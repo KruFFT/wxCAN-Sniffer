@@ -1,2 +1,2 @@
-# wxCAN-Sniffer
+# wxCAN Sniffer
 CAN bus sniffer (PC part)
