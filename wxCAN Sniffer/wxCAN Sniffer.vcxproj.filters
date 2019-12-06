@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Application">
+      <UniqueIdentifier>{2f55588f-ec77-44f0-bb5a-0fc774e89c1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FormMain">
+      <UniqueIdentifier>{92c4ce81-ea60-47a9-add2-31c479a4ac5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThreadedSerialPort">
+      <UniqueIdentifier>{10f2e7ca-17c5-4bb9-83be-82919fb200e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{9ba22cad-36cd-40d0-a098-fbc090c857d4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Application.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="FormMain.h">
+      <Filter>FormMain</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadedSerialPort.h">
+      <Filter>ThreadedSerialPort</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Application.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="FormMain.cpp">
+      <Filter>FormMain</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadedSerialPort.cpp">
+      <Filter>ThreadedSerialPort</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="CAN.ico">
+      <Filter>Resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="wxCAN Sniffer.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
