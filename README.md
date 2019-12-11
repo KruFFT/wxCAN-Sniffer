@@ -1,2 +1,2 @@
 # wxCAN Sniffer
-CAN bus sniffer (PC part)
+CAN bus sniffer (PC side)
