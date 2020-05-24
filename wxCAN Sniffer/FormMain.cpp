@@ -1,4 +1,4 @@
-﻿#include "FormMain.h"
+#include "FormMain.h"
 
 // Конструктор окна
 FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSize(940, 640), wxDEFAULT_FRAME_STYLE)
@@ -168,7 +168,7 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 				comboBoxSpeed->Append(wxT("2000000"));
 				sizerControls->Add(comboBoxSpeed, 0, wxALL, 2);
 
-				buttonConnectDisconnect = new wxButton(this, wxID_ANY, wxT("Подключить"));
+				buttonConnectDisconnect = new wxButton(this, wxID_ANY, wxT("Подключить"), wxDefaultPosition, wxSize(70, 27));
 				sizerControls->Add(buttonConnectDisconnect, 1, wxALL, 0);
 
 				textFPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxSize(50, 22), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
@@ -341,35 +341,31 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 	this->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 
 	// привязка событий
-	gridCANView->Connect(wxEVT_GRID_SELECT_CELL, wxGridEventHandler(FormMain::GridCANView_OnSelectCell), NULL, this);
-	buttonConnectDisconnect->Connect(wxEVT_BUTTON, wxCommandEventHandler(FormMain::ButtonConDiscon_OnClick), NULL, this);
-	buttonAdd->Connect(wxEVT_BUTTON, wxCommandEventHandler(FormMain::ButtonAdd_OnClick), NULL, this);
-	buttonRemove->Connect(wxEVT_BUTTON, wxCommandEventHandler(FormMain::ButtonRemove_OnClick), NULL, this);
-	buttonRemoveAll->Connect(wxEVT_BUTTON, wxCommandEventHandler(FormMain::ButtonRemoveAll_OnClick), NULL, this);
-	buttonSend->Connect(wxEVT_BUTTON, wxCommandEventHandler(FormMain::ButtonSend_OnClick), NULL, this);
-	buttonClearCANLog->Connect(wxEVT_BUTTON, wxCommandEventHandler(FormMain::ButtonClearCANLog_OnClick), NULL, this);
-	comboExt->Connect(wxEVT_CHOICE, wxCommandEventHandler(FormMain::ComboExt_OnChoice), NULL, this);
-	comboSep->Connect(wxEVT_CHOICE, wxCommandEventHandler(FormMain::ComboSep_OnChoice), NULL, this);
-	checkDec->Connect(wxEVT_CHECKBOX, wxCommandEventHandler(FormMain::CheckDec_OnClick), NULL, this);
-	checkSingle->Connect(wxEVT_CHECKBOX, wxCommandEventHandler(FormMain::CheckSingle_OnClick), NULL, this);
-	checkEndian->Connect(wxEVT_CHECKBOX, wxCommandEventHandler(FormMain::CheckEndian_OnClick), NULL, this);
-	checkASCII->Connect(wxEVT_CHECKBOX, wxCommandEventHandler(FormMain::CheckASCII_OnClick), NULL, this);
-	drawPanel->Connect(wxEVT_PAINT, wxPaintEventHandler(FormMain::DrawPanel_OnPaint), NULL, this);
-	drawPanel->Connect(wxEVT_SIZE, wxSizeEventHandler(FormMain::DrawPanel_OnSize), NULL, this);
-	drawPanel->Connect(wxEVT_ERASE_BACKGROUND, wxEraseEventHandler(FormMain::DrawPanel_OnEraseBackground), NULL, this);
-
-	//textDecWordMul->Connect(wxEVT_TEXT_ENTER, wxCommandEventHandler(FormMain::TextDecWordMul_OnEnter), NULL, this);
-	//textCANAnswerID->Connect(wxEVT_TEXT_ENTER, wxCommandEventHandler(FormMain::TextCANAnswerID_OnEnter), NULL, this);
-	// не получается иначе событие прицепить, приходится через ObjectID делать
-	Connect(idTEXTDECWORDMUL, wxEVT_TEXT_ENTER, wxCommandEventHandler(FormMain::TextDecWordMul_OnEnter));
-	Connect(idTEXTCANANSWERID, wxEVT_TEXT_ENTER, wxCommandEventHandler(FormMain::TextCANAnswerID_OnEnter));
+	buttonConnectDisconnect->Bind(wxEVT_BUTTON, &FormMain::ButtonConDiscon_OnClick, this);
+	gridCANView->Bind(wxEVT_GRID_SELECT_CELL, &FormMain::GridCANView_OnSelectCell, this);
+	buttonAdd->Bind(wxEVT_BUTTON, &FormMain::ButtonAdd_OnClick, this);
+	buttonRemove->Bind(wxEVT_BUTTON, &FormMain::ButtonRemove_OnClick, this);
+	buttonRemoveAll->Bind(wxEVT_BUTTON, &FormMain::ButtonRemoveAll_OnClick, this);
+	buttonSend->Bind(wxEVT_BUTTON, &FormMain::ButtonSend_OnClick, this);
+	buttonClearCANLog->Bind(wxEVT_BUTTON, &FormMain::ButtonClearCANLog_OnClick, this);
+	comboExt->Bind(wxEVT_CHOICE, &FormMain::ComboExt_OnChoice, this);
+	comboSep->Bind(wxEVT_CHOICE, &FormMain::ComboSep_OnChoice, this);
+	checkDec->Bind(wxEVT_CHECKBOX, &FormMain::CheckDec_OnClick, this);
+	checkSingle->Bind(wxEVT_CHECKBOX, &FormMain::CheckSingle_OnClick, this);
+	checkEndian->Bind(wxEVT_CHECKBOX, &FormMain::CheckEndian_OnClick, this);
+	checkASCII->Bind(wxEVT_CHECKBOX, &FormMain::CheckASCII_OnClick, this);
+	drawPanel->Bind(wxEVT_PAINT, &FormMain::DrawPanel_OnPaint, this);
+	drawPanel->Bind(wxEVT_SIZE, &FormMain::DrawPanel_OnSize, this);
+	drawPanel->Bind(wxEVT_ERASE_BACKGROUND, &FormMain::DrawPanel_OnEraseBackground, this);
+	textDecWordMul->Bind(wxEVT_TEXT_ENTER, &FormMain::TextDecWordMul_OnEnter, this);
+	textCANAnswerID->Bind(wxEVT_TEXT_ENTER, &FormMain::TextCANAnswerID_OnEnter, this);
 
 	// событие от фонового потока COM-порта
-	this->Connect(wxEVT_THREAD, wxThreadEventHandler(FormMain::Thread_OnUpdate), NULL, this);
+	this->Bind(wxEVT_THREAD, &FormMain::Thread_OnUpdate, this);
 	
 	// настройка и запуск таймера
 	timerMain = new wxTimer(this, idMAINTIMER);
-	Connect(idMAINTIMER, wxEVT_TIMER, wxTimerEventHandler(FormMain::MainTimer_OnTimer));
+	this->Bind(wxEVT_TIMER, &FormMain::MainTimer_OnTimer, this, idMAINTIMER);
 	timerMain->Start(TIMER_INTERVAL);
 
 	// определение разделителя дробной части чисел
@@ -379,7 +375,7 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 	decimalSeparator = sepBuf;*/
 	
 	// для русского языка определяется запятая, как и положено
-	// эта запятая и ставится в друбную часть времени в файл, разделяя секунды и миллисекунды
+	// эта запятая и ставится в дробную часть времени в файл, разделяя секунды и миллисекунды
 	// вот только Excel не понимает этого и неверно отображает миллисекунды
 	// поэтому разделителем ставлю точку
 	decimalSeparator = wxT(".");
