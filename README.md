@@ -21,6 +21,7 @@ CAN bus sniffer (PC side)
 5. В разделе C/C++ -> Code Generation изменить параметр Runtime Library:
 
       Для конфигурации Debug выбрать /MTd
+      
       Для конфигурации Release выбрать /MT
 
 6. Скомпилировать библиотеки wxWidgets по очереди для Debug и Release конфигураций.
