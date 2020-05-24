@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <wx/wx.h>
 #include <wx/grid.h>
@@ -14,7 +14,7 @@
 
 using namespace std;
 
-#define CAPTION		wxT("CAN Sniffer 1.3.5")
+#define CAPTION		wxT("CAN Sniffer 1.3.6")
 #define COM_NAME	wxT("COM4")
 
 #define SIG_BYTE_0 0xAA
