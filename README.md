@@ -41,6 +41,7 @@ CAN bus sniffer (PC side)
 4. В настройках проекта C/C++ -> Code Generation изменить (если пункт не появился - сделать пробную сборку):
 
     Runtime Library для конфигурации Debug:  /MTd
+    
     Runtime Library для конфигурации Release: /MT
 
 5. Дополнительно, если необходимы привилегии UAC, в разделе Linker -> Manifest File:
