@@ -15,7 +15,7 @@
 using namespace std;
 
 #define CAPTION		wxT("CAN Sniffer 1.3.6")
-#define COM_NAME	wxT("COM4")
+#define COM_NAME	wxT("COM3")
 
 #define SIG_BYTE_0 0xAA
 #define SIG_BYTE_1 0x55

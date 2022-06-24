@@ -1,4 +1,4 @@
-#include "FormMain.h"
+﻿#include "FormMain.h"
 
 // Конструктор окна
 FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSize(940, 640), wxDEFAULT_FRAME_STYLE)
