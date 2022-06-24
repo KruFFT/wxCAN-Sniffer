@@ -1,7 +1,29 @@
 ﻿#include "FormMain.h"
 
+// Талица событий
+wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
+	EVT_CLOSE(FormMain::OnClose)
+	EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConDiscon_OnClick)
+	EVT_BUTTON(ID_BUTTON_ADD, FormMain::FormMain::ButtonAdd_OnClick)
+	EVT_BUTTON(ID_BUTTON_REMOVE, FormMain::ButtonRemove_OnClick)
+	EVT_BUTTON(ID_BUTTON_REMOVE_ALL, FormMain::ButtonRemoveAll_OnClick)
+	EVT_BUTTON(ID_BUTTON_SEND, FormMain::ButtonSend_OnClick)
+	EVT_BUTTON(ID_BUTTON_CLEAR_LOG, FormMain::ButtonClearCANLog_OnClick)
+	EVT_GRID_CMD_SELECT_CELL(ID_GRID_CAN_VIEW, FormMain::GridCANView_OnSelectCell)
+	EVT_CHOICE(ID_COMBO_EXT, FormMain::ComboExt_OnChoice)
+	EVT_CHOICE(ID_COMBO_SEP, FormMain::ComboSep_OnChoice)
+	EVT_CHECKBOX(ID_CHECKBOX_DEC, FormMain::CheckDec_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_SINGLE, FormMain::CheckSingle_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_ENDIAN, FormMain::CheckEndian_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_ASCII, FormMain::CheckASCII_OnClick)
+	EVT_TEXT_ENTER(ID_TEXT_DEC_WORD_MUL, FormMain::TextDecWordMul_OnEnter)
+	EVT_TEXT_ENTER(ID_TEXT_CAN_ANSWER_ID, FormMain::TextCANAnswerID_OnEnter)
+	EVT_TIMER(ID_MAIN_TIMER, FormMain::MainTimer_OnTimer)
+	EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
+wxEND_EVENT_TABLE()
+
 // Конструктор окна
-FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSize(940, 640), wxDEFAULT_FRAME_STYLE)
+FormMain::FormMain() : wxFrame(NULL, ID_MAIN_FORM, CAPTION, wxDefaultPosition, wxSize(940, 640), wxDEFAULT_FRAME_STYLE)
 {
 	// иконка
 	this->SetIcon(wxICON(wxicon));
@@ -18,7 +40,7 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 		// левый верхний сайзер
 		wxStaticBoxSizer* sizerLeftTop = new wxStaticBoxSizer(new wxStaticBox(panelLeftTop, wxID_ANY, wxT("Просмотр пакетов")), wxVERTICAL);
 		{
-			gridCANView = new wxGrid(panelLeftTop, wxID_ANY);
+			gridCANView = new wxGrid(panelLeftTop, ID_GRID_CAN_VIEW);
 			// параметры сетки
 			gridCANView->CreateGrid(0, 10);
 			gridCANView->EnableEditing(false);
@@ -91,16 +113,16 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 			// сайзер с кнопками управления отправкой и журналом ответа
 			wxBoxSizer* sizerLeftBottomButtons = new wxBoxSizer(wxHORIZONTAL);
 			{
-				buttonSend = new wxButton(panelLeftBottom, wxID_ANY, wxT("Отправить CAN-пакет"));
+				buttonSend = new wxButton(panelLeftBottom, ID_BUTTON_SEND, wxT("Отправить CAN-пакет"));
 				sizerLeftBottomButtons->Add(buttonSend, 0, wxALL, 4);
 				wxStaticText* labelCANFromID = new wxStaticText(panelLeftBottom, wxID_ANY, wxT("Отображать ответ от:"), wxDefaultPosition, wxDefaultSize);
 				labelCANFromID->Wrap(-1);
 				sizerLeftBottomButtons->Add(labelCANFromID, 0, wxALL, 9);
-				textCANAnswerID = new wxTextCtrl(panelLeftBottom, idTEXTCANANSWERID, wxT("7E8"), wxDefaultPosition, wxSize(51, 20), wxTE_CENTRE | wxTE_PROCESS_ENTER | wxBORDER_SIMPLE);
+				textCANAnswerID = new wxTextCtrl(panelLeftBottom, ID_TEXT_CAN_ANSWER_ID, wxT("7E8"), wxDefaultPosition, wxSize(51, 20), wxTE_CENTRE | wxTE_PROCESS_ENTER | wxBORDER_SIMPLE);
 				sizerLeftBottomButtons->Add(textCANAnswerID, 0, wxALL, 7);
 				// спейсер между кнопками
 				sizerLeftBottomButtons->Add(0, 0, 1, wxEXPAND, 0);
-				buttonClearCANLog = new wxButton(panelLeftBottom, wxID_ANY, wxT("Очистить ответ"));
+				buttonClearCANLog = new wxButton(panelLeftBottom, ID_BUTTON_CLEAR_LOG, wxT("Очистить ответ"));
 				sizerLeftBottomButtons->Add(buttonClearCANLog, 0, wxALL, 4);
 
 				sizerLeftBottom->Add(sizerLeftBottomButtons, 0, wxEXPAND, 0);
@@ -168,7 +190,7 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 				comboBoxSpeed->Append(wxT("2000000"));
 				sizerControls->Add(comboBoxSpeed, 0, wxALL, 2);
 
-				buttonConnectDisconnect = new wxButton(this, wxID_ANY, wxT("Подключить"), wxDefaultPosition, wxSize(70, 27));
+				buttonConnectDisconnect = new wxButton(this, ID_BUTON_CONNECT_DISCONNECT, wxT("Подключить"), wxDefaultPosition, wxSize(70, 27));
 				sizerControls->Add(buttonConnectDisconnect, 1, wxALL, 0);
 
 				textFPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxSize(50, 22), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
@@ -188,13 +210,13 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 					// кнопки журнала
 					wxBoxSizer* sizerLogButtons = new wxBoxSizer(wxVERTICAL);
 					{
-						buttonAdd = new wxButton(this, wxID_ANY, wxT("Добавить ID в фильтр >>"), wxDefaultPosition, wxSize(150, -1));
+						buttonAdd = new wxButton(this, ID_BUTTON_ADD, wxT("Добавить ID в фильтр >>"), wxDefaultPosition, wxSize(150, -1));
 						sizerLogButtons->Add(buttonAdd, 0, wxALL, 2);
 
-						buttonRemove = new wxButton(this, wxID_ANY, wxT("Убрать ID из фильтра <<"), wxDefaultPosition, wxSize(150, -1));
+						buttonRemove = new wxButton(this, ID_BUTTON_REMOVE, wxT("Убрать ID из фильтра <<"), wxDefaultPosition, wxSize(150, -1));
 						sizerLogButtons->Add(buttonRemove, 0, wxALL, 2);
 
-						buttonRemoveAll = new wxButton(this, wxID_ANY, wxT("Очистить фильтр"), wxDefaultPosition, wxSize(150, -1));
+						buttonRemoveAll = new wxButton(this, ID_BUTTON_REMOVE_ALL, wxT("Очистить фильтр"), wxDefaultPosition, wxSize(150, -1));
 						sizerLogButtons->Add(buttonRemoveAll, 0, wxALL, 2);
 
 						sizerLogButtonsList->Add(sizerLogButtons, 0, wxEXPAND, 2);
@@ -216,7 +238,7 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 					wxArrayString comboExtChoices;
 					comboExtChoices.Add(wxT(".csv"));
 					comboExtChoices.Add(wxT(".log"));
-					comboExt = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, comboExtChoices);
+					comboExt = new wxChoice(this, ID_COMBO_EXT, wxDefaultPosition, wxDefaultSize, comboExtChoices);
 					comboExt->SetSelection(0);
 					logExt = wxT(".csv");
 					sizerLogType->Add(comboExt, 0, wxALL, 2);
@@ -232,7 +254,7 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 					comboSepChoices.Add(wxT("_"));
 					comboSepChoices.Add(wxT("Space"));
 
-					comboSep = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, comboSepChoices);
+					comboSep = new wxChoice(this, ID_COMBO_SEP, wxDefaultPosition, wxDefaultSize, comboSepChoices);
 					comboSep->SetSelection(0);
 					logSeparator = wxT(";");
 					sizerLogType->Add(comboSep, 0, wxALL, 2);
@@ -243,13 +265,13 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 				// параметры сохранения данных в лог
 				wxBoxSizer* sizerLogParameters = new wxBoxSizer(wxVERTICAL);
 				{
-					checkSingle = new wxCheckBox(this, wxID_ANY, wxT("Сохранение данных в один файл"));
+					checkSingle = new wxCheckBox(this, ID_CHECKBOX_SINGLE, wxT("Сохранение данных в один файл"));
 					checkSingle->SetValue(logSingle);
 					sizerLogParameters->Add(checkSingle, 0, wxALL, 5);
-					checkDec = new wxCheckBox(this, wxID_ANY, wxT("Десятичный вывод данных"));
+					checkDec = new wxCheckBox(this, ID_CHECKBOX_DEC, wxT("Десятичный вывод данных"));
 					checkDec->SetValue(logDecimal);
 					sizerLogParameters->Add(checkDec, 0, wxALL, 5);
-					checkASCII = new wxCheckBox(this, wxID_ANY, wxT("Добавлять ASCII данные"));
+					checkASCII = new wxCheckBox(this, ID_CHECKBOX_ASCII, wxT("Добавлять ASCII данные"));
 					checkASCII->SetValue(logASCII);
 					sizerLogParameters->Add(checkASCII, 0, wxALL, 5);
 
@@ -284,7 +306,7 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 				}
 
 				// выбор big endian или little endian
-				checkEndian = new wxCheckBox(this, wxID_ANY, wxT("Последовательность байтов big-endian"));
+				checkEndian = new wxCheckBox(this, ID_CHECKBOX_ENDIAN, wxT("Последовательность байтов big-endian"));
 				checkEndian->SetValue(bigEndian);
 				sizerDecoders->Add(checkEndian, 0, wxALL, 5);
 
@@ -305,7 +327,7 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 					wxStaticText* labelDecWordMul = new wxStaticText(this, wxID_ANY, wxT("Множитель слова:"), wxDefaultPosition, wxSize(120, -1));
 					labelDecWordMul->Wrap(-1);
 					sizerDecoderWordMul->Add(labelDecWordMul, 0, wxALL | wxEXPAND, 3);
-					textDecWordMul = new wxTextCtrl(this, idTEXTDECWORDMUL, wxString::Format(wxT("%1.6f"), mul), wxDefaultPosition, wxSize(200, 22), wxTE_CENTRE | wxTE_PROCESS_ENTER | wxBORDER_SIMPLE);
+					textDecWordMul = new wxTextCtrl(this, ID_TEXT_DEC_WORD_MUL, wxString::Format(wxT("%1.6f"), mul), wxDefaultPosition, wxSize(200, 22), wxTE_CENTRE | wxTE_PROCESS_ENTER | wxBORDER_SIMPLE);
 					sizerDecoderWordMul->Add(textDecWordMul, 0, wxALL | wxEXPAND, 0);
 					sizerDecoders->Add(sizerDecoderWordMul, 0, wxALIGN_CENTER | wxALL, 2);
 				}
@@ -325,7 +347,7 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 			}
 
 			// панель для графика
-			drawPanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+			drawPanel = new wxPanel(this, ID_DRAW_PANEL, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
 			drawPanel->SetBackgroundColour(wxColour(255, 255, 255));
 			sizerRight->Add(drawPanel, 1, wxALL | wxEXPAND, 2);
 
@@ -340,32 +362,33 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 	this->SetDoubleBuffered(true);
 	this->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 
-	// привязка событий
-	buttonConnectDisconnect->Bind(wxEVT_BUTTON, &FormMain::ButtonConDiscon_OnClick, this);
-	gridCANView->Bind(wxEVT_GRID_SELECT_CELL, &FormMain::GridCANView_OnSelectCell, this);
-	buttonAdd->Bind(wxEVT_BUTTON, &FormMain::ButtonAdd_OnClick, this);
-	buttonRemove->Bind(wxEVT_BUTTON, &FormMain::ButtonRemove_OnClick, this);
-	buttonRemoveAll->Bind(wxEVT_BUTTON, &FormMain::ButtonRemoveAll_OnClick, this);
-	buttonSend->Bind(wxEVT_BUTTON, &FormMain::ButtonSend_OnClick, this);
-	buttonClearCANLog->Bind(wxEVT_BUTTON, &FormMain::ButtonClearCANLog_OnClick, this);
-	comboExt->Bind(wxEVT_CHOICE, &FormMain::ComboExt_OnChoice, this);
-	comboSep->Bind(wxEVT_CHOICE, &FormMain::ComboSep_OnChoice, this);
-	checkDec->Bind(wxEVT_CHECKBOX, &FormMain::CheckDec_OnClick, this);
-	checkSingle->Bind(wxEVT_CHECKBOX, &FormMain::CheckSingle_OnClick, this);
-	checkEndian->Bind(wxEVT_CHECKBOX, &FormMain::CheckEndian_OnClick, this);
-	checkASCII->Bind(wxEVT_CHECKBOX, &FormMain::CheckASCII_OnClick, this);
+	// привязка событий (так нравится больше, но переделал на таблицу событий в начале кода, так как не смог сделать событие для UDP-сокета)
+	//buttonConnectDisconnect->Bind(wxEVT_BUTTON, &FormMain::ButtonConDiscon_OnClick, this);
+	//buttonAdd->Bind(wxEVT_BUTTON, &FormMain::ButtonAdd_OnClick, this);
+	//buttonRemove->Bind(wxEVT_BUTTON, &FormMain::ButtonRemove_OnClick, this);
+	//buttonRemoveAll->Bind(wxEVT_BUTTON, &FormMain::ButtonRemoveAll_OnClick, this);
+	//buttonSend->Bind(wxEVT_BUTTON, &FormMain::ButtonSend_OnClick, this);
+	//buttonClearCANLog->Bind(wxEVT_BUTTON, &FormMain::ButtonClearCANLog_OnClick, this);
+	//gridCANView->Bind(wxEVT_GRID_SELECT_CELL, &FormMain::GridCANView_OnSelectCell, this); 
+	//comboExt->Bind(wxEVT_CHOICE, &FormMain::ComboExt_OnChoice, this);
+	//comboSep->Bind(wxEVT_CHOICE, &FormMain::ComboSep_OnChoice, this);
+	//checkDec->Bind(wxEVT_CHECKBOX, &FormMain::CheckDec_OnClick, this);
+	//checkSingle->Bind(wxEVT_CHECKBOX, &FormMain::CheckSingle_OnClick, this);
+	//checkEndian->Bind(wxEVT_CHECKBOX, &FormMain::CheckEndian_OnClick, this);
+	//checkASCII->Bind(wxEVT_CHECKBOX, &FormMain::CheckASCII_OnClick, this);
+	//textDecWordMul->Bind(wxEVT_TEXT_ENTER, &FormMain::TextDecWordMul_OnEnter, this);
+	//textCANAnswerID->Bind(wxEVT_TEXT_ENTER, &FormMain::TextCANAnswerID_OnEnter, this);
+	//this->Bind(wxEVT_TIMER, &FormMain::MainTimer_OnTimer, this, ID_MAIN_TIMER);
+
+	// эту привязку событий оставил, так как иначе придётся делать наследование от wxPanel
 	drawPanel->Bind(wxEVT_PAINT, &FormMain::DrawPanel_OnPaint, this);
 	drawPanel->Bind(wxEVT_SIZE, &FormMain::DrawPanel_OnSize, this);
 	drawPanel->Bind(wxEVT_ERASE_BACKGROUND, &FormMain::DrawPanel_OnEraseBackground, this);
-	textDecWordMul->Bind(wxEVT_TEXT_ENTER, &FormMain::TextDecWordMul_OnEnter, this);
-	textCANAnswerID->Bind(wxEVT_TEXT_ENTER, &FormMain::TextCANAnswerID_OnEnter, this);
-
-	// событие от фонового потока COM-порта
+	// событие от фонового потока COM-порта, а это не смог нормально описать в таблице событий
 	this->Bind(wxEVT_THREAD, &FormMain::Thread_OnUpdate, this);
-	
+
 	// настройка и запуск таймера
-	timerMain = new wxTimer(this, idMAINTIMER);
-	this->Bind(wxEVT_TIMER, &FormMain::MainTimer_OnTimer, this, idMAINTIMER);
+	timerMain = new wxTimer(this, ID_MAIN_TIMER);
 	timerMain->Start(TIMER_INTERVAL);
 
 	// определение разделителя дробной части чисел
@@ -373,23 +396,49 @@ FormMain::FormMain() : wxFrame(NULL, wxID_ANY, CAPTION, wxDefaultPosition, wxSiz
 	wxChar sepBuf[256] { 0 };
 	GetLocaleInfo(langInfo->GetLCID(), LOCALE_SDECIMAL, sepBuf, WXSIZEOF(sepBuf));
 	decimalSeparator = sepBuf;*/
-	
+
 	// для русского языка определяется запятая, как и положено
 	// эта запятая и ставится в дробную часть времени в файл, разделяя секунды и миллисекунды
 	// вот только Excel не понимает этого и неверно отображает миллисекунды
 	// поэтому разделителем ставлю точку
 	decimalSeparator = wxT(".");
+
+	// подготовка сетевых операций
+	espIpAddress.Service(UDP_PORT);
+
+	wxIPV4address ipAddress;
+	ipAddress.AnyAddress();
+	ipAddress.Service(UDP_PORT);
+	udpSocket = new wxDatagramSocket(ipAddress);
+
+	if (!udpSocket->IsOk())
+	{
+		if (udpSocket->Error())
+		{
+			std::cout << "Error %d at opening datagram socket" << udpSocket->LastError();
+		}
+	}
+
+	udpSocket->SetEventHandler(*this, ID_UDP_SOCKET);
+	udpSocket->SetNotify(wxSOCKET_INPUT_FLAG);
+	udpSocket->Notify(true);
 }
 
-// Деструктор окна
-FormMain::~FormMain()
+// Нажатие кнопки закрытия окна
+void FormMain::OnClose(wxCloseEvent& event)
 {
 	timerMain->Stop();
+
+	if (udpSocket)
+		udpSocket->Destroy();
+
 	if (COM)
 		COM->Delete();
 
 	// записать все файлы
 	FlushLogs();
+
+	Destroy();
 }
 
 /*--------------------------------------------------------------------------------------------------*/
@@ -457,23 +506,23 @@ void FormMain::Thread_OnUpdate(wxThreadEvent& event)
 	if (COM)
 	{
 		while (COM->GetNextFrame(&frame))
-		{	
-			ProcessCANFrame(&frame);			
+		{
+			ProcessCANFrame(&frame);
 		}
 	}
 }
 
 // Проверка поступившего CAN-пакета
-void FormMain::ProcessCANFrame(CANFrame* Frame)
+void FormMain::ProcessCANFrame(CANFrame* frame)
 {
 	bool found = false;
 
 	// если это пакет с адресом 000 - это статистика и её надо вывести отдельно
-	if (Frame->ID == 0 && Frame->Length >= 4)
+	if (frame->ID == 0 && frame->Length >= 4)
 	{
-		uint16_t fps = (Frame->Data[0] << 8) + Frame->Data[1];
+		uint16_t fps = (frame->Data[0] << 8) + frame->Data[1];
 		textFPS->SetValue(wxString::Format(wxT("%i"), fps));	// кадров в секунду
-		uint16_t bps = (Frame->Data[2] << 8) + Frame->Data[3];
+		uint16_t bps = (frame->Data[2] << 8) + frame->Data[3];
 		textBPS->SetValue(wxString::Format(wxT("%i"), bps));	// байтов в секунду
 	}
 	else
@@ -483,16 +532,16 @@ void FormMain::ProcessCANFrame(CANFrame* Frame)
 		for (uint32_t iID = 0; iID < idCount; iID++)
 		{
 			// если найден - выделить яркостью цета изменяющиеся данные и заменить CAN-пакет
-			if (frames[iID].ID == Frame->ID)
+			if (frames[iID].ID == frame->ID)
 			{
-				gridCANView->SetCellValue(iID, 1, wxString::Format(wxT("%i"), Frame->Length));	// длина пакета
+				gridCANView->SetCellValue(iID, 1, wxString::Format(wxT("%i"), frame->Length));	// длина пакета
 				for (uint32_t i = 0; i < 8; i++)
 				{
-					if (i < Frame->Length)
+					if (i < frame->Length)
 					{
-						gridCANView->SetCellValue(iID, i + 2, wxString::Format(wxT("%02X"), Frame->Data[i]));
+						gridCANView->SetCellValue(iID, i + 2, wxString::Format(wxT("%02X"), frame->Data[i]));
 						// если новые данные такие же - необходимо плавно осветлять фоновую заливку
-						if (Frame->Data[i] == frames[iID].Data[i])
+						if (frame->Data[i] == frames[iID].Data[i])
 						{
 							byte tick = frames[iID].Tick[i];
 							if (tick < 255)
@@ -501,7 +550,7 @@ void FormMain::ProcessCANFrame(CANFrame* Frame)
 							}
 
 							gridCANView->SetCellBackgroundColour(iID, i + 2, wxColor(MARKED_COLOR, tick, tick));
-							Frame->Tick[i] = tick;
+							frame->Tick[i] = tick;
 						}
 						else
 						{
@@ -518,7 +567,7 @@ void FormMain::ProcessCANFrame(CANFrame* Frame)
 					gridCANView->RefreshBlock(iID, i + 2, iID, i + 2);
 				}
 
-				frames[iID] = *Frame;
+				frames[iID] = *frame;
 				found = true;
 				break;
 			}
@@ -528,26 +577,26 @@ void FormMain::ProcessCANFrame(CANFrame* Frame)
 		if (!found)
 		{
 			// добавить элемент в массив и отсортировать его
-			frames.push_back(*Frame);
+			frames.push_back(*frame);
 			sort(frames.begin(), frames.end());
 			idCount = frames.size();
 
 			// теперь надо снова найти элемент в отсортированном массиве, чтобы корректно вставить строку в таблицу
 			for (uint32_t iID = 0; iID < idCount; iID++)
 			{
-				if (frames[iID].ID == Frame->ID)
+				if (frames[iID].ID == frame->ID)
 				{
 					gridCANView->InsertRows(iID);
 
-					gridCANView->SetCellValue(iID, 0, wxString::Format(wxT("%03X"), Frame->ID));
-					gridCANView->SetCellValue(iID, 1, wxString::Format(wxT("%i"), Frame->Length));
+					gridCANView->SetCellValue(iID, 0, wxString::Format(wxT("%03X"), frame->ID));
+					gridCANView->SetCellValue(iID, 1, wxString::Format(wxT("%i"), frame->Length));
 
 					// заполнение столбцов параметров
 					for (uint32_t iData = 0; iData < 8; iData++)
 					{
-						if (iData < Frame->Length)
+						if (iData < frame->Length)
 						{
-							gridCANView->SetCellValue(iID, iData + 2, wxString::Format(wxT("%02X"), Frame->Data[iData]));
+							gridCANView->SetCellValue(iID, iData + 2, wxString::Format(wxT("%02X"), frame->Data[iData]));
 							gridCANView->SetCellBackgroundColour(iID, iData + 2, wxColor(NEW_COLOR));
 						}
 						else
@@ -564,39 +613,39 @@ void FormMain::ProcessCANFrame(CANFrame* Frame)
 		ShowNumbers();
 
 		// запись в лог по необходимости
-		
+
 		// если в фильтре ничего не выбрано - запись всех данных
 		if (logFilterIDs.size() == 0)
 		{
-			SaveToLog(Frame);
+			SaveToLog(frame);
 		}
 		// иначе - записывать пакеты указанные в фильтре
 		else
 		{
 			for (uint32_t iLog = 0; iLog < logFilterIDs.size(); iLog++)
 			{
-				if (Frame->ID == logFilterIDs[iLog])
+				if (frame->ID == logFilterIDs[iLog])
 				{
-					SaveToLog(Frame);
+					SaveToLog(frame);
 				}
 			}
 		}
 
 		// если ожидается ответ от этого ID - добавить его в список ответов
-		if (Frame->ID == answerID)
+		if (frame->ID == answerID)
 		{
 			int32_t index = gridCANLog->GetNumberRows();
 			gridCANLog->InsertRows(index);
 
-			gridCANLog->SetCellValue(index, 0, wxString::Format(wxT("%03X"), Frame->ID));
-			gridCANLog->SetCellValue(index, 1, wxString::Format(wxT("%i"), Frame->Length));
+			gridCANLog->SetCellValue(index, 0, wxString::Format(wxT("%03X"), frame->ID));
+			gridCANLog->SetCellValue(index, 1, wxString::Format(wxT("%i"), frame->Length));
 
 			// заполнение столбцов параметров
 			for (unsigned int i = 0; i < 8; i++)
 			{
-				if (i < Frame->Length)
+				if (i < frame->Length)
 				{
-					gridCANLog->SetCellValue(index, i + 2, wxString::Format(wxT("%02X"), Frame->Data[i]));
+					gridCANLog->SetCellValue(index, i + 2, wxString::Format(wxT("%02X"), frame->Data[i]));
 					//gridCANLog->SetCellBackgroundColour(index, i + 2, wxColor(DEFAULT_COLOR));
 				}
 			}
@@ -663,8 +712,6 @@ void FormMain::TextDecWordMul_OnEnter(wxCommandEvent& event)
 // Добавить ID в список фильра для записи в log
 void FormMain::ButtonAdd_OnClick(wxCommandEvent& event)
 {
-	int32_t index = -1;
-
 	if (rowToLog >= 0 && (int)frames.size() > rowToLog)
 	{
 		bool found = false;
@@ -746,7 +793,7 @@ void FormMain::CheckEndian_OnClick(wxCommandEvent& event)
 }
 
 // Записать в log указанный CAN-пакет
-void FormMain::SaveToLog(CANFrame* Frame)
+void FormMain::SaveToLog(CANFrame* frame)
 {
 	// если запись в один файл...
 	if (logSingle)
@@ -754,7 +801,7 @@ void FormMain::SaveToLog(CANFrame* Frame)
 		// если файл существует - записать данные
 		if (logFile)
 		{
-			LogWriteLine(logFile, Frame);
+			LogWriteLine(logFile, frame);
 		}
 		else
 		{
@@ -767,7 +814,7 @@ void FormMain::SaveToLog(CANFrame* Frame)
 				if (logFile->Open(logPath, wxT("a")))
 				{
 					logFile->SeekEnd();
-					LogWriteLine(logFile, Frame);
+					LogWriteLine(logFile, frame);
 				}
 			}
 			catch (...) {}
@@ -781,10 +828,10 @@ void FormMain::SaveToLog(CANFrame* Frame)
 		for (uint32_t iFile = 0; iFile < logFiles.size(); iFile++)
 		{
 			// проверка существования потока
-			if (logFiles[iFile].ID == Frame->ID)
+			if (logFiles[iFile].ID == frame->ID)
 			{
 				// если файл для этого кадра уже существует - просто дописать в него данные
-				LogWriteLine(logFiles[iFile].File, Frame);
+				LogWriteLine(logFiles[iFile].File, frame);
 
 				found = true;
 				break;
@@ -796,16 +843,16 @@ void FormMain::SaveToLog(CANFrame* Frame)
 		{
 			try
 			{
-				string logPath = wxGetCwd() + wxT("\\CAN ID ") + wxString::Format(wxT("%03X"), Frame->ID) + logExt;
+				string logPath = wxGetCwd() + wxT("\\CAN ID ") + wxString::Format(wxT("%03X"), frame->ID) + logExt;
 
 				LogFile newLogFile;
 				newLogFile.File = new wxFFile();
 				if (newLogFile.File->Open(logPath, wxT("a")))
 				{
 					newLogFile.File->SeekEnd();
-					newLogFile.ID = Frame->ID;
+					newLogFile.ID = frame->ID;
 					logFiles.push_back(newLogFile);
-					LogWriteLine(logFiles[logFiles.size() - 1].File, Frame);
+					LogWriteLine(logFiles[logFiles.size() - 1].File, frame);
 				}
 			}
 			catch (...) {}
@@ -814,7 +861,7 @@ void FormMain::SaveToLog(CANFrame* Frame)
 }
 
 // Записать в журнал строку данных
-void FormMain::LogWriteLine(wxFFile* File, CANFrame* Frame)
+void FormMain::LogWriteLine(wxFFile* file, CANFrame* frame)
 {
 	// штамп времени
 	wxDateTime dtNow = wxDateTime::UNow();
@@ -824,20 +871,20 @@ void FormMain::LogWriteLine(wxFFile* File, CANFrame* Frame)
 	try
 	{
 		// идентификатор пакета и его длина
-		newLine += wxString::Format(wxT("%03X"), Frame->ID) + logSeparator;
-		newLine += wxString::Format(wxT("%i"), Frame->Length) + logSeparator;
+		newLine += wxString::Format(wxT("%03X"), frame->ID) + logSeparator;
+		newLine += wxString::Format(wxT("%i"), frame->Length) + logSeparator;
 		// данные пакета
-		for (uint32_t iData = 0; iData < Frame->Length; iData++)
+		for (uint32_t iData = 0; iData < frame->Length; iData++)
 		{
 			if (logDecimal)
 			{
 				// десятичный вывод
-				newLine += wxString::Format(wxT("%0i"), Frame->Data[iData]) + logSeparator;
+				newLine += wxString::Format(wxT("%0i"), frame->Data[iData]) + logSeparator;
 			}
 			else
 			{
 				// шестнадцатиричный вывод
-				newLine += wxString::Format(wxT("%02X"), Frame->Data[iData]) + logSeparator;
+				newLine += wxString::Format(wxT("%02X"), frame->Data[iData]) + logSeparator;
 			}
 		}
 
@@ -846,7 +893,7 @@ void FormMain::LogWriteLine(wxFFile* File, CANFrame* Frame)
 		if (logASCII)
 		{
 			// дополнить строку разделителями для выравнивания
-			for (uint32_t iData = Frame->Length; iData < 8; iData++)
+			for (uint32_t iData = frame->Length; iData < 8; iData++)
 			{
 				newLine += logSeparator;
 			}
@@ -854,11 +901,11 @@ void FormMain::LogWriteLine(wxFFile* File, CANFrame* Frame)
 
 			// добавить ASCII данные из пакета
 			buf = newLine.ToStdString();
-			for (uint32_t iData = 0; iData < Frame->Length; iData++)
+			for (uint32_t iData = 0; iData < frame->Length; iData++)
 			{
-				if (Frame->Data[iData] > 0x1F)
+				if (frame->Data[iData] > 0x1F)
 				{
-					buf += Frame->Data[iData];
+					buf += frame->Data[iData];
 				}
 				else
 				{
@@ -873,10 +920,10 @@ void FormMain::LogWriteLine(wxFFile* File, CANFrame* Frame)
 		}
 
 		buf += "\n";
-		File->Write(buf.c_str(), buf.size());
-		File->Flush();
+		file->Write(buf.c_str(), buf.size());
+		file->Flush();
 	}
-	catch (...) { }
+	catch (...) {}
 }
 
 // Сбрасывает на диск данные и закрывает все файлы log-ов
@@ -914,7 +961,7 @@ void FormMain::GridCANView_OnSelectCell(wxGridEvent& event)
 	{
 		rowToView = -1;
 		colToView = -1;
-		
+
 		textBinByte->SetValue(wxT(""));
 		textDecByte->SetValue(wxT(""));
 		textDecWord->SetValue(wxT(""));
@@ -936,7 +983,7 @@ void FormMain::GridCANView_OnSelectCell(wxGridEvent& event)
 wxString FormMain::ToBinary(uint8_t Value)
 {
 	wxString binaryString;
-	
+
 	for (uint32_t counter = 0; counter < 4; counter++)
 	{
 		if (Value & 0x80)	binaryString += wxT('1');
@@ -977,7 +1024,7 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 	// нарисовать рамку и фон
 	dc.SetPen(*wxBLACK);
 	dc.DrawRectangle(drawRect);
-	
+
 	size_t drawDataSize = drawData.size();
 	if (drawDataSize > 0)
 	{
@@ -999,8 +1046,8 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 		{
 			// рисовать отмасштабированную линию
 			dc.DrawLine(drawRect.x + index, drawRect.y + drawRect.height - drawData[drawDataBegin + index - 1] * drawMul,
-						drawRect.x + index, drawRect.y + drawRect.height - drawData[drawDataBegin + index] * drawMul);
-			
+				drawRect.x + index, drawRect.y + drawRect.height - drawData[drawDataBegin + index] * drawMul);
+
 			// сохранение наибольшего значения для следующей итерации
 			if (drawData[drawDataBegin + index] > drawMaxValue)
 			{
@@ -1108,7 +1155,7 @@ void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
 		answerID = (unsigned int)tempValue;
 	else
 		answerID = 0;
-	
+
 	// отправить данные
 	if (COM)
 	{
@@ -1123,3 +1170,25 @@ void FormMain::TextCANAnswerID_OnEnter(wxCommandEvent& event)
 	textCANAnswerID->SetValue(wxString::Format(wxT("%03X"), answerID));
 }
 
+// событие UDP-сокета
+void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
+{
+	uint8_t receivedData[100];
+
+	if (event.GetSocketEvent() == wxSOCKET_INPUT)
+	{
+		size_t receivedDataLen = udpSocket->RecvFrom(espIpAddress, receivedData, sizeof(receivedData)).LastCount();
+		if (receivedDataLen)
+		{
+			uint32_t prefix = *(uint32_t*)receivedData;
+			// проверка на префикс
+			if (prefix == 0x55AA55AA)
+			{
+				//CANFrame frame;
+				//memcpy_s(&frame, 1024, receivedData + 4, receivedDataLen);
+				//ProcessCANFrame(&frame);
+				ProcessCANFrame((CANFrame*)&receivedData[4]);
+			}
+		}
+	}
+}

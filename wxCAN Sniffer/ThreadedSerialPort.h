@@ -11,7 +11,7 @@ static wxMutex syncCANSend;
 class ThreadedSerialPort : public wxThread
 {
 public:
-	ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFrame* Handler);
+	ThreadedSerialPort(wxString comPort, DWORD baudSpeed, wxFrame* windowHandle);
 	~ThreadedSerialPort();
 
 	bool GetNextFrame(CANFrame* frame);
@@ -26,7 +26,7 @@ private:
 	wxString portName;					// полное наименование последовательно порта с префиксами
 	DWORD    baudRate;					// указанная скорость
 	wxFrame* handleFrame = NULL;		// указатель на окно для генерации события для него
-	
+
 	uint8_t* buffer;					// байтовый буфер поледовательного порта
 	queue<CANFrame> canBuffer;			// буфер полученных CAN-пакетов
 	SendCANFrame frameToSend;			// CAN-пакет для отправки в CAN-сеть

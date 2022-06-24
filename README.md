@@ -1,7 +1,7 @@
-# wxCAN Sniffer
+﻿# wxCAN Sniffer
 CAN bus sniffer (PC side)
 
-Используется wxWidgets 3.1.3.
+Используется wxWidgets 3.1.7 x64.
 
 ====  Компиляция wxWidgets  ====
 

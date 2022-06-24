@@ -1,7 +1,7 @@
 ﻿#include "ThreadedSerialPort.h"
 
 // Конструктор
-ThreadedSerialPort::ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFrame* HandleFrame) : wxThread(wxTHREAD_JOINABLE)
+ThreadedSerialPort::ThreadedSerialPort(wxString comPort, DWORD baudSpeed, wxFrame* windowHandle) : wxThread(wxTHREAD_JOINABLE)
 {
 	// создать новый поток
 	if (this->Create() != wxTHREAD_NO_ERROR)
@@ -9,10 +9,10 @@ ThreadedSerialPort::ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFram
 		throw new exception("Невозможно создать поток");
 	}
 
-	portName = wxT("\\\\.\\") + PortName;
-	baudRate = BaudRate;
-	handleFrame = HandleFrame;
-	
+	portName = wxT("\\\\.\\") + comPort;
+	baudRate = baudSpeed;
+	handleFrame = windowHandle;
+
 	// выделить память под буфер
 	buffer = new byte[BUFFERLEN + 1];
 
@@ -83,7 +83,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 
 		// установка указателей в исходные состояния
 		bufferHead = bufferTail = buffer;
-		bufferEnd  = buffer + BUFFERLEN;
+		bufferEnd = buffer + BUFFERLEN;
 
 		// проверка на запрос для выхода
 		while (!TestDestroy())
@@ -137,125 +137,125 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 				switch (step)
 				{
 					// искомая сигнатура в буфере 0xAA55AA55 - это начало пакета, байт 0 = 0xAA
-					case 0:
-						if (*bufferHead == SIG_BYTE_0)
-						{
-							step++;
-						}
-						else
-						{
-							step = 0;
-						}
-						bufferHead++;
-						break;
-					
+				case 0:
+					if (*bufferHead == SIG_BYTE_0)
+					{
+						step++;
+					}
+					else
+					{
+						step = 0;
+					}
+					bufferHead++;
+					break;
+
 					// поиск сигнатуры, байт 1 = 0x55
-					case 1:
-						if (*bufferHead == SIG_BYTE_1)
-						{
-							step++;
-							bufferHead++;
-						}
-						else
-						{
-							step = 0;
-						}
-						break;
+				case 1:
+					if (*bufferHead == SIG_BYTE_1)
+					{
+						step++;
+						bufferHead++;
+					}
+					else
+					{
+						step = 0;
+					}
+					break;
 
 					// поиск сигнатуры, байт 2 = 0xAA
-					case 2:
-						if (*bufferHead == SIG_BYTE_2)
-						{
-							step++;
-							bufferHead++;
-						}
-						else
-						{
-							step = 0;
-						}						
-						break;
+				case 2:
+					if (*bufferHead == SIG_BYTE_2)
+					{
+						step++;
+						bufferHead++;
+					}
+					else
+					{
+						step = 0;
+					}
+					break;
 
 					// поиск сигнатуры, байт 3 = 0x55
-					case 3:
-						if (*bufferHead == SIG_BYTE_3)
-						{
-							step++;
-							bufferHead++;
-						}
-						else
-						{
-							step = 0;
-						}
-						break;
+				case 3:
+					if (*bufferHead == SIG_BYTE_3)
+					{
+						step++;
+						bufferHead++;
+					}
+					else
+					{
+						step = 0;
+					}
+					break;
 
 					// ID пакета (байт 0)
-					case 4: 
-						frame = { 0 };
-						frame.ID = *bufferHead;
-						bufferHead++;
-						step++;
-						break;
-					
+				case 4:
+					frame = { 0 };
+					frame.ID = *bufferHead;
+					bufferHead++;
+					step++;
+					break;
+
 					// ID пакета (байт 1)
-					case 5:
-						frame.ID |= (*bufferHead) << 8;
-						bufferHead++;
-						step++;
-						break;
+				case 5:
+					frame.ID |= (*bufferHead) << 8;
+					bufferHead++;
+					step++;
+					break;
 
 					// ID пакета (байт 2)
-					case 6:
-						frame.ID |= (*bufferHead) << 16;
-						bufferHead++;
-						step++;
-						break;
+				case 6:
+					frame.ID |= (*bufferHead) << 16;
+					bufferHead++;
+					step++;
+					break;
 
 					// ID пакета (байт 3)
-					case 7:
-						frame.ID |= (*bufferHead) << 24;
-						bufferHead++;
-						step++;
-						break;
+				case 7:
+					frame.ID |= (*bufferHead) << 24;
+					bufferHead++;
+					step++;
+					break;
 
 					// длина пакета
-					case 8:
-						frame.Length = *bufferHead;
-						bufferHead++;
-						step++;
-						if (frame.Length > 8)
-						{
-							// данные некорректные - возврат к поиску заголовка
-							step = 0;
-						}
-						break;
+				case 8:
+					frame.Length = *bufferHead;
+					bufferHead++;
+					step++;
+					if (frame.Length > 8)
+					{
+						// данные некорректные - возврат к поиску заголовка
+						step = 0;
+					}
+					break;
 
 					// данные пакета
-					case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16:
-						if (step - 9 < frame.Length)
-						{
-							frame.Data[step - 9] = *bufferHead;
-							bufferHead++;
-							step++;
-						}
-						else
-						{
-							step = 17;
-						}
-						break;
+				case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16:
+					if (step - 9 < frame.Length)
+					{
+						frame.Data[step - 9] = *bufferHead;
+						bufferHead++;
+						step++;
+					}
+					else
+					{
+						step = 17;
+					}
+					break;
 
 					// пакет собран - положить пакет в очередь
-					case 17:
-						syncCANBuffer.Lock();
-						canBuffer.push(frame);
-						syncCANBuffer.Unlock();
-						step = 0;
+				case 17:
+					syncCANBuffer.Lock();
+					canBuffer.push(frame);
+					syncCANBuffer.Unlock();
+					step = 0;
 
-						// сгенерировать событие
-						wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_THREAD));
-						break;
+					// сгенерировать событие
+					wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_THREAD));
+					break;
 				}
 			}
-			
+
 			// если есть данные на отправку - отправить
 			if (frameToSend.Frame.ID != 0)
 			{
@@ -274,7 +274,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 				byte randomByte = rand() % 255;
 				WriteFile(hSerial, &randomByte, 1, &bytesWritten, NULL);
 			}*/
-			
+
 			// пауза потока после разбора всех данных для заполнения входного буфера данными
 			Sleep(READ_PAUSE);
 		}

@@ -1,12 +1,13 @@
 #pragma once
 
-#include <wx/wx.h>
+#include <wx/wxprec.h>
 #include <wx/grid.h>
 #include <wx/splitter.h>
 #include <wx/ffile.h>
 #include <wx/thread.h>
 #include <wx/graphics.h>
 #include <wx/dcbuffer.h>
+#include <wx/socket.h>
 #include <windows.h>
 #include <iostream>
 #include <queue>
@@ -14,13 +15,15 @@
 
 using namespace std;
 
-#define CAPTION		wxT("CAN Sniffer 1.3.6")
+#define CAPTION		wxT("CAN Sniffer 2.0.0")
 #define COM_NAME	wxT("COM3")
 
 #define SIG_BYTE_0 0xAA
 #define SIG_BYTE_1 0x55
 #define SIG_BYTE_2 0xAA
 #define SIG_BYTE_3 0x55
+
+#define UDP_PORT 0xAA55
 
 // CAN-пакет данных
 struct CANFrame
@@ -29,7 +32,7 @@ public:
 	uint32_t ID;		// идентификатор пакета
 	uint8_t  Length;	// длина пакета
 	uint8_t  Data[8];	// массив данных пакета, до 8 байт
-	
+
 	uint8_t  Tick[8];	// счётчик тактов появления пакета, используется для выделения цветом в таблице
 
 	// оператор сравнения CAN-пакета необходим для сортировки
@@ -56,4 +59,4 @@ struct LogFile
 public:
 	uint32_t ID;		// идентификатор пакета
 	wxFFile* File;		// хэндл ассоциированного файла
- };
+};
