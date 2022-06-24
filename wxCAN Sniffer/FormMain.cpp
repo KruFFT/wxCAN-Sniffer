@@ -411,17 +411,16 @@ FormMain::FormMain() : wxFrame(NULL, ID_MAIN_FORM, CAPTION, wxDefaultPosition, w
 	ipAddress.Service(UDP_PORT);
 	udpSocket = new wxDatagramSocket(ipAddress);
 
-	if (!udpSocket->IsOk())
+	if (udpSocket->IsOk())
 	{
-		if (udpSocket->Error())
-		{
-			std::cout << "Error %d at opening datagram socket" << udpSocket->LastError();
-		}
+		udpSocket->SetEventHandler(*this, ID_UDP_SOCKET);
+		udpSocket->SetNotify(wxSOCKET_INPUT_FLAG);
+		udpSocket->Notify(true);
 	}
-
-	udpSocket->SetEventHandler(*this, ID_UDP_SOCKET);
-	udpSocket->SetNotify(wxSOCKET_INPUT_FLAG);
-	udpSocket->Notify(true);
+	else if (udpSocket->Error())
+	{
+		wxMessageBox(wxT("Ошибка открытия UDP-сокета: " + udpSocket->LastError()));
+	}
 }
 
 // Нажатие кнопки закрытия окна
@@ -1180,13 +1179,11 @@ void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
 		size_t receivedDataLen = udpSocket->RecvFrom(espIpAddress, receivedData, sizeof(receivedData)).LastCount();
 		if (receivedDataLen)
 		{
-			uint32_t prefix = *(uint32_t*)receivedData;
 			// проверка на префикс
+			uint32_t prefix = *(uint32_t*)receivedData;
 			if (prefix == 0x55AA55AA)
 			{
-				//CANFrame frame;
-				//memcpy_s(&frame, 1024, receivedData + 4, receivedDataLen);
-				//ProcessCANFrame(&frame);
+				// обработать полученный пакет пропустив префикс
 				ProcessCANFrame((CANFrame*)&receivedData[4]);
 			}
 		}

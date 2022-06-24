@@ -124,7 +124,7 @@ private:
 	double mul = 0.125;
 
 	vector<LogFile> logFiles;			// массив log-файлов
-	wxFFile* logFile = NULL;		// единый log-файл
+	wxFFile* logFile = NULL;			// единый log-файл
 
 	wxString decimalSeparator;			// выбранный символ разделитель для данных в log-файле
 
