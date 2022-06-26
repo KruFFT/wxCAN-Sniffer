@@ -1,26 +1,26 @@
-#include "FIFOBuffer.h"
+п»ї#include "FIFOBuffer.h"
 
-// Деструктор очищает очередь
+// Р”РµСЃС‚СЂСѓРєС‚РѕСЂ РѕС‡РёС‰Р°РµС‚ РѕС‡РµСЂРµРґСЊ
 FIFOBuffer::~FIFOBuffer()
 {
 	Clear();
 }
 
-// Вернуть размер очереди
+// Р’РµСЂРЅСѓС‚СЊ СЂР°Р·РјРµСЂ РѕС‡РµСЂРµРґРё
 size_t FIFOBuffer::Count()
 {
 	wxMutexLocker lock(syncFifoQueue);
 	return data.size();
 }
 
-// Добавить один байт
+// Р”РѕР±Р°РІРёС‚СЊ РѕРґРёРЅ Р±Р°Р№С‚
 void FIFOBuffer::Add(uint8_t value)
 {
 	wxMutexLocker lock(syncFifoQueue);
 	data.push(value);
 }
 
-// Добавить массив байтов
+// Р”РѕР±Р°РІРёС‚СЊ РјР°СЃСЃРёРІ Р±Р°Р№С‚РѕРІ
 void FIFOBuffer::Add(uint8_t values[], size_t amount)
 {
 	wxMutexLocker lock(syncFifoQueue);
@@ -30,7 +30,7 @@ void FIFOBuffer::Add(uint8_t values[], size_t amount)
 	}
 }
 
-// Прочитать следующий байт с контролем наличия
+// РџСЂРѕС‡РёС‚Р°С‚СЊ СЃР»РµРґСѓСЋС‰РёР№ Р±Р°Р№С‚ СЃ РєРѕРЅС‚СЂРѕР»РµРј РЅР°Р»РёС‡РёСЏ
 uint8_t FIFOBuffer::Next(bool& ok)
 {
 	uint8_t value;
@@ -49,7 +49,7 @@ uint8_t FIFOBuffer::Next(bool& ok)
 	return value;
 }
 
-// Очистить буфер
+// РћС‡РёСЃС‚РёС‚СЊ Р±СѓС„РµСЂ
 void FIFOBuffer::Clear()
 {
 	wxMutexLocker lock(syncFifoQueue);

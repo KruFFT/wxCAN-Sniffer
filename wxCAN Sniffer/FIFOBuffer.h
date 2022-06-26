@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include <wx/thread.h>
 #include <stdint.h>
@@ -18,5 +18,5 @@ public:
 	void Clear();
 
 private:
-	std::queue<uint8_t> data;		// очередь с данными
+	std::queue<uint8_t> data;		// РѕС‡РµСЂРµРґСЊ СЃ РґР°РЅРЅС‹РјРё
 };

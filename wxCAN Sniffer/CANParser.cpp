@@ -1,6 +1,6 @@
-#include "CANParser.h"
+п»ї#include "CANParser.h"
 
-// Деструктор очищает очередь
+// Р”РµСЃС‚СЂСѓРєС‚РѕСЂ РѕС‡РёС‰Р°РµС‚ РѕС‡РµСЂРµРґСЊ
 CANParser::~CANParser()
 {
 	wxMutexLocker lock(syncCanQueue);
@@ -22,7 +22,7 @@ void CANParser::ParseAll(FIFOBuffer& buffer)
             buffer.Next(ok) == SIG_BYTE_2 &&
             buffer.Next(ok) == SIG_BYTE_3)
         {
-            // сборка ID пакета
+            // СЃР±РѕСЂРєР° ID РїР°РєРµС‚Р°
             uint8_t id0 = buffer.Next(ok);
             uint8_t id1 = buffer.Next(ok);
             uint8_t id2 = buffer.Next(ok);

@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include "Common.h"
 #include "FIFOBuffer.h"
@@ -16,6 +16,6 @@ public:
 	CANFrame Next(bool& ok);
 
 private:
-	std::queue<CANFrame> frames;	// очередь с полученными пакетами
+	std::queue<CANFrame> frames;	// РѕС‡РµСЂРµРґСЊ СЃ РїРѕР»СѓС‡РµРЅРЅС‹РјРё РїР°РєРµС‚Р°РјРё
 };
 
