@@ -10,7 +10,7 @@
 #define DEFAULT_COLOR		0xFFFFFF	// white (BGR)
 #define DRAW_COLOR			0x0000FF	// red (BGR)
 
-#define TIMER_INTERVAL		25			// интервал срабатывания таймера
+#define TIMER_INTERVAL		20			// интервал срабатывания таймера
 
 // Идентификаторы необходимых объектов
 enum IDs

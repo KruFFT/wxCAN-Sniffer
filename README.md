@@ -14,7 +14,7 @@ CAN bus sniffer (PC side)
       Свойства системы -> Дополнительные параметры системы -> Переменные среды -> Создать
       WXWIN = C:\wxWidgets
 
-3. Из папки C:\wxWidgets\build\msw открыть файл решения под соответствующую Visual Studio (wx_vc16.sln для Visual Studio 2019)
+3. Из папки C:\wxWidgets\build\msw открыть файл решения под соответствующую Visual Studio (wx_vc17.sln для Visual Studio 2022)
 
 4. В Solution Expolorer, с помощью клавиши Shift, выделить все проекты, кроме _custom_build и зайти в Properties проектов.
 

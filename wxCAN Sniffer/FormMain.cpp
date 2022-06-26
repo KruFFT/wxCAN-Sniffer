@@ -2,24 +2,24 @@
 
 // Талица событий
 wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
-	EVT_CLOSE(FormMain::OnClose)
-	EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConDiscon_OnClick)
-	EVT_BUTTON(ID_BUTTON_ADD, FormMain::FormMain::ButtonAdd_OnClick)
-	EVT_BUTTON(ID_BUTTON_REMOVE, FormMain::ButtonRemove_OnClick)
-	EVT_BUTTON(ID_BUTTON_REMOVE_ALL, FormMain::ButtonRemoveAll_OnClick)
-	EVT_BUTTON(ID_BUTTON_SEND, FormMain::ButtonSend_OnClick)
-	EVT_BUTTON(ID_BUTTON_CLEAR_LOG, FormMain::ButtonClearCANLog_OnClick)
-	EVT_GRID_CMD_SELECT_CELL(ID_GRID_CAN_VIEW, FormMain::GridCANView_OnSelectCell)
-	EVT_CHOICE(ID_COMBO_EXT, FormMain::ComboExt_OnChoice)
-	EVT_CHOICE(ID_COMBO_SEP, FormMain::ComboSep_OnChoice)
-	EVT_CHECKBOX(ID_CHECKBOX_DEC, FormMain::CheckDec_OnClick)
-	EVT_CHECKBOX(ID_CHECKBOX_SINGLE, FormMain::CheckSingle_OnClick)
-	EVT_CHECKBOX(ID_CHECKBOX_ENDIAN, FormMain::CheckEndian_OnClick)
-	EVT_CHECKBOX(ID_CHECKBOX_ASCII, FormMain::CheckASCII_OnClick)
-	EVT_TEXT_ENTER(ID_TEXT_DEC_WORD_MUL, FormMain::TextDecWordMul_OnEnter)
-	EVT_TEXT_ENTER(ID_TEXT_CAN_ANSWER_ID, FormMain::TextCANAnswerID_OnEnter)
-	EVT_TIMER(ID_MAIN_TIMER, FormMain::MainTimer_OnTimer)
-	EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
+EVT_CLOSE(FormMain::OnClose)
+EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConDiscon_OnClick)
+EVT_BUTTON(ID_BUTTON_ADD, FormMain::FormMain::ButtonAdd_OnClick)
+EVT_BUTTON(ID_BUTTON_REMOVE, FormMain::ButtonRemove_OnClick)
+EVT_BUTTON(ID_BUTTON_REMOVE_ALL, FormMain::ButtonRemoveAll_OnClick)
+EVT_BUTTON(ID_BUTTON_SEND, FormMain::ButtonSend_OnClick)
+EVT_BUTTON(ID_BUTTON_CLEAR_LOG, FormMain::ButtonClearCANLog_OnClick)
+EVT_GRID_CMD_SELECT_CELL(ID_GRID_CAN_VIEW, FormMain::GridCANView_OnSelectCell)
+EVT_CHOICE(ID_COMBO_EXT, FormMain::ComboExt_OnChoice)
+EVT_CHOICE(ID_COMBO_SEP, FormMain::ComboSep_OnChoice)
+EVT_CHECKBOX(ID_CHECKBOX_DEC, FormMain::CheckDec_OnClick)
+EVT_CHECKBOX(ID_CHECKBOX_SINGLE, FormMain::CheckSingle_OnClick)
+EVT_CHECKBOX(ID_CHECKBOX_ENDIAN, FormMain::CheckEndian_OnClick)
+EVT_CHECKBOX(ID_CHECKBOX_ASCII, FormMain::CheckASCII_OnClick)
+EVT_TEXT_ENTER(ID_TEXT_DEC_WORD_MUL, FormMain::TextDecWordMul_OnEnter)
+EVT_TEXT_ENTER(ID_TEXT_CAN_ANSWER_ID, FormMain::TextCANAnswerID_OnEnter)
+EVT_TIMER(ID_MAIN_TIMER, FormMain::MainTimer_OnTimer)
+EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
 wxEND_EVENT_TABLE()
 
 // Конструктор окна
@@ -500,7 +500,7 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 // По событию от потока забирать все принятые CAN-пакеты, которые есть в буфере
 void FormMain::Thread_OnUpdate(wxThreadEvent& event)
 {
-	CANFrame frame;
+	/*CANFrame frame;
 
 	if (COM)
 	{
@@ -508,7 +508,7 @@ void FormMain::Thread_OnUpdate(wxThreadEvent& event)
 		{
 			ProcessCANFrame(&frame);
 		}
-	}
+	}*/
 }
 
 // Проверка поступившего CAN-пакета
@@ -1002,6 +1002,19 @@ wxString FormMain::ToBinary(uint8_t Value)
 // Срабатывание таймера
 void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 {
+	CANFrame frame;
+	bool ok;
+
+	if (COM)
+	{
+		frame = COM->GetNextFrame(ok);
+		while (ok)
+		{
+			frame = COM->GetNextFrame(ok);
+			ProcessCANFrame(&frame);
+		}
+	}
+
 	drawPanel->Refresh(true, &drawRect);
 	if (COM != NULL && !COM->IsAlive())
 	{
@@ -1158,7 +1171,7 @@ void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
 	// отправить данные
 	if (COM)
 	{
-		COM->SendFrame(&frame);
+		COM->SendFrame(frame);
 	}
 }
 

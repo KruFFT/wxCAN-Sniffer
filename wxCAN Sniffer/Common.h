@@ -9,6 +9,7 @@
 #include <wx/dcbuffer.h>
 #include <wx/socket.h>
 #include <windows.h>
+#include <stdint.h>
 #include <iostream>
 #include <queue>
 #include <vector>
