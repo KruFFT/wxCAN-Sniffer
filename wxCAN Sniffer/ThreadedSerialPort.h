@@ -1,22 +1,22 @@
 ﻿#pragma once
 
 #include "Common.h"
-#include "FIFOBuffer.h"
 #include "CANParser.h"
 
-#define SERIAL_BUFFER_LEN	100000
+#define BUFFERLEN	1000000
+
 #define READ_PAUSE	20
 
-//static wxMutex syncCANBuffer;
+static wxMutex syncCANBuffer;
 static wxMutex syncCANSend;
 
 class ThreadedSerialPort : public wxThread
 {
 public:
-	ThreadedSerialPort(wxString comPort, DWORD baudSpeed, wxFrame* windowHandle);
+	ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFrame* Handler);
 	~ThreadedSerialPort();
 
-	CANFrame GetNextFrame(bool& ok);
+	bool GetNextFrame(CANFrame& frame);
 	void SendFrame(CANFrame& frame);
 
 	HANDLE hSerial = INVALID_HANDLE_VALUE;	// хэндл открытого последовательного порта
@@ -26,11 +26,10 @@ private:
 	uint32_t SwapBytes(uint32_t value);
 
 	wxString portName;					// полное наименование последовательно порта с префиксами
-	DWORD    baudRate;					// заданная скорость
-	wxFrame* handleFrame = NULL;		// указатель на окно программы для генерации события для него
+	DWORD    baudRate;					// указанная скорость
+	wxFrame* handleFrame = NULL;		// указатель на окно для генерации события для него
 
-	FIFOBuffer buffer;					// байтовый буфер всех данных
-	CANParser parser;					// парсер принятых данных
-	uint8_t* serialBuffer;				// байтовый буфер чтения из поледовательного порта
+	uint8_t* buffer;					// байтовый буфер поледовательного порта
+	queue<CANFrame> canBuffer;			// буфер полученных CAN-пакетов
 	SendCANFrame frameToSend;			// CAN-пакет для отправки в CAN-сеть
 };

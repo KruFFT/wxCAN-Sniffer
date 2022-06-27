@@ -17,14 +17,12 @@
 using namespace std;
 
 #define CAPTION		wxT("CAN Sniffer 2.0.0")
-#define COM_NAME	wxT("COM3")
 
-#define SIG_BYTE_0 0xAA
-#define SIG_BYTE_1 0x55
-#define SIG_BYTE_2 0xAA
-#define SIG_BYTE_3 0x55
-
-#define UDP_PORT 0xAA55
+#define SIG_DWORD	0x55AA55AA
+#define SIG_BYTE_0	0xAA
+#define SIG_BYTE_1	0x55
+#define SIG_BYTE_2	0xAA
+#define SIG_BYTE_3	0x55
 
 // CAN-пакет данных
 struct CANFrame
@@ -60,4 +58,12 @@ struct LogFile
 public:
 	uint32_t ID;		// идентификатор пакета
 	wxFFile* File;		// хэндл ассоциированного файла
+};
+
+// Описание одного байтового буфера
+struct Buffer
+{
+public:
+	uint8_t* Pointer;
+	size_t   Size;
 };

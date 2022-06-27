@@ -17,9 +17,6 @@
     <Filter Include="Threaded Serial Port">
       <UniqueIdentifier>{10f2e7ca-17c5-4bb9-83be-82919fb200e5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="FIFO Buffer">
-      <UniqueIdentifier>{fd0af145-d1fa-4dd9-8bd3-b7e1c2129e9c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Form Main">
       <UniqueIdentifier>{92c4ce81-ea60-47a9-add2-31c479a4ac5d}</UniqueIdentifier>
     </Filter>
@@ -40,9 +37,6 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FIFOBuffer.h">
-      <Filter>FIFO Buffer</Filter>
-    </ClInclude>
     <ClInclude Include="CANParser.h">
       <Filter>CAN Parser</Filter>
     </ClInclude>
@@ -56,9 +50,6 @@
     </ClCompile>
     <ClCompile Include="ThreadedSerialPort.cpp">
       <Filter>Threaded Serial Port</Filter>
-    </ClCompile>
-    <ClCompile Include="FIFOBuffer.cpp">
-      <Filter>FIFO Buffer</Filter>
     </ClCompile>
     <ClCompile Include="CANParser.cpp">
       <Filter>CAN Parser</Filter>

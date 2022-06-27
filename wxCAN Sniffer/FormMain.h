@@ -12,6 +12,9 @@
 
 #define TIMER_INTERVAL		20			// интервал срабатывания таймера
 
+#define COM_NAME			wxT("COM3")	// последовательный порт по умолчанию
+#define UDP_PORT			0xAA55		// UDP порт
+
 // Идентификаторы необходимых объектов
 enum IDs
 {
@@ -108,7 +111,7 @@ private:
 	wxPanel* drawPanel;
 	wxTimer* timerMain;
 
-	ThreadedSerialPort* COM = NULL;		// последовательный порт в отдельном потоке
+	ThreadedSerialPort* COM = nullptr;	// последовательный порт в отдельном потоке
 	vector<CANFrame> frames;			// список отображаемых на экране пакетов
 
 	vector<int32_t> logFilterIDs;		// список ID для записи в log-файл
@@ -124,7 +127,7 @@ private:
 	double mul = 0.125;
 
 	vector<LogFile> logFiles;			// массив log-файлов
-	wxFFile* logFile = NULL;			// единый log-файл
+	wxFFile* logFile = nullptr;			// единый log-файл
 
 	wxString decimalSeparator;			// выбранный символ разделитель для данных в log-файле
 
@@ -139,11 +142,11 @@ private:
 	wxDatagramSocket* udpSocket;		// UDP-сокет
 	wxIPV4address espIpAddress;			// запомненый адрес ESP8266
 
-	void ProcessCANFrame(CANFrame* frame);
+	void ProcessCANFrame(CANFrame& frame);
 	void RefreshListLog();
-	void SaveToLog(CANFrame* frame);
+	void SaveToLog(CANFrame& frame);
 	void FlushLogs();
-	void LogWriteLine(wxFFile* file, CANFrame* frame);
+	void LogWriteLine(wxFFile* file, CANFrame& frame);
 	wxString ToBinary(uint8_t value);
 	void ShowNumbers();
 

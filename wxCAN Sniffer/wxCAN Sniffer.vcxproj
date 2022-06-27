@@ -159,7 +159,6 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="CANParser.h" />
     <ClInclude Include="Common.h" />
-    <ClInclude Include="FIFOBuffer.h" />
     <ClInclude Include="FormMain.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ThreadedSerialPort.h" />
@@ -167,7 +166,6 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="CANParser.cpp" />
-    <ClCompile Include="FIFOBuffer.cpp" />
     <ClCompile Include="FormMain.cpp" />
     <ClCompile Include="ThreadedSerialPort.cpp" />
   </ItemGroup>
