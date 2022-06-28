@@ -18,11 +18,11 @@ using namespace std;
 
 #define CAPTION		wxT("CAN Sniffer 2.0.0")
 
-#define SIG_DWORD	0x55AA55AA
 #define SIG_BYTE_0	0xAA
 #define SIG_BYTE_1	0x55
 #define SIG_BYTE_2	0xAA
 #define SIG_BYTE_3	0x55
+#define SIG_DWORD	(uint32_t)(SIG_BYTE_3 << 24 | SIG_BYTE_2 << 16 | SIG_BYTE_1 << 8 | SIG_BYTE_0)
 
 // CAN-пакет данных
 struct CANFrame
@@ -45,10 +45,7 @@ public:
 struct SendCANFrame
 {
 public:
-	uint8_t Signature0 = SIG_BYTE_0;
-	uint8_t Signature1 = SIG_BYTE_1;
-	uint8_t Signature2 = SIG_BYTE_2;
-	uint8_t Signature3 = SIG_BYTE_3;
+	uint32_t Signature = SIG_DWORD;
 	CANFrame Frame = { 0 };		// пакет для отправки
 };
 

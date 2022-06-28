@@ -5,15 +5,13 @@
 
 #define BUFFERLEN	1000000
 
-#define READ_PAUSE	20
-
 static wxMutex syncCANBuffer;
 static wxMutex syncCANSend;
 
 class ThreadedSerialPort : public wxThread
 {
 public:
-	ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFrame* Handler);
+	ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxFrame* handleWindow);
 	~ThreadedSerialPort();
 
 	bool GetNextFrame(CANFrame& frame);
@@ -27,7 +25,7 @@ private:
 
 	wxString portName;					// полное наименование последовательно порта с префиксами
 	DWORD    baudRate;					// указанная скорость
-	wxFrame* handleFrame = NULL;		// указатель на окно для генерации события для него
+	wxFrame* handleFrame = nullptr;		// указатель на окно для генерации события для него
 
 	uint8_t* buffer;					// байтовый буфер поледовательного порта
 	queue<CANFrame> canBuffer;			// буфер полученных CAN-пакетов

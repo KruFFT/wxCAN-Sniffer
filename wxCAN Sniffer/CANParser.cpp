@@ -1,11 +1,8 @@
 ﻿#include "CANParser.h"
 
 // Собрать CAN-пакет из входящего потока байтов (контроль границ вне этого кода, должно быть не менее 17 байт данных)
-CANFrame CANParser::Parse(uint8_t** bufferHead, bool* ok)
+bool CANParser::Parse(uint8_t** bufferHead, CANFrame& frame)
 {
-    CANFrame frame = { 0 };
-    *ok = false;
-
     // ниже "магия" указателей на указатели :)
     // поиск сигнатуры в потоке байтов
     if (*(uint32_t*)*bufferHead == SIG_DWORD)
@@ -20,12 +17,10 @@ CANFrame CANParser::Parse(uint8_t** bufferHead, bool* ok)
             for (size_t iData = 0; iData < frame.Length; iData++)
                 frame.Data[iData] = *(*bufferHead)++;
 
-            *ok = true;
+            return true;
         }
     }
-    else
-    {
-        (*bufferHead)++;
-    }
-    return frame;
+
+    (*bufferHead)++;
+    return false;
 }

@@ -23,7 +23,7 @@ EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
 wxEND_EVENT_TABLE()
 
 // Конструктор окна
-FormMain::FormMain() : wxFrame(NULL, ID_MAIN_FORM, CAPTION, wxDefaultPosition, wxSize(940, 640), wxDEFAULT_FRAME_STYLE)
+FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition, wxSize(940, 640), wxDEFAULT_FRAME_STYLE)
 {
 	// иконка
 	this->SetIcon(wxICON(wxicon));
@@ -181,7 +181,7 @@ FormMain::FormMain() : wxFrame(NULL, ID_MAIN_FORM, CAPTION, wxDefaultPosition, w
 				textCOM = new wxTextCtrl(this, wxID_ANY, COM_NAME, wxDefaultPosition, wxSize(50, 22), wxTE_CENTRE | wxBORDER_SIMPLE);
 				sizerControls->Add(textCOM, 0, wxALL, 2);
 
-				comboBoxSpeed = new wxComboBox(this, wxID_ANY, wxT("500000"), wxDefaultPosition, wxSize(70, 22), 0, NULL, wxTE_CENTRE | wxBORDER_SIMPLE);
+				comboBoxSpeed = new wxComboBox(this, wxID_ANY, wxT("500000"), wxDefaultPosition, wxSize(70, 22), 0, nullptr, wxTE_CENTRE | wxBORDER_SIMPLE);
 				comboBoxSpeed->Append(wxT("57600"));
 				comboBoxSpeed->Append(wxT("115200"));
 				comboBoxSpeed->Append(wxT("250000"));
@@ -222,7 +222,7 @@ FormMain::FormMain() : wxFrame(NULL, ID_MAIN_FORM, CAPTION, wxDefaultPosition, w
 						sizerLogButtonsList->Add(sizerLogButtons, 0, wxEXPAND, 2);
 					}
 					// список кадров журнала
-					listLog = new wxListBox(this, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), 0, NULL);
+					listLog = new wxListBox(this, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), 0, nullptr);
 					sizerLogButtonsList->Add(listLog, 1, wxALL | wxEXPAND, 2);
 
 					sizerLog->Add(sizerLogButtonsList, 0, wxEXPAND, 2);
@@ -432,7 +432,11 @@ void FormMain::OnClose(wxCloseEvent& event)
 		udpSocket->Destroy();
 
 	if (COM)
+	{
 		COM->Delete();
+		delete COM;
+		COM = nullptr;
+	}
 
 	// записать все файлы
 	FlushLogs();
@@ -448,7 +452,7 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 	try
 	{
 		// если порт не открыт - открыть, иначе - закрыть
-		if (COM == NULL)
+		if (COM == nullptr)
 		{
 			DWORD comSpeed = 0;
 			if (comboBoxSpeed->GetValue().ToULong(&comSpeed, 10))
@@ -479,7 +483,7 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 				COM->Delete();
 			}
 			delete COM;
-			COM = NULL;
+			COM = nullptr;
 			drawData.reserve(DRAW_DATA_RESERV);
 			drawData.clear();
 			drawData.shrink_to_fit();
@@ -934,7 +938,7 @@ void FormMain::FlushLogs()
 		logFiles[iFile].File->Flush();
 		logFiles[iFile].File->Close();
 		delete logFiles[iFile].File;
-		logFiles[iFile].File = NULL;
+		logFiles[iFile].File = nullptr;
 	}
 
 	// сохранить всё, если лог один
@@ -943,7 +947,7 @@ void FormMain::FlushLogs()
 		logFile->Flush();
 		logFile->Close();
 		delete logFile;
-		logFile = NULL;
+		logFile = nullptr;
 	}
 }
 

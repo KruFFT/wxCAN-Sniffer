@@ -1,7 +1,7 @@
 ﻿#include "ThreadedSerialPort.h"
 
 // Конструктор
-ThreadedSerialPort::ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFrame* HandleFrame) : wxThread(wxTHREAD_JOINABLE)
+ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxFrame* handleWindow) : wxThread(wxTHREAD_JOINABLE)
 {
 	// создать новый поток
 	if (this->Create() != wxTHREAD_NO_ERROR)
@@ -9,12 +9,12 @@ ThreadedSerialPort::ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFram
 		throw new exception("Невозможно создать поток");
 	}
 
-	portName = wxT("\\\\.\\") + PortName;
-	baudRate = BaudRate;
-	handleFrame = HandleFrame;
+	portName = wxT("\\\\.\\") + serialPort;
+	baudRate = portSpeed;
+	handleFrame = handleWindow;
 
 	// выделить память под буфер
-	buffer = new byte[BUFFERLEN + 1];
+	buffer = new uint8_t[BUFFERLEN + 1];
 
 	// запустить новый поток
 	wxThreadError runError = this->Run();
@@ -28,8 +28,11 @@ ThreadedSerialPort::ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFram
 ThreadedSerialPort::~ThreadedSerialPort()
 {
 	// удалить буфер
-	delete[] buffer;
-	buffer = NULL;
+	if (buffer)
+	{
+		delete[] buffer;
+		buffer = nullptr;
+	}
 }
 
 // Основной цикл потока
@@ -130,14 +133,12 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 			}
 
 			// поиск CAN-пакета и формирование данных
-			//while (bufferHead < bufferTail)
 			while (bufferTail - bufferHead >= 17)
 			{
-				bool ok;
-				CANFrame frame = CANParser::Parse(&bufferHead, &ok);
+				CANFrame frame;
 
 				// пакет собран - положить пакет в очередь
-				if (ok)
+				if (CANParser::Parse(&bufferHead, frame))
 				{
 					syncCANBuffer.Lock();
 					canBuffer.push(frame);
@@ -167,14 +168,15 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 				WriteFile(hSerial, &randomByte, 1, &bytesWritten, NULL);
 			}*/
 
-			// пауза потока после разбора всех данных для заполнения входного буфера данными
-			Sleep(READ_PAUSE);
+			// отдать время для обработки событий
+			// а надо ли это?
+			//Yield();
 		}
 
 		if (hSerial && hSerial != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(hSerial);
-			hSerial = NULL;
+			hSerial = nullptr;
 		}
 
 		// очистка буферов
@@ -216,7 +218,7 @@ void ThreadedSerialPort::SendFrame(CANFrame& frame)
 uint32_t ThreadedSerialPort::SwapBytes(uint32_t value)
 {
 	uint32_t revValue = value & 0xFF;
-	revValue = (revValue << 8) | ((value >> 8) & 0xFF);
+	revValue = (revValue << 8) | ((value >> 8)  & 0xFF);
 	revValue = (revValue << 8) | ((value >> 16) & 0xFF);
 	revValue = (revValue << 8) | ((value >> 24) & 0xFF);
 	return revValue;

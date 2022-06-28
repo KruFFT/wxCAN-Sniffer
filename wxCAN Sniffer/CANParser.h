@@ -6,5 +6,5 @@ class CANParser
 {
 public:
 	CANParser() = default;
-	static CANFrame Parse(uint8_t** bufferHead, bool* ok);
+	static bool Parse(uint8_t** bufferHead, CANFrame& frame);
 };
