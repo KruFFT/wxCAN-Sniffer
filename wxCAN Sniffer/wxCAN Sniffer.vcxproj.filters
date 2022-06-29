@@ -20,6 +20,9 @@
     <Filter Include="Form Main">
       <UniqueIdentifier>{92c4ce81-ea60-47a9-add2-31c479a4ac5d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Circular Frame Buffer">
+      <UniqueIdentifier>{3065a30f-51db-43c2-9485-8da34277dd12}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -40,6 +43,9 @@
     <ClInclude Include="CANParser.h">
       <Filter>CAN Parser</Filter>
     </ClInclude>
+    <ClInclude Include="CircularFrameBuffer.h">
+      <Filter>Circular Frame Buffer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp">
@@ -53,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="CANParser.cpp">
       <Filter>CAN Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="CircularFrameBuffer.cpp">
+      <Filter>Circular Frame Buffer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -384,6 +384,9 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 	drawPanel->Bind(wxEVT_PAINT, &FormMain::DrawPanel_OnPaint, this);
 	drawPanel->Bind(wxEVT_SIZE, &FormMain::DrawPanel_OnSize, this);
 	drawPanel->Bind(wxEVT_ERASE_BACKGROUND, &FormMain::DrawPanel_OnEraseBackground, this);
+	drawFrameSize = drawPanel->GetClientSize().GetWidth();
+	drawData = new CircularFrameBuffer(drawFrameSize);
+
 	// событие от фонового потока COM-порта, а это не смог нормально описать в таблице событий
 	this->Bind(wxEVT_THREAD, &FormMain::Thread_OnUpdate, this);
 
@@ -438,6 +441,12 @@ void FormMain::OnClose(wxCloseEvent& event)
 		COM = nullptr;
 	}
 
+	if (drawData)
+	{
+		delete drawData;
+		drawData = nullptr;
+	}
+
 	// записать все файлы
 	FlushLogs();
 
@@ -457,12 +466,9 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 			DWORD comSpeed = 0;
 			if (comboBoxSpeed->GetValue().ToULong(&comSpeed, 10))
 			{
-				frames.reserve(DRAW_DATA_RESERV);
+				frames.reserve(FRAMES_DATA_RESERV);
 				frames.clear();
-				drawData.reserve(DRAW_DATA_RESERV);
-				drawData.clear();
-				drawData.shrink_to_fit();
-				drawDataBegin = 0;
+				drawData->Clear();
 
 				// удалить все строки таблицы
 				if (gridCANView->GetNumberRows() > 0)
@@ -484,10 +490,8 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 			}
 			delete COM;
 			COM = nullptr;
-			drawData.reserve(DRAW_DATA_RESERV);
-			drawData.clear();
-			drawData.shrink_to_fit();
-			drawDataBegin = 0;
+			drawData->Clear();
+
 			buttonConnectDisconnect->SetLabelText(wxT("Подключить"));
 
 			// записать все log-файлы
@@ -567,7 +571,8 @@ void FormMain::ProcessCANFrame(CANFrame& frame)
 					}
 					// для wxWidhets 3.1.2 это строка не нужна
 					// проблема с обновлением фона ячейки появилась в связи с изменениемя контрола wxGrid в версии wxWidgets 3.1.3
-					gridCANView->RefreshBlock(iID, i + 2, iID, i + 2);
+					// TODO проверить необходимость этой строки
+					//gridCANView->RefreshBlock(iID, i + 2, iID, i + 2);
 				}
 
 				frames[iID] = frame;
@@ -664,7 +669,7 @@ void FormMain::ShowNumbers()
 	if (rowToView >= 0 && colToView >= 0)
 	{
 		// если полученных данных ещё нет
-		if (rowToView >= (int)frames.size())
+		if (rowToView >= frames.size())
 		{
 			return;
 		}
@@ -683,7 +688,10 @@ void FormMain::ShowNumbers()
 		textDecByte->SetValue(wxString::Format(wxT("%i"), firstByte));
 
 		// добавить полученные данные в очередь на отрисовку
-		drawData.push_back(mulValue);
+		if (drawData && colToView >= 0)
+		{
+			drawData->Add(mulValue);
+		}
 	}
 }
 
@@ -971,14 +979,14 @@ void FormMain::GridCANView_OnSelectCell(wxGridEvent& event)
 	}
 	else
 	{
+		if (drawData)
+		{
+			drawData->Clear();
+			drawDataBegin = 0;
+			drawMaxValue = 0;
+		}
 		// показать числа в разных форматах
 		ShowNumbers();
-
-		// очистка данных на отрисовку
-		drawData.clear();
-		drawData.shrink_to_fit();
-		drawDataBegin = 0;
-		drawMaxValue = 0;
 	}
 }
 
@@ -1006,20 +1014,9 @@ wxString FormMain::ToBinary(uint8_t value)
 // Срабатывание таймера
 void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 {
-	/*CANFrame frame;
-	bool ok;
-
-	if (COM)
-	{
-		frame = COM->GetNextFrame(ok);
-		while (ok)
-		{
-			frame = COM->GetNextFrame(ok);
-			ProcessCANFrame(&frame);
-		}
-	}*/
-
+	// это вызовет событие OnPaintдля панели
 	drawPanel->Refresh(true, &drawRect);
+	// проверка на отключение последовательного порта
 	if (COM != nullptr && !COM->IsAlive())
 	{
 		COM->Delete();
@@ -1033,41 +1030,32 @@ void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 {
 	//wxPaintDC dc(drawPanel);
-	wxBufferedPaintDC dc(drawPanel);	// с буферной отрисовкой выглядит лучше
+	wxBufferedPaintDC dc(drawPanel);	// с буферной отрисовкой не мерцает
 
 	PrepareDC(dc);
 
 	// нарисовать рамку и фон
-	dc.SetPen(*wxBLACK);
+	dc.SetPen(blackPen);
 	dc.DrawRectangle(drawRect);
 
-	size_t drawDataSize = drawData.size();
-	if (drawDataSize > 0)
+	if (drawData && colToView >= 0)
 	{
-		// если размер массива больше чем окно рисования - сдвинуть указатель на начало данных
-		if (drawDataSize >= (size_t)drawRect.width)
-		{
-			drawDataBegin = drawDataSize - drawRect.width;
-		}
+		double drawMul = (drawMaxValue != 0) ? (double)drawRect.height / drawMaxValue : 1.0;
 
-		double drawMul = 1;
-		if (drawMaxValue != 0)
-		{
-			drawMul = (double)drawRect.height / drawMaxValue;
-		}
+		dc.SetPen(graphPen);
 
-		dc.SetPen(wxPen(wxColor(DRAW_COLOR, 0, 0), 3));
+		uint32_t* frame = drawData->Frame();
 
-		for (int32_t index = 1; (index < drawRect.width) && (index < (int)drawDataSize - 1); index++)
+		for (uint32_t index = 1; index < drawFrameSize; index++)
 		{
 			// рисовать отмасштабированную линию
-			dc.DrawLine(drawRect.x + index, drawRect.y + drawRect.height - drawData[drawDataBegin + index - 1] * drawMul,
-				drawRect.x + index, drawRect.y + drawRect.height - drawData[drawDataBegin + index] * drawMul);
+			dc.DrawLine(index, drawRect.height - *(frame + index - 1) * drawMul,
+						index, drawRect.height - *(frame + index) * drawMul);
 
 			// сохранение наибольшего значения для следующей итерации
-			if (drawData[drawDataBegin + index] > drawMaxValue)
+			if (*(frame + index) > drawMaxValue)
 			{
-				drawMaxValue = drawData[drawDataBegin + index];
+				drawMaxValue = *(frame + index);
 			}
 		}
 	}

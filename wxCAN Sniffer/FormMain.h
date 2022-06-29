@@ -2,15 +2,16 @@
 
 #include "Common.h"
 #include "ThreadedSerialPort.h"
+#include "CircularFrameBuffer.h"
 
-#define DRAW_DATA_RESERV	1000
+#define FRAMES_DATA_RESERV	100			// колчиество элементов для резерв в векторах
 
 #define NEW_COLOR			0x00FF00	// green (BGR)
 #define MARKED_COLOR		0x0000FF	// red (BGR)
 #define DEFAULT_COLOR		0xFFFFFF	// white (BGR)
 #define DRAW_COLOR			0x0000FF	// red (BGR)
 
-#define TIMER_INTERVAL		20			// интервал срабатывания таймера
+#define TIMER_INTERVAL		10			// интервал срабатывания таймера (около 50 кадров/с)
 
 #define COM_NAME			wxT("COM3")	// последовательный порт по умолчанию
 #define UDP_PORT			0xAA55		// UDP порт
@@ -115,7 +116,7 @@ private:
 	vector<CANFrame> frames;			// список отображаемых на экране пакетов
 
 	vector<int32_t> logFilterIDs;		// список ID для записи в log-файл
-	int32_t rowToLog = -1;				// выбранная в таблице строка для добавления в фильтр log-файла
+	size_t rowToLog = -1;				// выбранная в таблице строка для добавления в фильтр log-файла
 	wxString logExt;					// расширение log-файла
 	wxString logSeparator;				// разделитель значений в log-файле
 	bool logDecimal = false;			// переключатель режима записи чисел в log-файле: десятичный или шестнадцатиричный
@@ -131,10 +132,14 @@ private:
 
 	wxString decimalSeparator;			// выбранный символ разделитель для данных в log-файле
 
-	wxRect drawRect;
-	vector<uint32_t> drawData;			// массив данных для отрисовки
+	wxPen blackPen = *wxBLACK;			// кисть рамки для отрисовки графика
+	wxPen graphPen = wxPen(wxColour(DRAW_COLOR, 0, 0), 3);	// кисть для отрисовки графика заданной ширины
+	wxRect drawRect;					// область отрисовки графика
+	CircularFrameBuffer* drawData = nullptr;	// круговой массив данных для отрисовки
+	size_t drawFrameSize;				// размер кадра отрисовки (равен ширине области панель)
 	uint32_t drawDataBegin = 0;			// начало данных в массиве
 	uint32_t drawMaxValue = 0;			// наибольшее отрисовываемое значение для масштабирования графика
+	
 	uint32_t answerID = 0x7E8;			// ID пакета, от которого будут отображаться данные
 	uint32_t timerCounter = 0;
 	bool bigEndian = true;
