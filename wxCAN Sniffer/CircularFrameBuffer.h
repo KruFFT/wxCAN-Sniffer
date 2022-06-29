@@ -19,4 +19,5 @@ private:
 	size_t frameSize;				// размер окна данных
 	size_t frameBegin;				// начало окна данных
 	size_t frameEnd;				// конец окна данных
+	size_t frameSizeBytesCount;		// количество байтов в кадре
 };

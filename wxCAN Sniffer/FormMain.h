@@ -4,17 +4,18 @@
 #include "ThreadedSerialPort.h"
 #include "CircularFrameBuffer.h"
 
-#define FRAMES_DATA_RESERV	100			// колчиество элементов для резерв в векторах
+#define FRAMES_DATA_RESERV	100			// количество элементов для резерва в векторе
 
 #define NEW_COLOR			0x00FF00	// green (BGR)
 #define MARKED_COLOR		0x0000FF	// red (BGR)
 #define DEFAULT_COLOR		0xFFFFFF	// white (BGR)
 #define DRAW_COLOR			0x0000FF	// red (BGR)
 
-#define TIMER_INTERVAL		10			// интервал срабатывания таймера (около 50 кадров/с)
+#define TIMER_INTERVAL		20			// интервал срабатывания таймера (около 50 кадров/с)
 
 #define COM_NAME			wxT("COM3")	// последовательный порт по умолчанию
 #define UDP_PORT			0xAA55		// UDP порт
+#define UDP_BUFFER_SIZE		1000		// размер буфера приёма пакетов
 
 // Идентификаторы необходимых объектов
 enum IDs
@@ -116,7 +117,7 @@ private:
 	vector<CANFrame> frames;			// список отображаемых на экране пакетов
 
 	vector<int32_t> logFilterIDs;		// список ID для записи в log-файл
-	size_t rowToLog = -1;				// выбранная в таблице строка для добавления в фильтр log-файла
+	int32_t rowToLog = -1;				// выбранная в таблице строка для добавления в фильтр log-файла
 	wxString logExt;					// расширение log-файла
 	wxString logSeparator;				// разделитель значений в log-файле
 	bool logDecimal = false;			// переключатель режима записи чисел в log-файле: десятичный или шестнадцатиричный

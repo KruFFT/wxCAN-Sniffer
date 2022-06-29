@@ -9,6 +9,7 @@ CircularFrameBuffer::CircularFrameBuffer(size_t windowSize)
 	frameSize = windowSize;
 	frameBegin = 0;
 	frameEnd = frameSize;
+	frameSizeBytesCount = bufferSize * sizeof(uint32_t);
 }
 
 // Деструктор
@@ -24,8 +25,7 @@ CircularFrameBuffer::~CircularFrameBuffer()
 // Очистить буфер
 void CircularFrameBuffer::Clear()
 {
-	size_t count = bufferSize * sizeof(uint32_t);
-	memset(buffer, 0, count);
+	memset(buffer, 0, frameSizeBytesCount);
 	frameBegin = 0;
 	frameEnd = frameSize;
 }
@@ -36,8 +36,7 @@ void CircularFrameBuffer::Add(uint32_t value)
 	// если достигнут предел массива - надо сдвинуть данные
 	if (frameEnd >= bufferSize)
 	{
-		size_t count = frameSize * sizeof(uint32_t);
-		memcpy_s(buffer, count, &buffer[frameBegin], count);
+		memcpy_s(buffer, frameSizeBytesCount, &buffer[frameBegin], frameSizeBytesCount);
 		frameBegin = 0;
 		frameEnd = frameSize;
 	}

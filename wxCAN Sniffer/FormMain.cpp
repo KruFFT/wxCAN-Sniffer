@@ -458,6 +458,10 @@ void FormMain::OnClose(wxCloseEvent& event)
 // Обработчик кнопки Подключить/отключить
 void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 {
+	rowToView = -1;
+	colToView = -1;
+	drawData->Clear();
+
 	try
 	{
 		// если порт не открыт - открыть, иначе - закрыть
@@ -468,7 +472,6 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 			{
 				frames.reserve(FRAMES_DATA_RESERV);
 				frames.clear();
-				drawData->Clear();
 
 				// удалить все строки таблицы
 				if (gridCANView->GetNumberRows() > 0)
@@ -478,8 +481,6 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 
 				COM = new ThreadedSerialPort(textCOM->GetValue(), comSpeed, (wxFrame*)this);
 				buttonConnectDisconnect->SetLabelText(wxT("Отключить"));
-				rowToView = -1;
-				colToView = -1;
 			}
 		}
 		else
@@ -490,7 +491,6 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 			}
 			delete COM;
 			COM = nullptr;
-			drawData->Clear();
 
 			buttonConnectDisconnect->SetLabelText(wxT("Подключить"));
 
@@ -1177,19 +1177,25 @@ void FormMain::TextCANAnswerID_OnEnter(wxCommandEvent& event)
 // событие UDP-сокета
 void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
 {
-	uint8_t receivedData[100];
+	uint8_t  receivedData[UDP_BUFFER_SIZE];
+	uint8_t* receivedDataPointer = receivedData;
 
 	if (event.GetSocketEvent() == wxSOCKET_INPUT)
 	{
-		size_t receivedDataLen = udpSocket->RecvFrom(espIpAddress, receivedData, sizeof(receivedData)).LastCount();
+		size_t receivedDataLen = udpSocket->RecvFrom(espIpAddress, receivedData, UDP_BUFFER_SIZE).LastCount();
 		if (receivedDataLen)
 		{
-			// проверка на префикс
-			uint32_t prefix = *(uint32_t*)receivedData;
-			if (prefix == 0x55AA55AA)
+			uint8_t* receivedDataTail = receivedDataPointer + receivedDataLen;
+			// поиск CAN-пакета и формирование данных
+			while (receivedDataPointer < receivedDataTail)
 			{
-				// обработать полученный пакет пропустив префикс
-				ProcessCANFrame((CANFrame&)receivedData[4]);
+				CANFrame frame;
+
+				// пакет собран - обработать пакет
+				if (CANParser::Parse(&receivedDataPointer, frame))
+				{
+					ProcessCANFrame(frame);
+				}
 			}
 		}
 	}
