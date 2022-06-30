@@ -24,30 +24,42 @@ using namespace std;
 #define SIG_BYTE_3	0x55
 #define SIG_DWORD	(uint32_t)(SIG_BYTE_3 << 24 | SIG_BYTE_2 << 16 | SIG_BYTE_1 << 8 | SIG_BYTE_0)
 
-// CAN-пакет данных
+// CAN-пакет для отправки данных
+#pragma pack (push, 1)
 struct CANFrame
 {
 public:
 	uint32_t ID;		// идентификатор пакета
 	uint8_t  Length;	// длина пакета
 	uint8_t  Data[8];	// массив данных пакета, до 8 байт
+};
+#pragma pack(pop)
 
-	uint8_t  Tick[8];	// счётчик тактов появления пакета, используется для выделения цветом в таблице
+// CAN-пакет для отображения в таблице
+#pragma pack (push, 1)
+struct VisualCANFrame
+{
+public:
+	CANFrame Frame = { 0 };	// пакет с данными
+	uint8_t  Tick[8];		// счётчик тактов появления пакета, используется для выделения цветом в таблице
 
 	// оператор сравнения CAN-пакета необходим для сортировки
-	bool operator < (const CANFrame& frame) const
+	bool operator < (const VisualCANFrame& frame) const
 	{
-		return (ID < frame.ID);
+		return (Frame.ID < frame.Frame.ID);
 	}
 };
+#pragma pack(pop)
 
 // CAN-пакет для отправки данных
+#pragma pack (push, 1)
 struct SendCANFrame
 {
 public:
 	uint32_t Signature = SIG_DWORD;
 	CANFrame Frame = { 0 };		// пакет для отправки
 };
+#pragma pack(pop)
 
 // Описание log-файла
 struct LogFile
@@ -55,12 +67,4 @@ struct LogFile
 public:
 	uint32_t ID;		// идентификатор пакета
 	wxFFile* File;		// хэндл ассоциированного файла
-};
-
-// Описание одного байтового буфера
-struct Buffer
-{
-public:
-	uint8_t* Pointer;
-	size_t   Size;
 };

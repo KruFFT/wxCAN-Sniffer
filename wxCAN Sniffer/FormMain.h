@@ -114,7 +114,7 @@ private:
 	wxTimer* timerMain;
 
 	ThreadedSerialPort* COM = nullptr;	// последовательный порт в отдельном потоке
-	vector<CANFrame> frames;			// список отображаемых на экране пакетов
+	vector<VisualCANFrame> frames;			// список отображаемых на экране пакетов
 
 	vector<int32_t> logFilterIDs;		// список ID для записи в log-файл
 	int32_t rowToLog = -1;				// выбранная в таблице строка для добавления в фильтр log-файла
@@ -142,19 +142,19 @@ private:
 	uint32_t drawMaxValue = 0;			// наибольшее отрисовываемое значение для масштабирования графика
 	
 	uint32_t answerID = 0x7E8;			// ID пакета, от которого будут отображаться данные
-	uint32_t timerCounter = 0;
-	bool bigEndian = true;
+	bool bigEndian = true;				// порядок следования байтов в слове big-endian
 
-	wxDatagramSocket* udpSocket;		// UDP-сокет
+	wxDatagramSocket* UDP;				// UDP-сокет
 	wxIPV4address espIpAddress;			// запомненый адрес ESP8266
 
-	void ProcessCANFrame(CANFrame& frame);
+	void ProcessCANFrame(VisualCANFrame& frame);
 	void RefreshListLog();
-	void SaveToLog(CANFrame& frame);
+	void SaveToLog(VisualCANFrame& frame);
 	void FlushLogs();
-	void LogWriteLine(wxFFile* file, CANFrame& frame);
+	void LogWriteLine(wxFFile* file, VisualCANFrame& frame);
 	wxString ToBinary(uint8_t value);
 	void ShowNumbers();
+	void UDPSocket_SendFrame(CANFrame& frame);
 
 	wxDECLARE_EVENT_TABLE();
 };
