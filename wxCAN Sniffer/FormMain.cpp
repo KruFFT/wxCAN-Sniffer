@@ -1028,15 +1028,6 @@ void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 {
 	// это вызовет событие OnPaintдля панели
 	drawPanel->Refresh(true, &drawRect);
-	// проверка на отключение последовательного порта
-	// TODO иногда падает на проверке IsAlive()
-	/*if (COM != nullptr && !COM->IsAlive())
-	{
-		COM->Delete();
-		delete COM;
-		COM = nullptr;
-		buttonConnectDisconnect->SetLabelText(wxT("Подключить"));
-	}*/
 }
 
 // Событие отрисовки в панели графика
