@@ -27,7 +27,7 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxF
 // Деструктор
 ThreadedSerialPort::~ThreadedSerialPort()
 {
-	// удалить буфер
+	// удалить буфер приёма сообщений
 	if (buffer)
 	{
 		delete[] buffer;
@@ -68,7 +68,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 			throw new exception("Невозможно установить параметры порта");
 		}
 
-		COMMTIMEOUTS commTimeouts;
+		COMMTIMEOUTS commTimeouts = { 0 };
 		commTimeouts.ReadIntervalTimeout = MAXDWORD;
 		commTimeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
 		commTimeouts.ReadTotalTimeoutConstant = 0;
@@ -145,7 +145,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 					syncCANBuffer.Unlock();
 
 					// сгенерировать событие
-					wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_THREAD));
+					wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_UPDATE));
 				}
 			}
 
@@ -173,10 +173,19 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 			//Yield();
 		}
 
+		wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_EXIT));
+
 		if (hSerial && hSerial != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(hSerial);
 			hSerial = nullptr;
+		}
+
+		// удалить буфер приёма сообщений
+		if (buffer)
+		{
+			delete[] buffer;
+			buffer = nullptr;
 		}
 
 		// очистка буферов
@@ -188,7 +197,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 		syncCANBuffer.Unlock();
 	}
 
-	return FALSE;
+	return (wxThread::ExitCode)0;
 }
 
 // Возвращает очередной CAN-пакет из очереди

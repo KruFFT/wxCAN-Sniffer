@@ -69,6 +69,7 @@ public:
 	void DrawPanel_OnPaint(wxPaintEvent& event);
 	void DrawPanel_OnEraseBackground(wxEraseEvent& event);
 	void Thread_OnUpdate(wxThreadEvent& event);
+	void Thread_OnExit(wxThreadEvent& event);
 	void UDPSocket_OnEvent(wxSocketEvent& event);
 
 private:
@@ -114,7 +115,7 @@ private:
 	wxTimer* timerMain;
 
 	ThreadedSerialPort* COM = nullptr;	// последовательный порт в отдельном потоке
-	vector<VisualCANFrame> frames;			// список отображаемых на экране пакетов
+	vector<VisualCANFrame> frames;		// список отображаемых на экране пакетов
 
 	vector<int32_t> logFilterIDs;		// список ID для записи в log-файл
 	int32_t rowToLog = -1;				// выбранная в таблице строка для добавления в фильтр log-файла
@@ -126,7 +127,7 @@ private:
 
 	int32_t rowToView = -1;				// номер строки выбранной ячейки для отображения данных о ней
 	int32_t colToView = -1;				// номер столбца выбранной ячейки для отображения данных о ней
-	double mul = 0.125;
+	double mul = 0.125;					// множитель для отображаемых чисел
 
 	vector<LogFile> logFiles;			// массив log-файлов
 	wxFFile* logFile = nullptr;			// единый log-файл
@@ -144,7 +145,7 @@ private:
 	uint32_t answerID = 0x7E8;			// ID пакета, от которого будут отображаться данные
 	bool bigEndian = true;				// порядок следования байтов в слове big-endian
 
-	wxDatagramSocket* UDP;				// UDP-сокет
+	wxDatagramSocket* UDP = nullptr;	// UDP-сокет
 	wxIPV4address espIpAddress;			// запомненый адрес ESP8266
 
 	void ProcessCANFrame(VisualCANFrame& frame);

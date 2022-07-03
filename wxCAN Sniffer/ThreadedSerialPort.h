@@ -3,10 +3,14 @@
 #include "Common.h"
 #include "CANParser.h"
 
-#define BUFFERLEN	1000000
+#define BUFFERLEN	1000000		// ёмкость буфера приёма данных
 
 static wxMutex syncCANBuffer;
 static wxMutex syncCANSend;
+
+// События, которые генерирует этот поток
+wxDECLARE_EVENT(wxEVT_SERIAL_PORT_THREAD_UPDATE, wxThreadEvent);
+wxDECLARE_EVENT(wxEVT_SERIAL_PORT_THREAD_EXIT, wxThreadEvent);
 
 class ThreadedSerialPort : public wxThread
 {

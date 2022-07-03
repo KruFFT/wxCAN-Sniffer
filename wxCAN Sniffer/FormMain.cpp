@@ -1,5 +1,9 @@
 ﻿#include "FormMain.h"
 
+// События из фонового потока
+wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_UPDATE, wxThreadEvent);
+wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_EXIT, wxThreadEvent);
+
 // Талица событий
 wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
 EVT_CLOSE(FormMain::OnClose)
@@ -388,7 +392,8 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 	drawData = new CircularFrameBuffer(drawFrameSize);
 
 	// событие от фонового потока COM-порта, а это не смог нормально описать в таблице событий
-	this->Bind(wxEVT_THREAD, &FormMain::Thread_OnUpdate, this);
+	this->Bind(wxEVT_SERIAL_PORT_THREAD_UPDATE, &FormMain::Thread_OnUpdate, this);
+	this->Bind(wxEVT_SERIAL_PORT_THREAD_EXIT, &FormMain::Thread_OnExit, this);
 
 	// настройка и запуск таймера
 	timerMain = new wxTimer(this, ID_MAIN_TIMER);
@@ -453,8 +458,6 @@ void FormMain::OnClose(wxCloseEvent& event)
 	Destroy();
 }
 
-/*--------------------------------------------------------------------------------------------------*/
-
 // Обработчик кнопки Подключить/отключить
 void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 {
@@ -489,7 +492,6 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 			{
 				COM->Delete();
 			}
-			delete COM;
 			COM = nullptr;
 
 			buttonConnectDisconnect->SetLabelText(wxT("Подключить"));
@@ -519,7 +521,17 @@ void FormMain::Thread_OnUpdate(wxThreadEvent& event)
 	}
 }
 
-// Проверка поступившего CAN-пакета
+// По событию от потока забирать все принятые CAN-пакеты, которые есть в буфере
+void FormMain::Thread_OnExit(wxThreadEvent& event)
+{
+	if (COM)
+	{
+		COM = nullptr;
+	}
+	buttonConnectDisconnect->SetLabelText(wxT("Подключить"));
+}
+
+// Обработка поступившего CAN-пакета
 void FormMain::ProcessCANFrame(VisualCANFrame& frame)
 {
 	bool found = false;
@@ -550,7 +562,7 @@ void FormMain::ProcessCANFrame(VisualCANFrame& frame)
 						// если новые данные такие же - необходимо плавно осветлять фоновую заливку
 						if (frame.Frame.Data[i] == frames[iID].Frame.Data[i])
 						{
-							byte tick = frames[iID].Tick[i];
+							uint8_t tick = frames[iID].Tick[i];
 							if (tick < 255)
 							{
 								tick++;
@@ -571,8 +583,8 @@ void FormMain::ProcessCANFrame(VisualCANFrame& frame)
 					}
 					// для wxWidhets 3.1.2 это строка не нужна
 					// проблема с обновлением фона ячейки появилась в связи с изменениемя контрола wxGrid в версии wxWidgets 3.1.3
-					// TODO проверить необходимость этой строки
-					//gridCANView->RefreshBlock(iID, i + 2, iID, i + 2);
+					// после обновления до wxWidhets 3.1.7 ошибка не повторяется, но оставлю эту строку
+					gridCANView->RefreshBlock(iID, i + 2, iID, i + 2);
 				}
 
 				frames[iID] = frame;
@@ -700,9 +712,9 @@ void FormMain::RefreshListLog()
 {
 	sort(logFilterIDs.begin(), logFilterIDs.end());
 	listLog->Clear();
-	for (uint32_t i = 0; i < logFilterIDs.size(); i++)
+	for (size_t iID = 0; iID < logFilterIDs.size(); iID++)
 	{
-		listLog->Append(wxString::Format(wxT("%03X"), logFilterIDs[i]));
+		listLog->Append(wxString::Format(wxT("%03X"), logFilterIDs[iID]));
 	}
 }
 
@@ -726,9 +738,9 @@ void FormMain::ButtonAdd_OnClick(wxCommandEvent& event)
 	if (rowToLog >= 0 && (int)frames.size() > rowToLog)
 	{
 		bool found = false;
-		for (uint32_t iIDs = 0; iIDs < logFilterIDs.size(); iIDs++)
+		for (size_t iID = 0; iID < logFilterIDs.size(); iID++)
 		{
-			if (frames[rowToLog].Frame.ID == logFilterIDs[iIDs])
+			if (frames[rowToLog].Frame.ID == logFilterIDs[iID])
 			{
 				found = true;
 				break;
@@ -819,7 +831,7 @@ void FormMain::SaveToLog(VisualCANFrame& frame)
 			// сначала создать файл
 			try
 			{
-				string logPath = wxGetCwd() + wxT("\\CAN") + logExt;
+				wxString logPath = wxGetCwd() + wxT("\\CAN") + logExt;
 
 				logFile = new wxFFile();
 				if (logFile->Open(logPath, wxT("a")))
@@ -836,7 +848,7 @@ void FormMain::SaveToLog(VisualCANFrame& frame)
 		// запись в разные файлы
 		bool found = false;
 
-		for (uint32_t iFile = 0; iFile < logFiles.size(); iFile++)
+		for (size_t iFile = 0; iFile < logFiles.size(); iFile++)
 		{
 			// проверка существования потока
 			if (logFiles[iFile].ID == frame.Frame.ID)
@@ -854,9 +866,9 @@ void FormMain::SaveToLog(VisualCANFrame& frame)
 		{
 			try
 			{
-				string logPath = wxGetCwd() + wxT("\\CAN ID ") + wxString::Format(wxT("%03X"), frame.Frame.ID) + logExt;
+				wxString logPath = wxGetCwd() + wxT("\\CAN ID ") + wxString::Format(wxT("%03X"), frame.Frame.ID) + logExt;
 
-				LogFile newLogFile;
+				LogFile newLogFile = { 0 };
 				newLogFile.File = new wxFFile();
 				if (newLogFile.File->Open(logPath, wxT("a")))
 				{
@@ -885,7 +897,7 @@ void FormMain::LogWriteLine(wxFFile* file, VisualCANFrame& frame)
 		newLine += wxString::Format(wxT("%03X"), frame.Frame.ID) + logSeparator;
 		newLine += wxString::Format(wxT("%i"), frame.Frame.Length) + logSeparator;
 		// данные пакета
-		for (uint32_t iData = 0; iData < frame.Frame.Length; iData++)
+		for (size_t iData = 0; iData < frame.Frame.Length; iData++)
 		{
 			if (logDecimal)
 			{
@@ -904,7 +916,7 @@ void FormMain::LogWriteLine(wxFFile* file, VisualCANFrame& frame)
 		if (logASCII)
 		{
 			// дополнить строку разделителями для выравнивания
-			for (uint32_t iData = frame.Frame.Length; iData < 8; iData++)
+			for (size_t iData = frame.Frame.Length; iData < 8; iData++)
 			{
 				newLine += logSeparator;
 			}
@@ -912,7 +924,7 @@ void FormMain::LogWriteLine(wxFFile* file, VisualCANFrame& frame)
 
 			// добавить ASCII данные из пакета
 			buf = newLine.ToStdString();
-			for (uint32_t iData = 0; iData < frame.Frame.Length; iData++)
+			for (size_t iData = 0; iData < frame.Frame.Length; iData++)
 			{
 				if (frame.Frame.Data[iData] > 0x1F)
 				{
@@ -941,7 +953,7 @@ void FormMain::LogWriteLine(wxFFile* file, VisualCANFrame& frame)
 void FormMain::FlushLogs()
 {
 	// сбросить данные на диск для массива логов
-	for (uint32_t iFile = 0; iFile < logFiles.size(); iFile++)
+	for (size_t iFile = 0; iFile < logFiles.size(); iFile++)
 	{
 		logFiles[iFile].File->Flush();
 		logFiles[iFile].File->Close();
@@ -995,14 +1007,14 @@ wxString FormMain::ToBinary(uint8_t value)
 {
 	wxString binaryString;
 
-	for (uint32_t counter = 0; counter < 4; counter++)
+	for (size_t counter = 0; counter < 4; counter++)
 	{
 		if (value & 0x80)	binaryString += wxT('1');
 		else				binaryString += wxT('0');
 		value <<= 1;
 	}
 	binaryString += wxT('_');
-	for (uint32_t counter = 0; counter < 4; counter++)
+	for (size_t counter = 0; counter < 4; counter++)
 	{
 		if (value & 0x80)	binaryString += wxT('1');
 		else				binaryString += wxT('0');
@@ -1017,14 +1029,14 @@ void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 	// это вызовет событие OnPaintдля панели
 	drawPanel->Refresh(true, &drawRect);
 	// проверка на отключение последовательного порта
-	// TODO тут падает иногда, надо проверить
-	if (COM != nullptr && !COM->IsAlive())
+	// TODO иногда падает на проверке IsAlive()
+	/*if (COM != nullptr && !COM->IsAlive())
 	{
 		COM->Delete();
 		delete COM;
 		COM = nullptr;
 		buttonConnectDisconnect->SetLabelText(wxT("Подключить"));
-	}
+	}*/
 }
 
 // Событие отрисовки в панели графика
@@ -1032,7 +1044,7 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 {
 	//wxPaintDC dc(drawPanel);
 	wxBufferedPaintDC dc(drawPanel);	// с буферной отрисовкой не мерцает
-
+	
 	PrepareDC(dc);
 
 	// нарисовать рамку и фон
@@ -1047,7 +1059,7 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 
 		uint32_t* frame = drawData->Frame();
 
-		for (uint32_t index = 1; index < drawFrameSize; index++)
+		for (size_t index = 1; index < drawFrameSize; index++)
 		{
 			// рисовать отмасштабированную линию
 			dc.DrawLine(index, drawRect.height - *(frame + index - 1) * drawMul,
@@ -1103,55 +1115,55 @@ void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
 	// длина данных пакета
 	textCANLength->GetValue().ToLong(&tempValue, 10);
 	if (tempValue >= 0 && tempValue <= 8)
-		frame.Length = (byte)tempValue;
+		frame.Length = (uint8_t)tempValue;
 	else
 		return;
 	// байт 1
 	textCANByte1->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[0] = (byte)tempValue;
+		frame.Data[0] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 2
 	textCANByte2->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[1] = (byte)tempValue;
+		frame.Data[1] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 3
 	textCANByte3->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[2] = (byte)tempValue;
+		frame.Data[2] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 4
 	textCANByte4->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[3] = (byte)tempValue;
+		frame.Data[3] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 5
 	textCANByte5->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[4] = (byte)tempValue;
+		frame.Data[4] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 6
 	textCANByte6->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[5] = (byte)tempValue;
+		frame.Data[5] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 7
 	textCANByte7->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[6] = (byte)tempValue;
+		frame.Data[6] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 8
 	textCANByte8->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[7] = (byte)tempValue;
+		frame.Data[7] = (uint8_t)tempValue;
 	else
 		return;
 	// запомнить ID пакета, от которого ожидается ответ
@@ -1182,7 +1194,7 @@ void FormMain::TextCANAnswerID_OnEnter(wxCommandEvent& event)
 // Событие UDP-сокета
 void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
 {
-	uint8_t  receivedData[UDP_BUFFER_SIZE];
+	uint8_t  receivedData[UDP_BUFFER_SIZE] = { 0 };
 	uint8_t* receivedDataPointer = receivedData;
 
 	if (event.GetSocketEvent() == wxSOCKET_INPUT)
@@ -1190,12 +1202,11 @@ void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
 		size_t receivedDataLen = UDP->RecvFrom(espIpAddress, receivedData, UDP_BUFFER_SIZE).LastCount();
 		if (receivedDataLen)
 		{
+			VisualCANFrame frame;
 			uint8_t* receivedDataTail = receivedDataPointer + receivedDataLen;
 			// поиск CAN-пакета и формирование данных
 			while (receivedDataPointer < receivedDataTail)
 			{
-				VisualCANFrame frame;
-
 				// пакет собран - обработать пакет
 				if (CANParser::Parse(&receivedDataPointer, frame))
 				{
