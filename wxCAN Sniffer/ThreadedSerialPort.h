@@ -3,7 +3,7 @@
 #include "Common.h"
 #include "CANParser.h"
 
-#define BUFFERLEN	1000000		// ёмкость буфера приёма данных
+#define BUFFERLEN	1000000				// ёмкость буфера приёма данных
 
 static wxMutex syncCANBuffer;
 static wxMutex syncCANSend;
@@ -31,7 +31,7 @@ private:
 	DWORD    baudRate;					// указанная скорость
 	wxFrame* handleFrame = nullptr;		// указатель на окно для генерации события для него
 
-	uint8_t* buffer;					// байтовый буфер поледовательного порта
-	queue<VisualCANFrame> canBuffer;			// буфер полученных CAN-пакетов
+	uint8_t* buffer = nullptr;			// байтовый буфер поледовательного порта
+	queue<VisualCANFrame> canBuffer;	// буфер полученных CAN-пакетов
 	SendCANFrame frameToSend;			// CAN-пакет для отправки в CAN-сеть
 };

@@ -13,9 +13,6 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxF
 	baudRate = portSpeed;
 	handleFrame = handleWindow;
 
-	// выделить память под буфер
-	buffer = new uint8_t[BUFFERLEN + 1];
-
 	// запустить новый поток
 	wxThreadError runError = this->Run();
 	if (runError != wxTHREAD_NO_ERROR)
@@ -82,7 +79,8 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 
 		PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR);
 
-		// установка указателей в исходные состояния
+		// выделить память под буфер и установка указателей в исходные состояния
+		buffer = new uint8_t[BUFFERLEN + 1];
 		bufferHead = bufferTail = buffer;
 		bufferEnd = buffer + BUFFERLEN;
 
@@ -167,36 +165,31 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 				byte randomByte = rand() % 255;
 				WriteFile(hSerial, &randomByte, 1, &bytesWritten, NULL);
 			}*/
-
-			// отдать время для обработки событий
-			// а надо ли это?
-			//Yield();
 		}
-
-		wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_EXIT));
 
 		if (hSerial && hSerial != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(hSerial);
 			hSerial = nullptr;
 		}
-
-		// удалить буфер приёма сообщений
-		if (buffer)
-		{
-			delete[] buffer;
-			buffer = nullptr;
-		}
-
-		// очистка буферов
-		syncCANBuffer.Lock();
-		while (canBuffer.size() > 0)
-		{
-			canBuffer.pop();
-		}
-		syncCANBuffer.Unlock();
 	}
 
+	// удалить буфер приёма сообщений
+	if (buffer)
+	{
+		delete[] buffer;
+		buffer = nullptr;
+	}
+
+	// очистка буферов
+	syncCANBuffer.Lock();
+	while (canBuffer.size() > 0)
+	{
+		canBuffer.pop();
+	}
+	syncCANBuffer.Unlock();
+
+	wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_EXIT));
 	return (wxThread::ExitCode)0;
 }
 
