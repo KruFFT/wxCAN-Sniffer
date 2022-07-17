@@ -163,6 +163,7 @@
     <ClInclude Include="CircularFrameBuffer.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="FormMain.h" />
+    <ClInclude Include="FramesContainer.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ThreadedSerialPort.h" />
   </ItemGroup>
@@ -171,6 +172,7 @@
     <ClCompile Include="CANParser.cpp" />
     <ClCompile Include="CircularFrameBuffer.cpp" />
     <ClCompile Include="FormMain.cpp" />
+    <ClCompile Include="FramesContainer.cpp" />
     <ClCompile Include="ThreadedSerialPort.cpp" />
   </ItemGroup>
   <ItemGroup>

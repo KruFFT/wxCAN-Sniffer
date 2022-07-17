@@ -40,8 +40,8 @@ public:
 struct VisualCANFrame
 {
 public:
-	CANFrame Frame = { 0 };	// пакет с данными
-	uint8_t  Tick[8];		// счётчик тактов появления пакета, используется для выделения цветом в таблице
+	CANFrame Frame;			// пакет с данными
+	wxColour Color[8];		// цвет фона ячейки
 
 	// оператор сравнения CAN-пакета необходим для сортировки
 	bool operator < (const VisualCANFrame& frame) const
@@ -57,7 +57,7 @@ struct SendCANFrame
 {
 public:
 	uint32_t Signature = SIG_DWORD;
-	CANFrame Frame = { 0 };		// пакет для отправки
+	CANFrame Frame;			// пакет для отправки
 };
 #pragma pack(pop)
 
@@ -65,6 +65,6 @@ public:
 struct LogFile
 {
 public:
-	uint32_t ID;		// идентификатор пакета
-	wxFFile* File;		// хэндл ассоциированного файла
+	uint32_t ID;			// идентификатор пакета
+	wxFFile* File;			// хэндл ассоциированного файла
 };

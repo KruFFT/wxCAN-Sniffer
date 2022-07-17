@@ -23,6 +23,9 @@
     <Filter Include="Circular Frame Buffer">
       <UniqueIdentifier>{3065a30f-51db-43c2-9485-8da34277dd12}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FramesContainer">
+      <UniqueIdentifier>{92b6726b-8edd-4f09-a3cb-5bc1dcd60946}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -46,6 +49,9 @@
     <ClInclude Include="CircularFrameBuffer.h">
       <Filter>Circular Frame Buffer</Filter>
     </ClInclude>
+    <ClInclude Include="FramesContainer.h">
+      <Filter>FramesContainer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp">
@@ -62,6 +68,9 @@
     </ClCompile>
     <ClCompile Include="CircularFrameBuffer.cpp">
       <Filter>Circular Frame Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="FramesContainer.cpp">
+      <Filter>FramesContainer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

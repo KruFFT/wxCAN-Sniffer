@@ -6,24 +6,25 @@ wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_EXIT, wxThreadEvent);
 
 // Талица событий
 wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
-EVT_CLOSE(FormMain::OnClose)
-EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConDiscon_OnClick)
-EVT_BUTTON(ID_BUTTON_ADD, FormMain::FormMain::ButtonAdd_OnClick)
-EVT_BUTTON(ID_BUTTON_REMOVE, FormMain::ButtonRemove_OnClick)
-EVT_BUTTON(ID_BUTTON_REMOVE_ALL, FormMain::ButtonRemoveAll_OnClick)
-EVT_BUTTON(ID_BUTTON_SEND, FormMain::ButtonSend_OnClick)
-EVT_BUTTON(ID_BUTTON_CLEAR_LOG, FormMain::ButtonClearCANLog_OnClick)
-EVT_GRID_CMD_SELECT_CELL(ID_GRID_CAN_VIEW, FormMain::GridCANView_OnSelectCell)
-EVT_CHOICE(ID_COMBO_EXT, FormMain::ComboExt_OnChoice)
-EVT_CHOICE(ID_COMBO_SEP, FormMain::ComboSep_OnChoice)
-EVT_CHECKBOX(ID_CHECKBOX_DEC, FormMain::CheckDec_OnClick)
-EVT_CHECKBOX(ID_CHECKBOX_SINGLE, FormMain::CheckSingle_OnClick)
-EVT_CHECKBOX(ID_CHECKBOX_ENDIAN, FormMain::CheckEndian_OnClick)
-EVT_CHECKBOX(ID_CHECKBOX_ASCII, FormMain::CheckASCII_OnClick)
-EVT_TEXT_ENTER(ID_TEXT_DEC_WORD_MUL, FormMain::TextDecWordMul_OnEnter)
-EVT_TEXT_ENTER(ID_TEXT_CAN_ANSWER_ID, FormMain::TextCANAnswerID_OnEnter)
-EVT_TIMER(ID_MAIN_TIMER, FormMain::MainTimer_OnTimer)
-EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
+	EVT_CLOSE(FormMain::OnClose)
+	EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConDiscon_OnClick)
+	EVT_BUTTON(ID_BUTTON_ADD, FormMain::FormMain::ButtonAdd_OnClick)
+	EVT_BUTTON(ID_BUTTON_REMOVE, FormMain::ButtonRemove_OnClick)
+	EVT_BUTTON(ID_BUTTON_REMOVE_ALL, FormMain::ButtonRemoveAll_OnClick)
+	EVT_BUTTON(ID_BUTTON_SEND, FormMain::ButtonSend_OnClick)
+	EVT_BUTTON(ID_BUTTON_CLEAR_LOG, FormMain::ButtonClearCANLog_OnClick)
+	EVT_GRID_CMD_SELECT_CELL(ID_GRID_CAN_VIEW, FormMain::GridCANView_OnSelectCell)
+	EVT_CHOICE(ID_COMBO_EXT, FormMain::ComboExt_OnChoice)
+	EVT_CHOICE(ID_COMBO_SEP, FormMain::ComboSep_OnChoice)
+	EVT_CHECKBOX(ID_CHECKBOX_LOG_ENABLE, FormMain::CheckLogEnable_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_DEC, FormMain::CheckDec_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_SINGLE, FormMain::CheckSingle_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_ENDIAN, FormMain::CheckEndian_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_ASCII, FormMain::CheckASCII_OnClick)
+	EVT_TEXT_ENTER(ID_TEXT_DEC_WORD_MUL, FormMain::TextDecWordMul_OnEnter)
+	EVT_TEXT_ENTER(ID_TEXT_CAN_ANSWER_ID, FormMain::TextCANAnswerID_OnEnter)
+	EVT_TIMER(ID_MAIN_TIMER, FormMain::MainTimer_OnTimer)
+	EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
 wxEND_EVENT_TABLE()
 
 // Конструктор окна
@@ -73,7 +74,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			gridCANView->SetColLabelValue(8, wxT("Байт 6"));
 			gridCANView->SetColLabelValue(9, wxT("Байт 7"));
 			// установка ширины столбцов
-			for (auto iCol = 0; iCol < 10; iCol++)
+			for (size_t iCol = 0; iCol < 10; iCol++)
 			{
 				gridCANView->SetColSize(iCol, 50);
 			}
@@ -162,7 +163,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			gridCANLog->SetColLabelValue(8, wxT("Байт 6"));
 			gridCANLog->SetColLabelValue(9, wxT("Байт 7"));
 			// установка ширины столбцов
-			for (auto iCol = 0; iCol < 10; iCol++)
+			for (size_t iCol = 0; iCol < 10; iCol++)
 			{
 				gridCANLog->SetColSize(iCol, 50);
 			}
@@ -209,6 +210,10 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			// журнал, кнопки управления логом и его параметры
 			wxStaticBoxSizer* sizerLog = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("Запись в журнал и фильтр")), wxVERTICAL);
 			{
+				checkLogEnable = new wxCheckBox(this, ID_CHECKBOX_LOG_ENABLE, wxT("Вести запись в журнал"));
+				checkLogEnable->SetValue(logEnable);
+				sizerLog->Add(checkLogEnable, 0, wxALL, 5);
+
 				wxBoxSizer* sizerLogButtonsList = new wxBoxSizer(wxHORIZONTAL);
 				{
 					// кнопки журнала
@@ -437,12 +442,14 @@ void FormMain::OnClose(wxCloseEvent& event)
 	timerMain->Stop();
 
 	if (UDP)
+	{
 		UDP->Destroy();
+		UDP = nullptr;
+	}
 
 	if (COM)
 	{
 		COM->Delete();
-		delete COM;
 		COM = nullptr;
 	}
 
@@ -473,8 +480,7 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 			DWORD comSpeed = 0;
 			if (comboBoxSpeed->GetValue().ToULong(&comSpeed, 10))
 			{
-				frames.reserve(FRAMES_DATA_RESERV);
-				frames.clear();
+				frames.Clear();
 
 				// удалить все строки таблицы
 				if (gridCANView->GetNumberRows() > 0)
@@ -510,7 +516,7 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 // По событию от потока забирать все принятые CAN-пакеты, которые есть в буфере
 void FormMain::Thread_OnUpdate(wxThreadEvent& event)
 {
-	VisualCANFrame frame;
+	CANFrame frame;
 
 	if (COM)
 	{
@@ -532,108 +538,26 @@ void FormMain::Thread_OnExit(wxThreadEvent& event)
 }
 
 // Обработка поступившего CAN-пакета
-void FormMain::ProcessCANFrame(VisualCANFrame& frame)
+void FormMain::ProcessCANFrame(CANFrame& frame)
 {
 	bool found = false;
 
 	// если это пакет с адресом 000 - это статистика и её надо вывести отдельно
-	if (frame.Frame.ID == 0 && frame.Frame.Length >= 4)
+	if (frame.ID == 0 && frame.Length >= 4)
 	{
-		uint16_t fps = (frame.Frame.Data[0] << 8) + frame.Frame.Data[1];
+		uint16_t fps = ((uint16_t)frame.Data[0] << 8) + (uint16_t)frame.Data[1];
 		textFPS->SetValue(wxString::Format(wxT("%i"), fps));	// кадров в секунду
-		uint16_t bps = (frame.Frame.Data[2] << 8) + frame.Frame.Data[3];
+		uint16_t bps = ((uint16_t)frame.Data[2] << 8) + (uint16_t)frame.Data[3];
 		textBPS->SetValue(wxString::Format(wxT("%i"), bps));	// байтов в секунду
 	}
 	else
 	{
-		// поиск ID в списке
-		size_t idCount = frames.size();
-		for (uint32_t iID = 0; iID < idCount; iID++)
-		{
-			// если найден - выделить яркостью цета изменяющиеся данные и заменить CAN-пакет
-			if (frames[iID].Frame.ID == frame.Frame.ID)
-			{
-				gridCANView->SetCellValue(iID, 1, wxString::Format(wxT("%i"), frame.Frame.Length));	// длина пакета
-				for (uint32_t i = 0; i < 8; i++)
-				{
-					if (i < frame.Frame.Length)
-					{
-						gridCANView->SetCellValue(iID, i + 2, wxString::Format(wxT("%02X"), frame.Frame.Data[i]));
-						// если новые данные такие же - необходимо плавно осветлять фоновую заливку
-						if (frame.Frame.Data[i] == frames[iID].Frame.Data[i])
-						{
-							uint8_t tick = frames[iID].Tick[i];
-							if (tick < 255)
-							{
-								tick++;
-							}
-
-							gridCANView->SetCellBackgroundColour(iID, i + 2, wxColor(MARKED_COLOR, tick, tick));
-							frame.Tick[i] = tick;
-						}
-						else
-						{
-							gridCANView->SetCellBackgroundColour(iID, i + 2, wxColor(MARKED_COLOR));
-						}
-					}
-					else
-					{
-						gridCANView->SetCellValue(iID, i + 2, wxT(" "));
-						gridCANView->SetCellBackgroundColour(iID, i + 2, wxColor(DEFAULT_COLOR));
-					}
-					// для wxWidhets 3.1.2 это строка не нужна
-					// проблема с обновлением фона ячейки появилась в связи с изменениемя контрола wxGrid в версии wxWidgets 3.1.3
-					// после обновления до wxWidhets 3.1.7 ошибка не повторяется, но оставлю эту строку
-					gridCANView->RefreshBlock(iID, i + 2, iID, i + 2);
-				}
-
-				frames[iID] = frame;
-				found = true;
-				break;
-			}
-		}
-
-		// если ID не найден - добавить новый
-		if (!found)
-		{
-			// добавить элемент в массив и отсортировать его
-			frames.push_back(frame);
-			sort(frames.begin(), frames.end());
-			idCount = frames.size();
-
-			// теперь надо снова найти элемент в отсортированном массиве, чтобы корректно вставить строку в таблицу
-			for (uint32_t iID = 0; iID < idCount; iID++)
-			{
-				if (frames[iID].Frame.ID == frame.Frame.ID)
-				{
-					gridCANView->InsertRows(iID);
-
-					gridCANView->SetCellValue(iID, 0, wxString::Format(wxT("%03X"), frame.Frame.ID));
-					gridCANView->SetCellValue(iID, 1, wxString::Format(wxT("%i"), frame.Frame.Length));
-
-					// заполнение столбцов параметров
-					for (uint32_t iData = 0; iData < 8; iData++)
-					{
-						if (iData < frame.Frame.Length)
-						{
-							gridCANView->SetCellValue(iID, iData + 2, wxString::Format(wxT("%02X"), frame.Frame.Data[iData]));
-							gridCANView->SetCellBackgroundColour(iID, iData + 2, wxColor(NEW_COLOR));
-						}
-						else
-						{
-							gridCANView->SetCellValue(iID, iData + 2, wxT(" "));
-							gridCANView->SetCellBackgroundColour(iID, iData + 2, wxColor(DEFAULT_COLOR));
-						}
-					}
-					break;
-				}
-			}
-		}
+		frames.AddFrame(frame);
+		
 		// показать числа в разных форматах
 		ShowNumbers();
 
 		// запись в лог по необходимости
-
 		// если в фильтре ничего не выбрано - запись всех данных
 		if (logFilterIDs.size() == 0)
 		{
@@ -642,9 +566,9 @@ void FormMain::ProcessCANFrame(VisualCANFrame& frame)
 		// иначе - записывать пакеты указанные в фильтре
 		else
 		{
-			for (uint32_t iLog = 0; iLog < logFilterIDs.size(); iLog++)
+			for (size_t iLog = 0; iLog < logFilterIDs.size(); iLog++)
 			{
-				if (frame.Frame.ID == logFilterIDs[iLog])
+				if (frame.ID == logFilterIDs[iLog])
 				{
 					SaveToLog(frame);
 				}
@@ -652,21 +576,26 @@ void FormMain::ProcessCANFrame(VisualCANFrame& frame)
 		}
 
 		// если ожидается ответ от этого ID - добавить его в список ответов
-		if (frame.Frame.ID == answerID)
+		if (frame.ID == answerID)
 		{
-			int32_t index = gridCANLog->GetNumberRows();
-			gridCANLog->InsertRows(index);
+			int32_t lastRow = gridCANLog->GetNumberRows();
+			gridCANLog->InsertRows(lastRow);
 
-			gridCANLog->SetCellValue(index, 0, wxString::Format(wxT("%03X"), frame.Frame.ID));
-			gridCANLog->SetCellValue(index, 1, wxString::Format(wxT("%i"), frame.Frame.Length));
+			gridCANLog->SetCellValue(lastRow, 0, wxString::Format(wxT("%03X"), frame.ID));
+			gridCANLog->SetCellValue(lastRow, 1, wxString::Format(wxT("%i"), frame.Length));
 
 			// заполнение столбцов параметров
-			for (unsigned int i = 0; i < 8; i++)
+			for (size_t iData = 0; iData < 8; iData++)
 			{
-				if (i < frame.Frame.Length)
+				if (iData < frame.Length)
 				{
-					gridCANLog->SetCellValue(index, i + 2, wxString::Format(wxT("%02X"), frame.Frame.Data[i]));
-					//gridCANLog->SetCellBackgroundColour(index, i + 2, wxColor(DEFAULT_COLOR));
+					// вывод данных
+					gridCANLog->SetCellValue(lastRow, iData + 2, wxString::Format(wxT("%02X"), frame.Data[iData]));
+				}
+				else
+				{
+					// вывод пустых ячеек
+					gridCANView->SetCellValue(lastRow, iData + 2, wxT(" "));
 				}
 			}
 			// прокрутить список вниз
@@ -681,13 +610,14 @@ void FormMain::ShowNumbers()
 	if (rowToView >= 0 && colToView >= 0)
 	{
 		// если полученных данных ещё нет
-		if (rowToView >= frames.size())
+		if (rowToView >= frames.Size())
 		{
 			return;
 		}
 
-		uint8_t firstByte = frames[rowToView].Frame.Data[colToView];
-		uint8_t secondByte = colToView < 7 ? frames[rowToView].Frame.Data[colToView + 1] : 0;
+		VisualCANFrame vFrame = frames.GetFrame(rowToView);
+		uint8_t firstByte = vFrame.Frame.Data[colToView];
+		uint8_t secondByte = colToView < 7 ? vFrame.Frame.Data[colToView + 1] : 0;
 
 		// выбор между big endian и little endian
 		uint32_t value = bigEndian ? (firstByte << 8) + secondByte : (secondByte << 8) + firstByte;
@@ -735,19 +665,19 @@ void FormMain::TextDecWordMul_OnEnter(wxCommandEvent& event)
 // Добавить ID в список фильра для записи в log
 void FormMain::ButtonAdd_OnClick(wxCommandEvent& event)
 {
-	if (rowToLog >= 0 && (int)frames.size() > rowToLog)
+	if (rowToLog >= 0 && (int)frames.Size() > rowToLog)
 	{
 		bool found = false;
 		for (size_t iID = 0; iID < logFilterIDs.size(); iID++)
 		{
-			if (frames[rowToLog].Frame.ID == logFilterIDs[iID])
+			if (frames.GetFrame(rowToLog).Frame.ID == logFilterIDs[iID])
 			{
 				found = true;
 				break;
 			}
 		}
 		if (!found)
-			logFilterIDs.push_back(frames[rowToLog].Frame.ID);
+			logFilterIDs.push_back(frames.GetFrame(rowToLog).Frame.ID);
 	}
 
 	RefreshListLog();
@@ -773,6 +703,12 @@ void FormMain::ButtonRemoveAll_OnClick(wxCommandEvent& event)
 	RefreshListLog();
 }
 
+// Выбор разрешения записи в журнал
+void FormMain::CheckLogEnable_OnClick(wxCommandEvent& event)
+{
+	logEnable = event.IsChecked();
+}
+
 // Выбор расширения файла
 void FormMain::ComboExt_OnChoice(wxCommandEvent& event)
 {
@@ -794,97 +730,100 @@ void FormMain::ComboSep_OnChoice(wxCommandEvent& event)
 // Клик по десятичной форме записи log
 void FormMain::CheckDec_OnClick(wxCommandEvent& event)
 {
-	logDecimal = checkDec->IsChecked();
+	logDecimal = event.IsChecked();
 }
 
 // Клик по выводу в один файл
 void FormMain::CheckSingle_OnClick(wxCommandEvent& event)
 {
-	logSingle = checkSingle->IsChecked();
+	logSingle = event.IsChecked();
 }
 
 // Клик для добавления в log-файл ASCII данных
 void FormMain::CheckASCII_OnClick(wxCommandEvent& event)
 {
-	logASCII = checkASCII->IsChecked();
+	logASCII = event.IsChecked();
 }
 
 // Клик по выбору big endian или little endian
 void FormMain::CheckEndian_OnClick(wxCommandEvent& event)
 {
-	bigEndian = checkEndian->IsChecked();
+	bigEndian = event.IsChecked();
 }
 
 // Записать в log указанный CAN-пакет
-void FormMain::SaveToLog(VisualCANFrame& frame)
+void FormMain::SaveToLog(CANFrame& frame)
 {
-	// если запись в один файл...
-	if (logSingle)
+	if (logEnable)
 	{
-		// если файл существует - записать данные
-		if (logFile)
+		// если запись в один файл...
+		if (logSingle)
 		{
-			LogWriteLine(logFile, frame);
+			// если файл существует - записать данные
+			if (logFile)
+			{
+				LogWriteLine(logFile, frame);
+			}
+			else
+			{
+				// сначала создать файл
+				try
+				{
+					wxString logPath = wxGetCwd() + wxT("\\CAN") + logExt;
+
+					logFile = new wxFFile();
+					if (logFile->Open(logPath, wxT("a")))
+					{
+						logFile->SeekEnd();
+						LogWriteLine(logFile, frame);
+					}
+				}
+				catch (...) {}
+			}
 		}
 		else
 		{
-			// сначала создать файл
-			try
-			{
-				wxString logPath = wxGetCwd() + wxT("\\CAN") + logExt;
+			// запись в разные файлы
+			bool found = false;
 
-				logFile = new wxFFile();
-				if (logFile->Open(logPath, wxT("a")))
+			for (size_t iFile = 0; iFile < logFiles.size(); iFile++)
+			{
+				// проверка существования потока
+				if (logFiles[iFile].ID == frame.ID)
 				{
-					logFile->SeekEnd();
-					LogWriteLine(logFile, frame);
+					// если файл для этого кадра уже существует - просто дописать в него данные
+					LogWriteLine(logFiles[iFile].File, frame);
+
+					found = true;
+					break;
 				}
 			}
-			catch (...) {}
-		}
-	}
-	else
-	{
-		// запись в разные файлы
-		bool found = false;
 
-		for (size_t iFile = 0; iFile < logFiles.size(); iFile++)
-		{
-			// проверка существования потока
-			if (logFiles[iFile].ID == frame.Frame.ID)
+			// если файл не существует - сначала создать его, а потом записать строку
+			if (!found)
 			{
-				// если файл для этого кадра уже существует - просто дописать в него данные
-				LogWriteLine(logFiles[iFile].File, frame);
-
-				found = true;
-				break;
-			}
-		}
-
-		// если файл не существует - сначала создать его, а потом записать строку
-		if (!found)
-		{
-			try
-			{
-				wxString logPath = wxGetCwd() + wxT("\\CAN ID ") + wxString::Format(wxT("%03X"), frame.Frame.ID) + logExt;
-
-				LogFile newLogFile = { 0 };
-				newLogFile.File = new wxFFile();
-				if (newLogFile.File->Open(logPath, wxT("a")))
+				try
 				{
-					newLogFile.File->SeekEnd();
-					newLogFile.ID = frame.Frame.ID;
-					logFiles.push_back(newLogFile);
-					LogWriteLine(logFiles[logFiles.size() - 1].File, frame);
+					wxString logPath = wxGetCwd() + wxT("\\CAN ID ") + wxString::Format(wxT("%03X"), frame.ID) + logExt;
+
+					LogFile newLogFile = { 0 };
+					newLogFile.File = new wxFFile();
+					if (newLogFile.File->Open(logPath, wxT("a")))
+					{
+						newLogFile.File->SeekEnd();
+						newLogFile.ID = frame.ID;
+						logFiles.push_back(newLogFile);
+						LogWriteLine(logFiles[logFiles.size() - 1].File, frame);
+					}
 				}
+				catch (...) {}
 			}
-			catch (...) {}
 		}
 	}
 }
 
 // Записать в журнал строку данных
-void FormMain::LogWriteLine(wxFFile* file, VisualCANFrame& frame)
+void FormMain::LogWriteLine(wxFFile* file, CANFrame& frame)
 {
 	// штамп времени
 	wxDateTime dtNow = wxDateTime::UNow();
@@ -894,20 +833,20 @@ void FormMain::LogWriteLine(wxFFile* file, VisualCANFrame& frame)
 	try
 	{
 		// идентификатор пакета и его длина
-		newLine += wxString::Format(wxT("%03X"), frame.Frame.ID) + logSeparator;
-		newLine += wxString::Format(wxT("%i"), frame.Frame.Length) + logSeparator;
+		newLine += wxString::Format(wxT("%03X"), frame.ID) + logSeparator;
+		newLine += wxString::Format(wxT("%i"), frame.Length) + logSeparator;
 		// данные пакета
-		for (size_t iData = 0; iData < frame.Frame.Length; iData++)
+		for (size_t iData = 0; iData < frame.Length; iData++)
 		{
 			if (logDecimal)
 			{
 				// десятичный вывод
-				newLine += wxString::Format(wxT("%0i"), frame.Frame.Data[iData]) + logSeparator;
+				newLine += wxString::Format(wxT("%0i"), frame.Data[iData]) + logSeparator;
 			}
 			else
 			{
 				// шестнадцатиричный вывод
-				newLine += wxString::Format(wxT("%02X"), frame.Frame.Data[iData]) + logSeparator;
+				newLine += wxString::Format(wxT("%02X"), frame.Data[iData]) + logSeparator;
 			}
 		}
 
@@ -916,7 +855,7 @@ void FormMain::LogWriteLine(wxFFile* file, VisualCANFrame& frame)
 		if (logASCII)
 		{
 			// дополнить строку разделителями для выравнивания
-			for (size_t iData = frame.Frame.Length; iData < 8; iData++)
+			for (size_t iData = frame.Length; iData < 8; iData++)
 			{
 				newLine += logSeparator;
 			}
@@ -924,11 +863,11 @@ void FormMain::LogWriteLine(wxFFile* file, VisualCANFrame& frame)
 
 			// добавить ASCII данные из пакета
 			buf = newLine.ToStdString();
-			for (size_t iData = 0; iData < frame.Frame.Length; iData++)
+			for (size_t iData = 0; iData < frame.Length; iData++)
 			{
-				if (frame.Frame.Data[iData] > 0x1F)
+				if (frame.Data[iData] > 0x1F)
 				{
-					buf += frame.Frame.Data[iData];
+					buf += frame.Data[iData];
 				}
 				else
 				{
@@ -1026,8 +965,48 @@ wxString FormMain::ToBinary(uint8_t value)
 // Срабатывание таймера
 void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 {
-	// это вызовет событие OnPaintдля панели
+	// обновить данные в таблице
+	RefreshGridCANView();
+	// это вызовет событие OnPaint для панели
 	drawPanel->Refresh(true, &drawRect);
+}
+
+// Обновить данные CAN-пакетов в таблице, вызывается по таймеру
+void FormMain::RefreshGridCANView()
+{
+	size_t framesCount = frames.Size();
+
+	// заполнить таблицу строками
+	while (gridCANView->GetNumberRows() < framesCount)
+	{
+		gridCANView->InsertRows(0);
+	}
+
+	for (size_t iFrame = 0; iFrame < framesCount; iFrame++)
+	{
+		// вывод ID и длины пакета
+		VisualCANFrame vFrame = frames.GetFrame(iFrame);
+		gridCANView->SetCellValue(iFrame, 0, wxString::Format(wxT("%03X"), vFrame.Frame.ID));
+		gridCANView->SetCellValue(iFrame, 1, wxString::Format(wxT("%i"), vFrame.Frame.Length));
+
+		// заполнение столбцов данных
+		for (size_t iData = 0; iData < 8; iData++)
+		{
+			if (iData < vFrame.Frame.Length)
+			{
+				// вывод данных
+				gridCANView->SetCellValue(iFrame, iData + 2, wxString::Format(wxT("%02X"), vFrame.Frame.Data[iData]));
+				gridCANView->SetCellBackgroundColour(iFrame, iData + 2, vFrame.Color[iData]);
+			}
+			else
+			{
+				// вывод пустых ячеек
+				gridCANView->SetCellValue(iFrame, iData + 2, wxT(" "));
+				gridCANView->SetCellBackgroundColour(iFrame, iData + 2, wxColor(DEFAULT_COLOR));
+			}
+			gridCANView->RefreshBlock(iFrame, 2, iFrame, 9);
+		}
+	}
 }
 
 // Событие отрисовки в панели графика
@@ -1193,7 +1172,7 @@ void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
 		size_t receivedDataLen = UDP->RecvFrom(espIpAddress, receivedData, UDP_BUFFER_SIZE).LastCount();
 		if (receivedDataLen)
 		{
-			VisualCANFrame frame;
+			CANFrame frame;
 			uint8_t* receivedDataTail = receivedDataPointer + receivedDataLen;
 			// поиск CAN-пакета и формирование данных
 			while (receivedDataPointer < receivedDataTail)

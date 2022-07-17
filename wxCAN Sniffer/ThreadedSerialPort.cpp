@@ -133,7 +133,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 			// поиск CAN-пакета и формирование данных
 			while (bufferTail - bufferHead >= 17)
 			{
-				VisualCANFrame frame;
+				CANFrame frame;
 
 				// пакет собран - положить пакет в очередь
 				if (CANParser::Parse(&bufferHead, frame))
@@ -194,7 +194,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 }
 
 // Возвращает очередной CAN-пакет из очереди
-bool ThreadedSerialPort::GetNextFrame(VisualCANFrame& frame)
+bool ThreadedSerialPort::GetNextFrame(CANFrame& frame)
 {
 	wxMutexLocker lock(syncCANBuffer);
 	if (canBuffer.size() > 0)
