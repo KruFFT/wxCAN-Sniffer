@@ -211,7 +211,7 @@ void ThreadedSerialPort::SendFrame(CANFrame& frame)
 {
 	// создаётся локальная копия пакета данных
 	wxMutexLocker lock(syncCANSend);
-	memcpy_s(&frameToSend.Frame, sizeof(VisualCANFrame), &frame, sizeof(VisualCANFrame));
+	memcpy_s(&frameToSend.Frame, sizeof(CANFrame), &frame, sizeof(CANFrame));
 	// если понадобится - поменять порядок байтов в идентификаторе
 	//frameToSend.Frame.ID = SwapBytes(frameToSend.Frame.ID);
 }

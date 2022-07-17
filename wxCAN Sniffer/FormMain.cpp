@@ -1079,7 +1079,7 @@ void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
 	// ID пакета
 	textCANID->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0x7FFF)
-		frame.ID = (unsigned int)tempValue;
+		frame.ID = (uint32_t)tempValue;
 	else
 		return;
 	// длина данных пакета
@@ -1139,7 +1139,7 @@ void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
 	// запомнить ID пакета, от которого ожидается ответ
 	textCANAnswerID->GetValue().ToLong(&tempValue, 16);
 	if (tempValue > 0 && tempValue <= 0x7FFF)
-		answerID = (unsigned int)tempValue;
+		answerID = (uint32_t)tempValue;
 	else
 		answerID = 0;
 
