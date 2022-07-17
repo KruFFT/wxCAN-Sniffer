@@ -1,10 +1,10 @@
-#pragma once
+п»ї#pragma once
 #include "Common.h"
 
-#define FRAMES_DATA_RESERV	1000		// количество элементов для резерва в векторе
-#define NEW_COLOR			0xFF00FF00	// green (ABGR) - для выделения новых данных
-#define CHANGE_COLOR		0xFF0000FF	// red (ABGR)   - для выделения изменямых данных
-#define DEFAULT_COLOR		0xFFFFFFFF	// white (ABGR) - цвет ячейки по умолчанию
+#define FRAMES_DATA_RESERV	1000		// РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РґР»СЏ СЂРµР·РµСЂРІР° РІ РІРµРєС‚РѕСЂРµ
+#define NEW_COLOR			0xFF00FF00	// green (ABGR) - РґР»СЏ РІС‹РґРµР»РµРЅРёСЏ РЅРѕРІС‹С… РґР°РЅРЅС‹С…
+#define CHANGE_COLOR		0xFF0000FF	// red (ABGR)   - РґР»СЏ РІС‹РґРµР»РµРЅРёСЏ РёР·РјРµРЅСЏРјС‹С… РґР°РЅРЅС‹С…
+#define DEFAULT_COLOR		0xFFFFFFFF	// white (ABGR) - С†РІРµС‚ СЏС‡РµР№РєРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 
 class FramesContainer
 {
@@ -18,5 +18,5 @@ public:
 	VisualCANFrame GetFrame(size_t index);
 
 private:
-	vector<VisualCANFrame> frames;		// хранилище пакетов с данными для визуализации
+	vector<VisualCANFrame> frames;		// С…СЂР°РЅРёР»РёС‰Рµ РїР°РєРµС‚РѕРІ СЃ РґР°РЅРЅС‹РјРё РґР»СЏ РІРёР·СѓР°Р»РёР·Р°С†РёРё
 };

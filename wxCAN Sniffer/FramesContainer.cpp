@@ -1,38 +1,38 @@
-#include "FramesContainer.h"
+п»ї#include "FramesContainer.h"
 
-// Конструктор
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
 FramesContainer::FramesContainer()
 {
 	frames.reserve(FRAMES_DATA_RESERV);
 	frames.clear();
 }
 
-// Деструктор
+// Р”РµСЃС‚СЂСѓРєС‚РѕСЂ
 FramesContainer::~FramesContainer()
 {
 	frames.clear();
 }
 
-// Очистить хранилище CAN-пакетов
+// РћС‡РёСЃС‚РёС‚СЊ С…СЂР°РЅРёР»РёС‰Рµ CAN-РїР°РєРµС‚РѕРІ
 void FramesContainer::Clear()
 {
 	frames.clear();
 }
 
-// Добавить новый CAN-пакет с раскраской его данных
+// Р”РѕР±Р°РІРёС‚СЊ РЅРѕРІС‹Р№ CAN-РїР°РєРµС‚ СЃ СЂР°СЃРєСЂР°СЃРєРѕР№ РµРіРѕ РґР°РЅРЅС‹С…
 void FramesContainer::AddFrame(CANFrame& frame)
 {
-	// поиск ID в таблице
+	// РїРѕРёСЃРє ID РІ С‚Р°Р±Р»РёС†Рµ
 	size_t idCount = frames.size();
 	for (size_t iID = 0; iID < idCount; iID++)
 	{
-		// если найден - выделить яркостью цета изменяющиеся данные и заменить CAN-пакет
+		// РµСЃР»Рё РЅР°Р№РґРµРЅ - РІС‹РґРµР»РёС‚СЊ СЏСЂРєРѕСЃС‚СЊСЋ С†РµС‚Р° РёР·РјРµРЅСЏСЋС‰РёРµСЃСЏ РґР°РЅРЅС‹Рµ Рё Р·Р°РјРµРЅРёС‚СЊ CAN-РїР°РєРµС‚
 		if (frames[iID].Frame.ID == frame.ID)
 		{
-			// обновить данные раскраски элементов
+			// РѕР±РЅРѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ СЂР°СЃРєСЂР°СЃРєРё СЌР»РµРјРµРЅС‚РѕРІ
 			for (size_t iData = 0; iData < frames[iID].Frame.Length; iData++)
 			{
-				// если новые данные такие же, что были ранее - необходимо плавно осветлять фоновую заливку
+				// РµСЃР»Рё РЅРѕРІС‹Рµ РґР°РЅРЅС‹Рµ С‚Р°РєРёРµ Р¶Рµ, С‡С‚Рѕ Р±С‹Р»Рё СЂР°РЅРµРµ - РЅРµРѕР±С…РѕРґРёРјРѕ РїР»Р°РІРЅРѕ РѕСЃРІРµС‚Р»СЏС‚СЊ С„РѕРЅРѕРІСѓСЋ Р·Р°Р»РёРІРєСѓ
 				if (frames[iID].Frame.Data[iData] == frame.Data[iData])
 				{
 					if (frames[iID].Color[iData] == NEW_COLOR)
@@ -41,7 +41,7 @@ void FramesContainer::AddFrame(CANFrame& frame)
 					}
 					else
 					{
-						// постепенно добавить цвет до белого в каналах G и B
+						// РїРѕСЃС‚РµРїРµРЅРЅРѕ РґРѕР±Р°РІРёС‚СЊ С†РІРµС‚ РґРѕ Р±РµР»РѕРіРѕ РІ РєР°РЅР°Р»Р°С… G Рё B
 						uint32_t curentColorValue = frames[iID].Color[iData].GetRGBA();
 						if (curentColorValue < DEFAULT_COLOR)
 						{
@@ -55,13 +55,13 @@ void FramesContainer::AddFrame(CANFrame& frame)
 					frames[iID].Color[iData] = CHANGE_COLOR;
 				}
 			}
-			// обновить данные пакета
+			// РѕР±РЅРѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ РїР°РєРµС‚Р°
 			frames[iID].Frame = frame;
 			return;
 		}
 	}
 
-	// если ID не найден - добавить новый с зелёным цветом
+	// РµСЃР»Рё ID РЅРµ РЅР°Р№РґРµРЅ - РґРѕР±Р°РІРёС‚СЊ РЅРѕРІС‹Р№ СЃ Р·РµР»С‘РЅС‹Рј С†РІРµС‚РѕРј
 	VisualCANFrame vFrame;
 	vFrame.Frame = frame;
 	fill_n(vFrame.Color, 8, NEW_COLOR);
@@ -70,13 +70,13 @@ void FramesContainer::AddFrame(CANFrame& frame)
 	sort(frames.begin(), frames.end());
 }
 
-// Вернуть размер хранилища
+// Р’РµСЂРЅСѓС‚СЊ СЂР°Р·РјРµСЂ С…СЂР°РЅРёР»РёС‰Р°
 size_t FramesContainer::Size()
 {
 	return frames.size();
 }
 
-// Вернуть указанный отображаемый CAN-пакет
+// Р’РµСЂРЅСѓС‚СЊ СѓРєР°Р·Р°РЅРЅС‹Р№ РѕС‚РѕР±СЂР°Р¶Р°РµРјС‹Р№ CAN-РїР°РєРµС‚
 VisualCANFrame FramesContainer::GetFrame(size_t index)
 {
 	return frames[index];
