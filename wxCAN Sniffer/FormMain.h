@@ -6,9 +6,7 @@
 #include "FramesContainer.h"
 
 #define DRAW_COLOR			0x0000FF	// red (BGR)
-
-#define TIMER_INTERVAL		40			// интервал срабатывания таймера (около 25 кадров/с)
-
+#define TIMER_INTERVAL		40			// интервал срабатывания таймера обновления данных на экране (около 25 кадров/с)
 #define COM_NAME			wxT("COM3")	// последовательный порт по умолчанию
 #define UDP_PORT			0xAA55		// UDP порт
 #define UDP_BUFFER_SIZE		1000		// размер буфера приёма пакетов
@@ -124,15 +122,13 @@ private:
 	bool logDecimal = false;			// переключатель режима записи чисел в log-файле: десятичный или шестнадцатиричный
 	bool logSingle = true;				// переключатель режима записи в log-файле: в один или в раздельные
 	bool logASCII = false;				// добавлять или нет в log-файле текстовые данные
+	vector<LogFile> logFiles;			// массив log-файлов
+	wxFFile* logFile = nullptr;			// единый log-файл
+	wxString decimalSeparator;			// выбранный символ разделитель для данных в log-файле
 
 	int32_t rowToView = -1;				// номер строки выбранной ячейки для отображения данных о ней
 	int32_t colToView = -1;				// номер столбца выбранной ячейки для отображения данных о ней
 	double mul = 0.125;					// множитель для отображаемых чисел
-
-	vector<LogFile> logFiles;			// массив log-файлов
-	wxFFile* logFile = nullptr;			// единый log-файл
-
-	wxString decimalSeparator;			// выбранный символ разделитель для данных в log-файле
 
 	wxPen blackPen = *wxBLACK;			// кисть рамки для отрисовки графика
 	wxPen graphPen = wxPen(wxColour(DRAW_COLOR, 0, 0), 3);	// кисть для отрисовки графика заданной ширины
