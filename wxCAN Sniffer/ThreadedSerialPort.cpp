@@ -1,7 +1,7 @@
 ﻿#include "ThreadedSerialPort.h"
 
 // Конструктор
-ThreadedSerialPort::ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFrame* HandleFrame) : wxThread(wxTHREAD_JOINABLE)
+ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxFrame* handleWindow) : wxThread(wxTHREAD_JOINABLE)
 {
 	// создать новый поток
 	if (this->Create() != wxTHREAD_NO_ERROR)
@@ -9,12 +9,9 @@ ThreadedSerialPort::ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFram
 		throw new exception("Невозможно создать поток");
 	}
 
-	portName = wxT("\\\\.\\") + PortName;
-	baudRate = BaudRate;
-	handleFrame = HandleFrame;
-	
-	// выделить память под буфер
-	buffer = new byte[BUFFERLEN + 1];
+	portName = wxT("\\\\.\\") + serialPort;
+	baudRate = portSpeed;
+	handleFrame = handleWindow;
 
 	// запустить новый поток
 	wxThreadError runError = this->Run();
@@ -27,15 +24,17 @@ ThreadedSerialPort::ThreadedSerialPort(wxString PortName, DWORD BaudRate, wxFram
 // Деструктор
 ThreadedSerialPort::~ThreadedSerialPort()
 {
-	// удалить буфер
-	delete[] buffer;
-	buffer = NULL;
+	// удалить буфер приёма сообщений
+	if (buffer)
+	{
+		delete[] buffer;
+		buffer = nullptr;
+	}
 }
 
 // Основной цикл потока
 wxThread::ExitCode ThreadedSerialPort::Entry()
 {
-	CANFrame frame;				// CAN-пакет заполняемый данными
 	uint8_t* bufferHead;		// указатель на начало данных в буфере
 	uint8_t* bufferTail;		// указатель на конец данных в буфере
 	uint8_t* bufferEnd;			// указатель на конец буфера для контроля
@@ -43,7 +42,6 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 	DWORD bytesToSend;			// количество байтов для отправки
 	DWORD bytesSent;			// количество отправленных байтов
 	DWORD bufferFreeLength;		// размер свободного места в буфере	
-	uint8_t  step = 0;			// стадия сборки пакета из байтового потока
 	uint32_t dataLength;		// количество байтов с данными в буфере
 	uint32_t freeLength;		// количество свободных байтов в буфере до начала данных в нём
 	BOOL readError;				// результат чтения данных из последовательного порта
@@ -67,7 +65,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 			throw new exception("Невозможно установить параметры порта");
 		}
 
-		COMMTIMEOUTS commTimeouts;
+		COMMTIMEOUTS commTimeouts = { 0 };
 		commTimeouts.ReadIntervalTimeout = MAXDWORD;
 		commTimeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
 		commTimeouts.ReadTotalTimeoutConstant = 0;
@@ -81,9 +79,10 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 
 		PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR);
 
-		// установка указателей в исходные состояния
+		// выделить память под буфер и установка указателей в исходные состояния
+		buffer = new uint8_t[BUFFERLEN + 1];
 		bufferHead = bufferTail = buffer;
-		bufferEnd  = buffer + BUFFERLEN;
+		bufferEnd = buffer + BUFFERLEN;
 
 		// проверка на запрос для выхода
 		while (!TestDestroy())
@@ -132,130 +131,22 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 			}
 
 			// поиск CAN-пакета и формирование данных
-			while (bufferHead < bufferTail)
+			while (bufferTail - bufferHead >= 17)
 			{
-				switch (step)
+				CANFrame frame;
+
+				// пакет собран - положить пакет в очередь
+				if (CANParser::Parse(&bufferHead, frame))
 				{
-					// искомая сигнатура в буфере 0xAA55AA55 - это начало пакета, байт 0 = 0xAA
-					case 0:
-						if (*bufferHead == SIG_BYTE_0)
-						{
-							step++;
-						}
-						else
-						{
-							step = 0;
-						}
-						bufferHead++;
-						break;
-					
-					// поиск сигнатуры, байт 1 = 0x55
-					case 1:
-						if (*bufferHead == SIG_BYTE_1)
-						{
-							step++;
-							bufferHead++;
-						}
-						else
-						{
-							step = 0;
-						}
-						break;
+					syncCANBuffer.Lock();
+					canBuffer.push(frame);
+					syncCANBuffer.Unlock();
 
-					// поиск сигнатуры, байт 2 = 0xAA
-					case 2:
-						if (*bufferHead == SIG_BYTE_2)
-						{
-							step++;
-							bufferHead++;
-						}
-						else
-						{
-							step = 0;
-						}						
-						break;
-
-					// поиск сигнатуры, байт 3 = 0x55
-					case 3:
-						if (*bufferHead == SIG_BYTE_3)
-						{
-							step++;
-							bufferHead++;
-						}
-						else
-						{
-							step = 0;
-						}
-						break;
-
-					// ID пакета (байт 0)
-					case 4: 
-						frame = { 0 };
-						frame.ID = *bufferHead;
-						bufferHead++;
-						step++;
-						break;
-					
-					// ID пакета (байт 1)
-					case 5:
-						frame.ID |= (*bufferHead) << 8;
-						bufferHead++;
-						step++;
-						break;
-
-					// ID пакета (байт 2)
-					case 6:
-						frame.ID |= (*bufferHead) << 16;
-						bufferHead++;
-						step++;
-						break;
-
-					// ID пакета (байт 3)
-					case 7:
-						frame.ID |= (*bufferHead) << 24;
-						bufferHead++;
-						step++;
-						break;
-
-					// длина пакета
-					case 8:
-						frame.Length = *bufferHead;
-						bufferHead++;
-						step++;
-						if (frame.Length > 8)
-						{
-							// данные некорректные - возврат к поиску заголовка
-							step = 0;
-						}
-						break;
-
-					// данные пакета
-					case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16:
-						if (step - 9 < frame.Length)
-						{
-							frame.Data[step - 9] = *bufferHead;
-							bufferHead++;
-							step++;
-						}
-						else
-						{
-							step = 17;
-						}
-						break;
-
-					// пакет собран - положить пакет в очередь
-					case 17:
-						syncCANBuffer.Lock();
-						canBuffer.push(frame);
-						syncCANBuffer.Unlock();
-						step = 0;
-
-						// сгенерировать событие
-						wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_THREAD));
-						break;
+					// сгенерировать событие
+					wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_UPDATE));
 				}
 			}
-			
+
 			// если есть данные на отправку - отправить
 			if (frameToSend.Frame.ID != 0)
 			{
@@ -274,36 +165,41 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 				byte randomByte = rand() % 255;
 				WriteFile(hSerial, &randomByte, 1, &bytesWritten, NULL);
 			}*/
-			
-			// пауза потока после разбора всех данных для заполнения входного буфера данными
-			Sleep(READ_PAUSE);
 		}
 
 		if (hSerial && hSerial != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(hSerial);
-			hSerial = NULL;
+			hSerial = nullptr;
 		}
-
-		// очистка буферов
-		syncCANBuffer.Lock();
-		while (canBuffer.size() > 0)
-		{
-			canBuffer.pop();
-		}
-		syncCANBuffer.Unlock();
 	}
 
-	return FALSE;
+	// удалить буфер приёма сообщений
+	if (buffer)
+	{
+		delete[] buffer;
+		buffer = nullptr;
+	}
+
+	// очистка буферов
+	syncCANBuffer.Lock();
+	while (canBuffer.size() > 0)
+	{
+		canBuffer.pop();
+	}
+	syncCANBuffer.Unlock();
+
+	wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_EXIT));
+	return (wxThread::ExitCode)0;
 }
 
 // Возвращает очередной CAN-пакет из очереди
-bool ThreadedSerialPort::GetNextFrame(CANFrame* frame)
+bool ThreadedSerialPort::GetNextFrame(CANFrame& frame)
 {
 	wxMutexLocker lock(syncCANBuffer);
 	if (canBuffer.size() > 0)
 	{
-		*frame = canBuffer.front();
+		frame = canBuffer.front();
 		canBuffer.pop();
 		return true;
 	}
@@ -311,11 +207,11 @@ bool ThreadedSerialPort::GetNextFrame(CANFrame* frame)
 }
 
 // Отправить CAN-пакет
-void ThreadedSerialPort::SendFrame(CANFrame* frame)
+void ThreadedSerialPort::SendFrame(CANFrame& frame)
 {
 	// создаётся локальная копия пакета данных
 	wxMutexLocker lock(syncCANSend);
-	memcpy_s(&frameToSend.Frame, sizeof(CANFrame), frame, sizeof(CANFrame));
+	memcpy_s(&frameToSend.Frame, sizeof(CANFrame), &frame, sizeof(CANFrame));
 	// если понадобится - поменять порядок байтов в идентификаторе
 	//frameToSend.Frame.ID = SwapBytes(frameToSend.Frame.ID);
 }
@@ -324,7 +220,7 @@ void ThreadedSerialPort::SendFrame(CANFrame* frame)
 uint32_t ThreadedSerialPort::SwapBytes(uint32_t value)
 {
 	uint32_t revValue = value & 0xFF;
-	revValue = (revValue << 8) | ((value >> 8) & 0xFF);
+	revValue = (revValue << 8) | ((value >> 8)  & 0xFF);
 	revValue = (revValue << 8) | ((value >> 16) & 0xFF);
 	revValue = (revValue << 8) | ((value >> 24) & 0xFF);
 	return revValue;

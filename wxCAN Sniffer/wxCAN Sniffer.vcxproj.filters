@@ -8,14 +8,23 @@
     <Filter Include="Application">
       <UniqueIdentifier>{2f55588f-ec77-44f0-bb5a-0fc774e89c1e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="FormMain">
-      <UniqueIdentifier>{92c4ce81-ea60-47a9-add2-31c479a4ac5d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThreadedSerialPort">
-      <UniqueIdentifier>{10f2e7ca-17c5-4bb9-83be-82919fb200e5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resources">
       <UniqueIdentifier>{9ba22cad-36cd-40d0-a098-fbc090c857d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CAN Parser">
+      <UniqueIdentifier>{8561f078-4916-4e5a-a2e2-004ec6b9e614}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Threaded Serial Port">
+      <UniqueIdentifier>{10f2e7ca-17c5-4bb9-83be-82919fb200e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Form Main">
+      <UniqueIdentifier>{92c4ce81-ea60-47a9-add2-31c479a4ac5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Circular Frame Buffer">
+      <UniqueIdentifier>{3065a30f-51db-43c2-9485-8da34277dd12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FramesContainer">
+      <UniqueIdentifier>{92b6726b-8edd-4f09-a3cb-5bc1dcd60946}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -23,16 +32,25 @@
       <Filter>Application</Filter>
     </ClInclude>
     <ClInclude Include="FormMain.h">
-      <Filter>FormMain</Filter>
+      <Filter>Form Main</Filter>
     </ClInclude>
     <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ThreadedSerialPort.h">
-      <Filter>ThreadedSerialPort</Filter>
+      <Filter>Threaded Serial Port</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CANParser.h">
+      <Filter>CAN Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="CircularFrameBuffer.h">
+      <Filter>Circular Frame Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="FramesContainer.h">
+      <Filter>FramesContainer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -40,10 +58,19 @@
       <Filter>Application</Filter>
     </ClCompile>
     <ClCompile Include="FormMain.cpp">
-      <Filter>FormMain</Filter>
+      <Filter>Form Main</Filter>
     </ClCompile>
     <ClCompile Include="ThreadedSerialPort.cpp">
-      <Filter>ThreadedSerialPort</Filter>
+      <Filter>Threaded Serial Port</Filter>
+    </ClCompile>
+    <ClCompile Include="CANParser.cpp">
+      <Filter>CAN Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="CircularFrameBuffer.cpp">
+      <Filter>Circular Frame Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="FramesContainer.cpp">
+      <Filter>FramesContainer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
