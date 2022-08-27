@@ -1,6 +1,8 @@
 ﻿# wxCAN Sniffer
 CAN bus sniffer (PC side)
 
+Статья о проекте: https://habr.com/ru/post/479672/
+
 Используется wxWidgets 3.2.0 x64.
 
 ====  Компиляция wxWidgets  ====
