@@ -7,9 +7,6 @@
 
 #define DRAW_COLOR			0x0000FF	// red (BGR)
 #define TIMER_INTERVAL		40			// интервал срабатывания таймера обновления данных на экране (около 25 кадров/с)
-#define COM_NAME			wxT("COM3")	// последовательный порт по умолчанию
-#define UDP_PORT			0xAA55		// UDP порт
-#define UDP_BUFFER_SIZE		1000		// размер буфера приёма пакетов
 
 // Идентификаторы необходимых объектов
 enum IDs
