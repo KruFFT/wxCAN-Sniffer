@@ -8,13 +8,15 @@ bool CANParser::Parse(uint8_t** bufferHead, CANFrame& frame)
     {
         *bufferHead += 4;
         // сборка пакета
-        frame.ID = *(uint32_t*)*bufferHead;
+        frame.id = *(uint32_t*)*bufferHead;
         *bufferHead += 4;
-        frame.Length = *(*bufferHead)++;
-        if (frame.Length <= 8)
+        frame.interval = *(uint16_t*)*bufferHead;
+        *bufferHead += 2;
+        frame.length = *(*bufferHead)++;
+        if (frame.length <= 8)
         {
-            for (size_t iData = 0; iData < frame.Length; iData++)
-                frame.Data[iData] = *(*bufferHead)++;
+            for (size_t iData = 0; iData < frame.length; iData++)
+                frame.data[iData] = *(*bufferHead)++;
 
             return true;
         }

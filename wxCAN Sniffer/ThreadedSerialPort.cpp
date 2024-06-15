@@ -148,14 +148,14 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 			}
 
 			// если есть данные на отправку - отправить
-			if (frameToSend.Frame.ID != 0)
+			if (frameToSend.Frame.id != 0)
 			{
 				syncCANSend.Lock();
 				// 4 байта сигнатуры + 4 байта ID-пакета + 1 байт длина данных + сами данные
-				bytesToSend = 9 + frameToSend.Frame.Length;
+				bytesToSend = 9 + frameToSend.Frame.length;
 				WriteFile(hSerial, &frameToSend, bytesToSend, &bytesSent, NULL);
 				// после отправки - сбросить флаг наличия данных
-				frameToSend.Frame.ID = 0;
+				frameToSend.Frame.id = 0;
 				syncCANSend.Unlock();
 			}
 			/*else

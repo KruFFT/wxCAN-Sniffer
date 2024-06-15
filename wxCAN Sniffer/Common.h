@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define CAPTION		wxT("CAN Sniffer 2.0.0")
+#define CAPTION		wxT("CAN Sniffer 2.1.0")
 
 #define SIG_BYTE_0	0xAA
 #define SIG_BYTE_1	0x55
@@ -24,14 +24,19 @@ using namespace std;
 #define SIG_BYTE_3	0x55
 #define SIG_DWORD	(uint32_t)(SIG_BYTE_3 << 24 | SIG_BYTE_2 << 16 | SIG_BYTE_1 << 8 | SIG_BYTE_0)
 
+#define COM_NAME			wxT("COM6")	// последовательный порт по умолчанию
+#define UDP_PORT			0xAA55		// UDP порт
+#define UDP_BUFFER_SIZE		1000		// размер буфера приёма пакетов
+
 // CAN-пакет для отправки данных
 #pragma pack (push, 1)
 struct CANFrame
 {
 public:
-	uint32_t ID;		// идентификатор пакета
-	uint8_t  Length;	// длина пакета
-	uint8_t  Data[8];	// массив данных пакета, до 8 байт
+	uint32_t id;		// идентификатор пакета
+	uint16_t interval;	// интервал между пакетами (мс)
+	uint8_t  length;	// длина пакета
+	uint8_t  data[8];	// массив данных пакета, до 8 байт
 };
 #pragma pack(pop)
 
@@ -40,13 +45,13 @@ public:
 struct VisualCANFrame
 {
 public:
-	CANFrame Frame;			// пакет с данными
-	wxColour Color[8];		// цвет фона ячейки
+	CANFrame frame;			// пакет с данными
+	wxColour color[8];		// цвет фона ячейки
 
 	// оператор сравнения CAN-пакета необходим для сортировки
-	bool operator < (const VisualCANFrame& frame) const
+	bool operator < (const VisualCANFrame& anotherFrame) const
 	{
-		return (Frame.ID < frame.Frame.ID);
+		return (frame.id < anotherFrame.frame.id);
 	}
 };
 #pragma pack(pop)
@@ -65,6 +70,6 @@ public:
 struct LogFile
 {
 public:
-	uint32_t ID;			// идентификатор пакета
-	wxFFile* File;			// хэндл ассоциированного файла
+	uint32_t id;			// идентификатор пакета
+	wxFFile* file;			// хэндл ассоциированного файла
 };

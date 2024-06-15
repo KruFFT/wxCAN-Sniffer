@@ -32,7 +32,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 {
 	// иконка
 	this->SetIcon(wxICON(wxicon));
-	this->SetSizeHints(wxSize(940, 600));
+	this->SetSizeHints(wxSize(1110, 600));
 
 	// главный сайзер окна
 	wxBoxSizer* sizerMain = new wxBoxSizer(wxHORIZONTAL);
@@ -47,7 +47,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 		{
 			gridCANView = new wxGrid(panelLeftTop, ID_GRID_CAN_VIEW);
 			// параметры сетки
-			gridCANView->CreateGrid(0, 10);
+			gridCANView->CreateGrid(0, 11);
 			gridCANView->EnableEditing(false);
 			gridCANView->EnableGridLines(true);
 			gridCANView->EnableDragGridSize(false);
@@ -64,19 +64,20 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			gridCANView->SetDefaultCellAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
 			// заполнение таблицы
 			gridCANView->SetColLabelValue(0, wxT("CAN ID"));
-			gridCANView->SetColLabelValue(1, wxT("Длина"));
-			gridCANView->SetColLabelValue(2, wxT("Байт 0"));
-			gridCANView->SetColLabelValue(3, wxT("Байт 1"));
-			gridCANView->SetColLabelValue(4, wxT("Байт 2"));
-			gridCANView->SetColLabelValue(5, wxT("Байт 3"));
-			gridCANView->SetColLabelValue(6, wxT("Байт 4"));
-			gridCANView->SetColLabelValue(7, wxT("Байт 5"));
-			gridCANView->SetColLabelValue(8, wxT("Байт 6"));
-			gridCANView->SetColLabelValue(9, wxT("Байт 7"));
+			gridCANView->SetColLabelValue(1, wxT("Интервал"));
+			gridCANView->SetColLabelValue(2, wxT("Длина"));
+			gridCANView->SetColLabelValue(3, wxT("Байт 0"));
+			gridCANView->SetColLabelValue(4, wxT("Байт 1"));
+			gridCANView->SetColLabelValue(5, wxT("Байт 2"));
+			gridCANView->SetColLabelValue(6, wxT("Байт 3"));
+			gridCANView->SetColLabelValue(7, wxT("Байт 4"));
+			gridCANView->SetColLabelValue(8, wxT("Байт 5"));
+			gridCANView->SetColLabelValue(9, wxT("Байт 6"));
+			gridCANView->SetColLabelValue(10, wxT("Байт 7"));
 			// установка ширины столбцов
-			for (size_t iCol = 0; iCol < 10; iCol++)
+			for (size_t iCol = 0; iCol < 11; iCol++)
 			{
-				gridCANView->SetColSize(iCol, 50);
+				gridCANView->SetColSize(iCol, 60);
 			}
 			sizerLeftTop->Add(gridCANView, 1, wxEXPAND, 0);
 
@@ -543,11 +544,11 @@ void FormMain::ProcessCANFrame(CANFrame& frame)
 	bool found = false;
 
 	// если это пакет с адресом 000 - это статистика и её надо вывести отдельно
-	if (frame.ID == 0 && frame.Length >= 4)
+	if (frame.id == 0 && frame.length >= 4)
 	{
-		uint16_t fps = ((uint16_t)frame.Data[0] << 8) + (uint16_t)frame.Data[1];
+		uint16_t fps = ((uint16_t)frame.data[0] << 8) + (uint16_t)frame.data[1];
 		textFPS->SetValue(wxString::Format(wxT("%i"), fps));	// кадров в секунду
-		uint16_t bps = ((uint16_t)frame.Data[2] << 8) + (uint16_t)frame.Data[3];
+		uint16_t bps = ((uint16_t)frame.data[2] << 8) + (uint16_t)frame.data[3];
 		textBPS->SetValue(wxString::Format(wxT("%i"), bps));	// байтов в секунду
 	}
 	else
@@ -568,7 +569,7 @@ void FormMain::ProcessCANFrame(CANFrame& frame)
 		{
 			for (size_t iLog = 0; iLog < logFilterIDs.size(); iLog++)
 			{
-				if (frame.ID == logFilterIDs[iLog])
+				if (frame.id == logFilterIDs[iLog])
 				{
 					SaveToLog(frame);
 				}
@@ -576,21 +577,21 @@ void FormMain::ProcessCANFrame(CANFrame& frame)
 		}
 
 		// если ожидается ответ от этого ID - добавить его в список ответов
-		if (frame.ID == answerID)
+		if (frame.id == answerID)
 		{
 			int32_t lastRow = gridCANLog->GetNumberRows();
 			gridCANLog->InsertRows(lastRow);
 
-			gridCANLog->SetCellValue(lastRow, 0, wxString::Format(wxT("%03X"), frame.ID));
-			gridCANLog->SetCellValue(lastRow, 1, wxString::Format(wxT("%i"), frame.Length));
+			gridCANLog->SetCellValue(lastRow, 0, wxString::Format(wxT("%03X"), frame.id));
+			gridCANLog->SetCellValue(lastRow, 1, wxString::Format(wxT("%i"), frame.length));
 
 			// заполнение столбцов параметров
 			for (size_t iData = 0; iData < 8; iData++)
 			{
-				if (iData < frame.Length)
+				if (iData < frame.length)
 				{
 					// вывод данных
-					gridCANLog->SetCellValue(lastRow, iData + 2, wxString::Format(wxT("%02X"), frame.Data[iData]));
+					gridCANLog->SetCellValue(lastRow, iData + 2, wxString::Format(wxT("%02X"), frame.data[iData]));
 				}
 				else
 				{
@@ -616,8 +617,8 @@ void FormMain::ShowNumbers()
 		}
 
 		VisualCANFrame vFrame = frames.GetFrame(rowToView);
-		uint8_t firstByte = vFrame.Frame.Data[colToView];
-		uint8_t secondByte = colToView < 7 ? vFrame.Frame.Data[colToView + 1] : 0;
+		uint8_t firstByte = vFrame.frame.data[colToView];
+		uint8_t secondByte = colToView < 7 ? vFrame.frame.data[colToView + 1] : 0;
 
 		// выбор между big endian и little endian
 		uint32_t value = bigEndian ? (firstByte << 8) + secondByte : (secondByte << 8) + firstByte;
@@ -670,14 +671,14 @@ void FormMain::ButtonAdd_OnClick(wxCommandEvent& event)
 		bool found = false;
 		for (size_t iID = 0; iID < logFilterIDs.size(); iID++)
 		{
-			if (frames.GetFrame(rowToLog).Frame.ID == logFilterIDs[iID])
+			if (frames.GetFrame(rowToLog).frame.id == logFilterIDs[iID])
 			{
 				found = true;
 				break;
 			}
 		}
 		if (!found)
-			logFilterIDs.push_back(frames.GetFrame(rowToLog).Frame.ID);
+			logFilterIDs.push_back(frames.GetFrame(rowToLog).frame.id);
 	}
 
 	RefreshListLog();
@@ -789,10 +790,10 @@ void FormMain::SaveToLog(CANFrame& frame)
 			for (size_t iFile = 0; iFile < logFiles.size(); iFile++)
 			{
 				// проверка существования потока
-				if (logFiles[iFile].ID == frame.ID)
+				if (logFiles[iFile].id == frame.id)
 				{
 					// если файл для этого кадра уже существует - просто дописать в него данные
-					LogWriteLine(logFiles[iFile].File, frame);
+					LogWriteLine(logFiles[iFile].file, frame);
 
 					found = true;
 					break;
@@ -804,16 +805,16 @@ void FormMain::SaveToLog(CANFrame& frame)
 			{
 				try
 				{
-					wxString logPath = wxGetCwd() + wxT("\\CAN ID ") + wxString::Format(wxT("%03X"), frame.ID) + logExt;
+					wxString logPath = wxGetCwd() + wxT("\\CAN ID ") + wxString::Format(wxT("%03X"), frame.id) + logExt;
 
 					LogFile newLogFile = { 0 };
-					newLogFile.File = new wxFFile();
-					if (newLogFile.File->Open(logPath, wxT("a")))
+					newLogFile.file = new wxFFile();
+					if (newLogFile.file->Open(logPath, wxT("a")))
 					{
-						newLogFile.File->SeekEnd();
-						newLogFile.ID = frame.ID;
+						newLogFile.file->SeekEnd();
+						newLogFile.id = frame.id;
 						logFiles.push_back(newLogFile);
-						LogWriteLine(logFiles[logFiles.size() - 1].File, frame);
+						LogWriteLine(logFiles[logFiles.size() - 1].file, frame);
 					}
 				}
 				catch (...) {}
@@ -833,20 +834,20 @@ void FormMain::LogWriteLine(wxFFile* file, CANFrame& frame)
 	try
 	{
 		// идентификатор пакета и его длина
-		newLine += wxString::Format(wxT("%03X"), frame.ID) + logSeparator;
-		newLine += wxString::Format(wxT("%i"), frame.Length) + logSeparator;
+		newLine += wxString::Format(wxT("%03X"), frame.id) + logSeparator;
+		newLine += wxString::Format(wxT("%i"), frame.length) + logSeparator;
 		// данные пакета
-		for (size_t iData = 0; iData < frame.Length; iData++)
+		for (size_t iData = 0; iData < frame.length; iData++)
 		{
 			if (logDecimal)
 			{
 				// десятичный вывод
-				newLine += wxString::Format(wxT("%0i"), frame.Data[iData]) + logSeparator;
+				newLine += wxString::Format(wxT("%0i"), frame.data[iData]) + logSeparator;
 			}
 			else
 			{
 				// шестнадцатиричный вывод
-				newLine += wxString::Format(wxT("%02X"), frame.Data[iData]) + logSeparator;
+				newLine += wxString::Format(wxT("%02X"), frame.data[iData]) + logSeparator;
 			}
 		}
 
@@ -855,7 +856,7 @@ void FormMain::LogWriteLine(wxFFile* file, CANFrame& frame)
 		if (logASCII)
 		{
 			// дополнить строку разделителями для выравнивания
-			for (size_t iData = frame.Length; iData < 8; iData++)
+			for (size_t iData = frame.length; iData < 8; iData++)
 			{
 				newLine += logSeparator;
 			}
@@ -863,11 +864,11 @@ void FormMain::LogWriteLine(wxFFile* file, CANFrame& frame)
 
 			// добавить ASCII данные из пакета
 			buf = newLine.ToStdString();
-			for (size_t iData = 0; iData < frame.Length; iData++)
+			for (size_t iData = 0; iData < frame.length; iData++)
 			{
-				if (frame.Data[iData] > 0x1F)
+				if (frame.data[iData] > 0x1F)
 				{
-					buf += frame.Data[iData];
+					buf += frame.data[iData];
 				}
 				else
 				{
@@ -894,10 +895,10 @@ void FormMain::FlushLogs()
 	// сбросить данные на диск для массива логов
 	for (size_t iFile = 0; iFile < logFiles.size(); iFile++)
 	{
-		logFiles[iFile].File->Flush();
-		logFiles[iFile].File->Close();
-		delete logFiles[iFile].File;
-		logFiles[iFile].File = nullptr;
+		logFiles[iFile].file->Flush();
+		logFiles[iFile].file->Close();
+		delete logFiles[iFile].file;
+		logFiles[iFile].file = nullptr;
 	}
 
 	// сохранить всё, если лог один
@@ -984,27 +985,28 @@ void FormMain::RefreshGridCANView()
 
 	for (size_t iFrame = 0; iFrame < framesCount; iFrame++)
 	{
-		// вывод ID и длины пакета
+		// вывод ID, интервала и длины пакета
 		VisualCANFrame vFrame = frames.GetFrame(iFrame);
-		gridCANView->SetCellValue(iFrame, 0, wxString::Format(wxT("%03X"), vFrame.Frame.ID));
-		gridCANView->SetCellValue(iFrame, 1, wxString::Format(wxT("%i"), vFrame.Frame.Length));
+		gridCANView->SetCellValue(iFrame, 0, wxString::Format(wxT("%03X"), vFrame.frame.id));
+		gridCANView->SetCellValue(iFrame, 1, wxString::Format(wxT("%i"), vFrame.frame.interval));
+		gridCANView->SetCellValue(iFrame, 2, wxString::Format(wxT("%i"), vFrame.frame.length));
 
 		// заполнение столбцов данных
 		for (size_t iData = 0; iData < 8; iData++)
 		{
-			if (iData < vFrame.Frame.Length)
+			if (iData < vFrame.frame.length)
 			{
 				// вывод данных
-				gridCANView->SetCellValue(iFrame, iData + 2, wxString::Format(wxT("%02X"), vFrame.Frame.Data[iData]));
-				gridCANView->SetCellBackgroundColour(iFrame, iData + 2, vFrame.Color[iData]);
+				gridCANView->SetCellValue(iFrame, iData + 3, wxString::Format(wxT("%02X"), vFrame.frame.data[iData]));
+				gridCANView->SetCellBackgroundColour(iFrame, iData + 3, vFrame.color[iData]);
 			}
 			else
 			{
 				// вывод пустых ячеек
-				gridCANView->SetCellValue(iFrame, iData + 2, wxT(" "));
-				gridCANView->SetCellBackgroundColour(iFrame, iData + 2, wxColor(DEFAULT_COLOR));
+				gridCANView->SetCellValue(iFrame, iData + 3, wxT(" "));
+				gridCANView->SetCellBackgroundColour(iFrame, iData + 3, wxColor(DEFAULT_COLOR));
 			}
-			gridCANView->RefreshBlock(iFrame, 2, iFrame, 9);
+			gridCANView->RefreshBlock(iFrame, 3, iFrame, 9);
 		}
 	}
 }
@@ -1079,61 +1081,61 @@ void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
 	// ID пакета
 	textCANID->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0x7FFF)
-		frame.ID = (uint32_t)tempValue;
+		frame.id = (uint32_t)tempValue;
 	else
 		return;
 	// длина данных пакета
 	textCANLength->GetValue().ToLong(&tempValue, 10);
 	if (tempValue >= 0 && tempValue <= 8)
-		frame.Length = (uint8_t)tempValue;
+		frame.length = (uint8_t)tempValue;
 	else
 		return;
 	// байт 1
 	textCANByte1->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[0] = (uint8_t)tempValue;
+		frame.data[0] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 2
 	textCANByte2->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[1] = (uint8_t)tempValue;
+		frame.data[1] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 3
 	textCANByte3->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[2] = (uint8_t)tempValue;
+		frame.data[2] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 4
 	textCANByte4->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[3] = (uint8_t)tempValue;
+		frame.data[3] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 5
 	textCANByte5->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[4] = (uint8_t)tempValue;
+		frame.data[4] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 6
 	textCANByte6->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[5] = (uint8_t)tempValue;
+		frame.data[5] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 7
 	textCANByte7->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[6] = (uint8_t)tempValue;
+		frame.data[6] = (uint8_t)tempValue;
 	else
 		return;
 	// байт 8
 	textCANByte8->GetValue().ToLong(&tempValue, 16);
 	if (tempValue >= 0 && tempValue <= 0xFF)
-		frame.Data[7] = (uint8_t)tempValue;
+		frame.data[7] = (uint8_t)tempValue;
 	else
 		return;
 	// запомнить ID пакета, от которого ожидается ответ
