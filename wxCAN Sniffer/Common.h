@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define CAPTION		wxT("CAN Sniffer 2.1.0")
+#define CAPTION		wxT("CAN Sniffer 2.1.1")
 
 #define SIG_BYTE_0	0xAA
 #define SIG_BYTE_1	0x55
@@ -27,16 +27,17 @@ using namespace std;
 #define COM_NAME			wxT("COM6")	// последовательный порт по умолчанию
 #define UDP_PORT			0xAA55		// UDP порт
 #define UDP_BUFFER_SIZE		1000		// размер буфера приёма пакетов
+#define CAN_DATA_MINIMAL	19			// мнимальный размер данных для парсера: сигнатура (4 байта) + ID пакета (4 байта) + интервал (2 байта) + длина (1 байт) + данные (8 байт) = 19 байт
 
 // CAN-пакет для отправки данных
 #pragma pack (push, 1)
-struct CANFrame
+struct CANFrameIn
 {
 public:
-	uint32_t id;		// идентификатор пакета
-	uint16_t interval;	// интервал между пакетами (мс)
-	uint8_t  length;	// длина пакета
-	uint8_t  data[8];	// массив данных пакета, до 8 байт
+	uint32_t id;			// идентификатор пакета
+	uint16_t interval;		// интервал между пакетами (мс)
+	uint8_t  length;		// длина пакета
+	uint8_t  data[8];		// массив данных пакета, до 8 байт
 };
 #pragma pack(pop)
 
@@ -45,7 +46,7 @@ public:
 struct VisualCANFrame
 {
 public:
-	CANFrame frame;			// пакет с данными
+	CANFrameIn frame;		// пакет с данными
 	wxColour color[8];		// цвет фона ячейки
 
 	// оператор сравнения CAN-пакета необходим для сортировки
@@ -57,12 +58,23 @@ public:
 #pragma pack(pop)
 
 // CAN-пакет для отправки данных
+// CAN-пакет для отправки данных
+#pragma pack (push, 1)
+struct CANFrameOut
+{
+public:
+	uint32_t id;			// идентификатор пакета
+	uint8_t  length;		// длина пакета
+	uint8_t  data[8];		// массив данных пакета, до 8 байт
+};
+#pragma pack(pop)
+
 #pragma pack (push, 1)
 struct SendCANFrame
 {
 public:
 	uint32_t Signature = SIG_DWORD;
-	CANFrame Frame;			// пакет для отправки
+	CANFrameOut Frame;		// пакет для отправки
 };
 #pragma pack(pop)
 

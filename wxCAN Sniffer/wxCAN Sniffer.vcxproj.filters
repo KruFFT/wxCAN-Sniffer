@@ -83,4 +83,9 @@
       <Filter>Resources</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="wxCAN Sniffer.manifest">
+      <Filter>Resources</Filter>
+    </Manifest>
+  </ItemGroup>
 </Project>

@@ -18,8 +18,8 @@ public:
 	ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxFrame* handleWindow);
 	~ThreadedSerialPort();
 
-	bool GetNextFrame(CANFrame& frame);
-	void SendFrame(CANFrame& frame);
+	bool GetNextFrame(CANFrameIn& frame);
+	void SendFrame(CANFrameOut& frame);
 
 	HANDLE hSerial = INVALID_HANDLE_VALUE;	// хэндл открытого последовательного порта
 
@@ -32,6 +32,6 @@ private:
 	wxFrame* handleFrame = nullptr;		// указатель на окно для генерации события для него
 
 	uint8_t* buffer = nullptr;			// байтовый буфер поледовательного порта
-	queue<CANFrame> canBuffer;			// буфер полученных CAN-пакетов
+	queue<CANFrameIn> canBuffer;			// буфер полученных CAN-пакетов
 	SendCANFrame frameToSend;			// CAN-пакет для отправки в CAN-сеть
 };

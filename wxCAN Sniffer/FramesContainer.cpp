@@ -20,7 +20,7 @@ void FramesContainer::Clear()
 }
 
 // Добавить данные нового CAN-пакет с раскраской его данных в таблицу
-void FramesContainer::AddFrame(CANFrame& frame)
+void FramesContainer::AddFrame(CANFrameIn& frame)
 {
 	// поиск ID в таблице
 	size_t idCount = frames.size();

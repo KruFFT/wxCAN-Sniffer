@@ -13,7 +13,7 @@ public:
 	~FramesContainer();
 
 	void Clear();
-	void AddFrame(CANFrame& frame);
+	void AddFrame(CANFrameIn& frame);
 	size_t Size();
 	VisualCANFrame GetFrame(size_t index);
 

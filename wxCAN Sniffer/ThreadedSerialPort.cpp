@@ -131,9 +131,9 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 			}
 
 			// поиск CAN-пакета и формирование данных
-			while (bufferTail - bufferHead >= 17)
+			while (bufferTail - bufferHead >= CAN_DATA_MINIMAL)
 			{
-				CANFrame frame;
+				CANFrameIn frame;
 
 				// пакет собран - положить пакет в очередь
 				if (CANParser::Parse(&bufferHead, frame))
@@ -194,7 +194,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 }
 
 // Возвращает очередной CAN-пакет из очереди
-bool ThreadedSerialPort::GetNextFrame(CANFrame& frame)
+bool ThreadedSerialPort::GetNextFrame(CANFrameIn& frame)
 {
 	wxMutexLocker lock(syncCANBuffer);
 	if (canBuffer.size() > 0)
@@ -207,11 +207,11 @@ bool ThreadedSerialPort::GetNextFrame(CANFrame& frame)
 }
 
 // Отправить CAN-пакет
-void ThreadedSerialPort::SendFrame(CANFrame& frame)
+void ThreadedSerialPort::SendFrame(CANFrameOut& frame)
 {
 	// создаётся локальная копия пакета данных
 	wxMutexLocker lock(syncCANSend);
-	memcpy_s(&frameToSend.Frame, sizeof(CANFrame), &frame, sizeof(CANFrame));
+	memcpy_s(&frameToSend.Frame, sizeof(CANFrameIn), &frame, sizeof(CANFrameIn));
 	// если понадобится - поменять порядок байтов в идентификаторе
 	//frameToSend.Frame.ID = SwapBytes(frameToSend.Frame.ID);
 }

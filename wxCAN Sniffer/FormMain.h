@@ -141,15 +141,15 @@ private:
 	wxDatagramSocket* UDP = nullptr;	// UDP-сокет
 	wxIPV4address espIpAddress;			// запомненый адрес ESP8266
 
-	void ProcessCANFrame(CANFrame& frame);
+	void ProcessCANFrame(CANFrameIn& frame);
 	void RefreshGridCANView();
 	void RefreshListLog();
-	void SaveToLog(CANFrame& frame);
+	void SaveToLog(CANFrameIn& frame);
 	void FlushLogs();
-	void LogWriteLine(wxFFile* file, CANFrame& frame);
+	void LogWriteLine(wxFFile* file, CANFrameIn& frame);
 	wxString ToBinary(uint8_t value);
 	void ShowNumbers();
-	void UDPSocket_SendFrame(CANFrame& frame);
+	void UDPSocket_SendFrame(CANFrameOut& frame);
 
 	wxDECLARE_EVENT_TABLE();
 };
