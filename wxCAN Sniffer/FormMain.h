@@ -84,8 +84,8 @@ private:
 	wxButton* buttonSend;
 	wxTextCtrl* textCANAnswerID;
 	wxButton* buttonClearCANLog;
-	wxTextCtrl* textCOM;
-	wxComboBox* comboBoxSpeed;
+	wxComboBox* comboBoxSerialPort;
+	wxComboBox* comboBoxSerialSpeed;
 	wxTextCtrl* textFPS;
 	wxTextCtrl* textBPS;
 	wxButton* buttonConnectDisconnect;

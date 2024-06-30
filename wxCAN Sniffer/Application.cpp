@@ -8,7 +8,7 @@ bool Application::OnInit()
 		//locale.AddCatalog(GetAppDir() + wxT("\\myapp"));
 	}
 
-	FormMain* form = new FormMain();
+	auto form = new FormMain();
 	form->Show(true);
 	SetTopWindow(form);
 
