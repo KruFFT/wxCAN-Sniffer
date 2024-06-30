@@ -79,6 +79,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			{
 				gridCANView->SetColSize(iCol, this->FromDIP(60));
 			}
+			gridCANView->SetSelectionMode(wxGrid::wxGridSelectionModes::wxGridSelectNone);
 			sizerLeftTop->Add(gridCANView, 1, wxEXPAND, 0);
 
 			panelLeftTop->SetSizer(sizerLeftTop);
@@ -168,6 +169,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			{
 				gridCANLog->SetColSize(iCol, this->FromDIP(60));
 			}
+			gridCANLog->SetSelectionMode(wxGrid::wxGridSelectionModes::wxGridSelectNone);
 			sizerLeftBottom->Add(gridCANLog, 1, wxEXPAND, 0);
 
 			panelLeftBottom->SetSizer(sizerLeftBottom);
@@ -609,7 +611,7 @@ void FormMain::ProcessCANFrame(CANFrameIn& frame)
 void FormMain::ShowNumbers()
 {
 	if (rowToView >= 0 && colToView >= 0)
-	{
+	{			
 		// если полученных данных ещё нет
 		if (rowToView >= frames.Size())
 		{
@@ -975,42 +977,51 @@ void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 // Обновить данные CAN-пакетов в таблице, вызывается по таймеру
 void FormMain::RefreshGridCANView()
 {
-	size_t framesCount = frames.Size();
+	size_t framesAmount = frames.Size();
 
 	// заполнить таблицу строками
-	while (gridCANView->GetNumberRows() < framesCount)
+	while (gridCANView->GetNumberRows() < framesAmount)
 	{
 		gridCANView->InsertRows(0);
-	}
-
-	for (size_t iFrame = 0; iFrame < framesCount; iFrame++)
+	}	
+	if (framesAmount > 0)
 	{
-		// вывод ID, интервала и длины пакета
-		VisualCANFrame vFrame = frames.GetFrame(iFrame);
-		gridCANView->SetCellValue(iFrame, 0, wxString::Format(wxT("%03X"), vFrame.frame.id));
-		gridCANView->SetCellValue(iFrame, 1, wxString::Format(wxT("%i"), vFrame.frame.interval));
-		gridCANView->SetCellValue(iFrame, 2, wxString::Format(wxT("%i"), vFrame.frame.length));
-
-		// заполнение столбцов данных
-		for (size_t iData = 0; iData < 8; iData++)
+		for (size_t iFrame = 0; iFrame < framesAmount; iFrame++)
 		{
-			if (iData < vFrame.frame.length)
+			// вывод ID, интервала и длины пакета
+			VisualCANFrame vFrame = frames.GetFrame(iFrame);
+			gridCANView->SetCellValue(iFrame, 0, wxString::Format(wxT("%03X"), vFrame.frame.id));
+			gridCANView->SetCellValue(iFrame, 1, wxString::Format(wxT("%i"), vFrame.frame.interval));
+			gridCANView->SetCellValue(iFrame, 2, wxString::Format(wxT("%i"), vFrame.frame.length));
+
+			// заполнение столбцов данных
+			for (size_t iData = 0; iData < 8; iData++)
 			{
-				// вывод данных
-				gridCANView->SetCellValue(iFrame, iData + 3, wxString::Format(wxT("%02X"), vFrame.frame.data[iData]));
-				gridCANView->SetCellBackgroundColour(iFrame, iData + 3, vFrame.color[iData]);
-			}
-			else
-			{
-				// вывод пустых ячеек
-				gridCANView->SetCellValue(iFrame, iData + 3, wxT(" "));
-				gridCANView->SetCellBackgroundColour(iFrame, iData + 3, wxColor(DEFAULT_COLOR));
+				if (iData < vFrame.frame.length)
+				{
+					// вывод данных с их фоновым цветом
+					gridCANView->SetCellValue(iFrame, iData + 3, wxString::Format(wxT("%02X"), vFrame.frame.data[iData]));
+					gridCANView->SetCellBackgroundColour(iFrame, iData + 3, vFrame.color[iData]);
+				}
+				else
+				{
+					// вывод пустых ячеек
+					gridCANView->SetCellValue(iFrame, iData + 3, wxT(" "));
+					gridCANView->SetCellBackgroundColour(iFrame, iData + 3, wxColor(DEFAULT_COLOR));
+				}
 			}
 		}
-	}
-	if (framesCount > 0)
-	{
-		gridCANView->RefreshBlock(0, 0, framesCount - 1, 10);
+		// раскраска выделенных ячеек
+		if (colToView >= 0)
+		{
+			gridCANView->SetCellBackgroundColour(rowToView, colToView + 3, wxColor(SELECTED_COLOR));
+			if (colToView < 7)
+			{
+				gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, wxColor(SELECTED_COLOR));
+			}
+		}
+		// обновить отображение таблицы
+		gridCANView->RefreshBlock(0, 0, framesAmount - 1, 10);
 	}
 }
 
