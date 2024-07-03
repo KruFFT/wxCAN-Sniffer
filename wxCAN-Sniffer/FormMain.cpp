@@ -675,7 +675,7 @@ void FormMain::TextDecWordMul_OnEnter(wxCommandEvent& event)
 	drawMaxValue = 0;
 }
 
-// Добавить ID в список фильра для записи в log
+// Добавить ID в список фильтра для записи в log
 void FormMain::ButtonAdd_OnClick(wxCommandEvent& event)
 {
 	if (rowToLog >= 0 && (int)frames.Size() > rowToLog)
@@ -857,7 +857,7 @@ void FormMain::LogWriteLine(wxFFile* file, CANFrameIn& frame)
 			}
 			else
 			{
-				// шестнадцатиричный вывод
+				// шестнадцатеричный вывод
 				newLine += wxString::Format(FORMAT_HEX2, frame.data[iData]) + logSeparator;
 			}
 		}

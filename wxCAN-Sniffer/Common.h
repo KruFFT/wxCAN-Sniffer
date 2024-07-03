@@ -1,6 +1,9 @@
 ﻿#pragma once
 
-#include <wx/wxprec.h>
+//#include <wx/wxprec.h>
+//#ifndef WX_PRECOMP
+	#include <wx/wx.h>
+//#endif
 #include <wx/grid.h>
 #include <wx/splitter.h>
 #include <wx/ffile.h>
@@ -24,9 +27,9 @@ using namespace std;
 #define SIG_BYTE_3	0x55
 #define SIG_DWORD	(uint32_t)(SIG_BYTE_3 << 24 | SIG_BYTE_2 << 16 | SIG_BYTE_1 << 8 | SIG_BYTE_0)
 
-#define UDP_PORT			0xAA55		// UDP порт
-#define UDP_BUFFER_SIZE		1000		// размер буфера приёма пакетов
-#define CAN_DATA_MINIMAL	19			// мнимальный размер данных для парсера: сигнатура (4 байта) + ID пакета (4 байта) + интервал (2 байта) + длина (1 байт) + данные (8 байт) = 19 байт
+#define UDP_PORT			0xAA55	// UDP порт
+#define UDP_BUFFER_SIZE		1000	// размер буфера приёма пакетов
+#define CAN_DATA_MINIMAL	19		// минимальный размер данных для парсера: сигнатура (4 байта) + ID пакета (4 байта) + интервал (2 байта) + длина (1 байт) + данные (8 байт) = 19 байт
 
 // CAN-пакет для приёма данных
 #pragma pack (push, 1)
@@ -84,23 +87,23 @@ public:
 	wxFFile* file;			// хэндл ассоциированного файла
 };
 
-#define CONNECT							wxT("Подключить")
-#define DISCONNECT						wxT("Отключить")
+#define CONNECT						wxT("Подключить")
+#define DISCONNECT					wxT("Отключить")
 
-#define FORMAT_HEX2						wxT("%02X")
-#define FORMAT_HEX3						wxT("%03X")
-#define FORMAT_HEX8						wxT("%08X")
-#define FORMAT_INT						wxT("%i")
-#define FORMAT_INT0						wxT("%0i")
-#define FORMAT_INT3						wxT("%03i")
-#define FORMAT_FLOAT					wxT("%1.6f")
+#define FORMAT_HEX2					wxT("%02X")
+#define FORMAT_HEX3					wxT("%03X")
+#define FORMAT_HEX8					wxT("%08X")
+#define FORMAT_INT					wxT("%i")
+#define FORMAT_INT0					wxT("%0i")
+#define FORMAT_INT3					wxT("%03i")
+#define FORMAT_FLOAT				wxT("%1.6f")
 
-#define ERROR_CAPTION					wxT("Ошибка")
-#define ERROR_SERIAL_GET_PARAMETERS		wxT("Невозможно получить параметры порта.\nОшибка: ")
-#define ERROR_SERIAL_SET_PARAMETERS		wxT("Невозможно установить параметры порта.\nОшибка: ")
-#define ERROR_SERIAL_SET_TIMEOUTS		wxT("Невозможно установить тайм-ауты порта.\nОшибка: ")
-#define ERROR_SERIAL					wxT("Невозможно работать с этим последовательным портом")
-#define ERROR_UDP_OPEN					wxT("Ошибка открытия UDP-сокета: "
+#define ERROR_CAPTION				wxT("Ошибка")
+#define ERROR_SERIAL_GET_PARAMETERS	wxT("Невозможно получить параметры порта.\nОшибка: ")
+#define ERROR_SERIAL_SET_PARAMETERS	wxT("Невозможно установить параметры порта.\nОшибка: ")
+#define ERROR_SERIAL_SET_TIMEOUTS	wxT("Невозможно установить тайм-ауты порта.\nОшибка: ")
+#define ERROR_SERIAL				wxT("Невозможно работать с этим последовательным портом")
+#define ERROR_UDP_OPEN				wxT("Ошибка открытия UDP-сокета: "
 
-#define ERROR_THREAD_CREATE				"Невозможно создать поток"
-#define ERROR_THREAD_START				"Невозможно запустить поток"
+#define ERROR_THREAD_CREATE			"Невозможно создать поток"
+#define ERROR_THREAD_START			"Невозможно запустить поток"

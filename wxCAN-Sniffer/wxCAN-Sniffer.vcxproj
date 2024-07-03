@@ -23,6 +23,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>wxCANSniffer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>wxCAN-Sniffer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -179,13 +180,13 @@
     <ClCompile Include="ThreadedSerialPort.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="wxCAN Sniffer.rc" />
+    <ResourceCompile Include="wxCAN-Sniffer.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="CAN.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="wxCAN Sniffer.manifest" />
+    <Manifest Include="wxCAN-Sniffer.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

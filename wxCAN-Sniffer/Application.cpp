@@ -5,7 +5,7 @@ bool Application::OnInit()
 {
 	if (locale.Init())
 	{
-		//locale.AddCatalog(GetAppDir() + wxT("\\myapp"));
+		//locale.AddCatalog(GetAppDir() + wxT("\\."));
 	}
 
 	auto form = new FormMain();
