@@ -2,6 +2,8 @@
 
 #include "Common.h"
 #include "CANParser.h"
+#include <SetupAPI.h>
+#pragma comment(lib, "SetupAPI.lib")
 
 #define BUFFERLEN	1000000				// ёмкость буфера приёма данных
 
@@ -18,10 +20,20 @@ public:
 	ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxFrame* handleWindow);
 	~ThreadedSerialPort();
 
-	bool GetNextFrame(CANFrame& frame);
-	void SendFrame(CANFrame& frame);
+	bool GetNextFrame(CANFrameIn& frame);
+	void SendFrame(CANFrameOut& frame);
 
 	HANDLE hSerial = INVALID_HANDLE_VALUE;	// хэндл открытого последовательного порта
+
+	struct Information					// струтура описания последовательного порта
+	{
+	public:
+		wxString Port;
+		wxString HardwareID;
+		wxString Description;
+	};
+
+	static vector<Information> Enumerate();
 
 private:
 	virtual void* Entry();
@@ -32,6 +44,6 @@ private:
 	wxFrame* handleFrame = nullptr;		// указатель на окно для генерации события для него
 
 	uint8_t* buffer = nullptr;			// байтовый буфер поледовательного порта
-	queue<CANFrame> canBuffer;			// буфер полученных CAN-пакетов
+	queue<CANFrameIn> canBuffer;		// буфер полученных CAN-пакетов
 	SendCANFrame frameToSend;			// CAN-пакет для отправки в CAN-сеть
 };

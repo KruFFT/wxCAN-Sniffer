@@ -5,10 +5,10 @@ bool Application::OnInit()
 {
 	if (locale.Init())
 	{
-		//locale.AddCatalog(GetAppDir() + wxT("\\myapp"));
+		//locale.AddCatalog(GetAppDir() + wxT("\\."));
 	}
 
-	FormMain* form = new FormMain();
+	auto form = new FormMain();
 	form->Show(true);
 	SetTopWindow(form);
 

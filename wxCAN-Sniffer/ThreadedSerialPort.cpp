@@ -6,7 +6,7 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxF
 	// создать новый поток
 	if (this->Create() != wxTHREAD_NO_ERROR)
 	{
-		throw new exception("Невозможно создать поток");
+		throw new exception(ERROR_THREAD_CREATE);
 	}
 
 	portName = wxT("\\\\.\\") + serialPort;
@@ -14,10 +14,10 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxF
 	handleFrame = handleWindow;
 
 	// запустить новый поток
-	wxThreadError runError = this->Run();
+	auto runError = this->Run();
 	if (runError != wxTHREAD_NO_ERROR)
 	{
-		throw new exception("Невозможно запустить поток");
+		throw new exception(ERROR_THREAD_START);
 	}
 }
 
@@ -54,7 +54,8 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 		if (!GetCommState(hSerial, &dcbSerialParams))
 		{
-			throw new exception("Невозможно получить параметры порта");
+			wxMessageBox(ERROR_SERIAL_GET_PARAMETERS + wxString::Format(FORMAT_HEX8, GetLastError()), ERROR_CAPTION, wxICON_ERROR);
+			return (wxThread::ExitCode)0;
 		}
 		dcbSerialParams.BaudRate = baudRate;
 		dcbSerialParams.ByteSize = 8;
@@ -62,7 +63,8 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 		dcbSerialParams.Parity = NOPARITY;
 		if (!SetCommState(hSerial, &dcbSerialParams))
 		{
-			throw new exception("Невозможно установить параметры порта");
+			wxMessageBox(ERROR_SERIAL_SET_PARAMETERS + wxString::Format(FORMAT_HEX8, GetLastError()), ERROR_CAPTION, wxICON_ERROR);
+			return (wxThread::ExitCode)0;
 		}
 
 		COMMTIMEOUTS commTimeouts = { 0 };
@@ -74,7 +76,8 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 
 		if (!SetCommTimeouts(hSerial, &commTimeouts))
 		{
-			throw new exception("Невозможно установить тайм-ауты порта");
+			wxMessageBox(ERROR_SERIAL_SET_TIMEOUTS + wxString::Format(FORMAT_HEX8, GetLastError()), ERROR_CAPTION, wxICON_ERROR);
+			return (wxThread::ExitCode)0;
 		}
 
 		PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR);
@@ -131,9 +134,9 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 			}
 
 			// поиск CAN-пакета и формирование данных
-			while (bufferTail - bufferHead >= 17)
+			while (bufferTail - bufferHead >= CAN_DATA_MINIMAL)
 			{
-				CANFrame frame;
+				CANFrameIn frame;
 
 				// пакет собран - положить пакет в очередь
 				if (CANParser::Parse(&bufferHead, frame))
@@ -194,7 +197,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 }
 
 // Возвращает очередной CAN-пакет из очереди
-bool ThreadedSerialPort::GetNextFrame(CANFrame& frame)
+bool ThreadedSerialPort::GetNextFrame(CANFrameIn& frame)
 {
 	wxMutexLocker lock(syncCANBuffer);
 	if (canBuffer.size() > 0)
@@ -207,11 +210,11 @@ bool ThreadedSerialPort::GetNextFrame(CANFrame& frame)
 }
 
 // Отправить CAN-пакет
-void ThreadedSerialPort::SendFrame(CANFrame& frame)
+void ThreadedSerialPort::SendFrame(CANFrameOut& frame)
 {
 	// создаётся локальная копия пакета данных
 	wxMutexLocker lock(syncCANSend);
-	memcpy_s(&frameToSend.Frame, sizeof(CANFrame), &frame, sizeof(CANFrame));
+	memcpy_s(&frameToSend.Frame, sizeof(CANFrameIn), &frame, sizeof(CANFrameIn));
 	// если понадобится - поменять порядок байтов в идентификаторе
 	//frameToSend.Frame.ID = SwapBytes(frameToSend.Frame.ID);
 }
@@ -224,4 +227,55 @@ uint32_t ThreadedSerialPort::SwapBytes(uint32_t value)
 	revValue = (revValue << 8) | ((value >> 16) & 0xFF);
 	revValue = (revValue << 8) | ((value >> 24) & 0xFF);
 	return revValue;
+}
+
+vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
+{
+	vector<Information> ports;
+
+	HDEVINFO hDevicesInformation = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_COMPORT, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+	if (hDevicesInformation != INVALID_HANDLE_VALUE)
+	{
+		SP_DEVINFO_DATA devicesInformation;
+		devicesInformation.cbSize = sizeof(SP_DEVINFO_DATA);
+
+		for (size_t index = 0; SetupDiEnumDeviceInfo(hDevicesInformation, index, &devicesInformation); index++)
+		{
+			ThreadedSerialPort::Information information;
+
+			// название порта            
+			auto hRegKey = SetupDiOpenDevRegKey(hDevicesInformation, &devicesInformation, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+			if (hRegKey != INVALID_HANDLE_VALUE)
+			{
+				wxChar port[256] = { 0 };
+				DWORD dwSize = 255;
+				auto registryResult = RegQueryValueEx(hRegKey, wxT("PortName"), NULL, NULL, (BYTE*)port, &dwSize);
+				if (registryResult == ERROR_SUCCESS)
+				{
+					RegCloseKey(hRegKey);
+					information.Port = port;
+
+					// идентификатор оборудования
+					wxChar hardwareId[256] = { 0 };
+					if (SetupDiGetDeviceRegistryProperty(hDevicesInformation, &devicesInformation, SPDRP_HARDWAREID, NULL, (PBYTE)hardwareId, sizeof(hardwareId), NULL))
+					{
+						information.HardwareID = hardwareId;
+					}
+
+					// полное название
+					wxChar description[256] = { 0 };
+					if (SetupDiGetDeviceRegistryProperty(hDevicesInformation, &devicesInformation, SPDRP_FRIENDLYNAME, NULL, (PBYTE)description, sizeof(description), NULL))
+					{
+						information.Description = description;
+					}
+
+					ports.push_back(information);
+				}
+			}
+		}
+
+		SetupDiDestroyDeviceInfoList(hDevicesInformation);
+	}
+
+	return ports;
 }

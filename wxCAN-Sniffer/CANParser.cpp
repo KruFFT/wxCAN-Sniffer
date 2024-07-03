@@ -1,7 +1,7 @@
 ﻿#include "CANParser.h"
 
-// Собрать CAN-пакет из входящего потока байтов (контроль границ вне этого кода, должно быть не менее 17 байт данных)
-bool CANParser::Parse(uint8_t** bufferHead, CANFrame& frame)
+// Собрать CAN-пакет из входящего потока байтов (контроль границ вне этого кода, должно быть не менее CAN_DATA_MINIMAL байт данных)
+bool CANParser::Parse(uint8_t** bufferHead, CANFrameIn& frame)
 {
     // поиск сигнатуры в потоке байтов
     if (*(uint32_t*)*bufferHead == SIG_DWORD)

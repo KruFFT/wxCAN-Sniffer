@@ -20,13 +20,13 @@ void FramesContainer::Clear()
 }
 
 // Добавить данные нового CAN-пакет с раскраской его данных в таблицу
-void FramesContainer::AddFrame(CANFrame& frame)
+void FramesContainer::AddFrame(CANFrameIn& frame)
 {
 	// поиск ID в таблице
 	size_t idCount = frames.size();
 	for (size_t iID = 0; iID < idCount; iID++)
 	{
-		// если найден - выделить яркостью цета изменяющиеся данные и заменить CAN-пакет
+		// если найден - выделить яркостью цвета изменяющиеся данные и заменить CAN-пакет
 		if (frames[iID].frame.id == frame.id)
 		{
 			// обновить данные раскраски элементов

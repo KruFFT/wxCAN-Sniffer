@@ -3,7 +3,10 @@
 //#pragma warning(disable : 4996)
 //#include <vld.h>
 
-#include <wx/wxprec.h>
+//#include <wx/wxprec.h>
+//#ifndef WX_PRECOMP
+	#include <wx/wx.h>
+//#endif
 
 //  Класс приложения
 class Application : public wxApp
