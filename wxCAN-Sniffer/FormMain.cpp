@@ -3,11 +3,12 @@
 // События из фонового потока
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_UPDATE, wxThreadEvent);
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_EXIT, wxThreadEvent);
+wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
 
 // Талица событий
 wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
 	EVT_CLOSE(FormMain::OnClose)
-	EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConDiscon_OnClick)
+	EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConnectDisconnect_OnClick)
 	EVT_BUTTON(ID_BUTTON_ADD, FormMain::FormMain::ButtonAdd_OnClick)
 	EVT_BUTTON(ID_BUTTON_REMOVE, FormMain::ButtonRemove_OnClick)
 	EVT_BUTTON(ID_BUTTON_REMOVE_ALL, FormMain::ButtonRemoveAll_OnClick)
@@ -411,6 +412,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 	// событие от фонового потока COM-порта, а это не смог нормально описать в таблице событий
 	this->Bind(wxEVT_SERIAL_PORT_THREAD_UPDATE, &FormMain::Thread_OnUpdate, this);
 	this->Bind(wxEVT_SERIAL_PORT_THREAD_EXIT, &FormMain::Thread_OnExit, this);
+	this->Bind(wxEVT_SERIAL_PORT_THREAD_MESSAGE, &FormMain::Thread_OnMessage, this);
 
 	// настройка и запуск таймера
 	timerMain = new wxTimer(this, ID_MAIN_TIMER);
@@ -434,17 +436,17 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 	wxIPV4address ipAddress;
 	ipAddress.AnyAddress();
 	ipAddress.Service(UDP_PORT);
-	UDP = new wxDatagramSocket(ipAddress);
+	udpSocket = new wxDatagramSocket(ipAddress);
 
-	if (UDP->IsOk())
+	if (udpSocket->IsOk())
 	{
-		UDP->SetEventHandler(*this, ID_UDP_SOCKET);
-		UDP->SetNotify(wxSOCKET_INPUT_FLAG);
-		UDP->Notify(true);
+		udpSocket->SetEventHandler(*this, ID_UDP_SOCKET);
+		udpSocket->SetNotify(wxSOCKET_INPUT_FLAG);
+		udpSocket->Notify(true);
 	}
-	else if (UDP->Error())
+	else if (udpSocket->Error())
 	{
-		wxMessageBox(ERROR_UDP_OPEN + UDP->LastError()));
+		wxMessageBox(ERROR_UDP_OPEN + udpSocket->LastError()));
 	}
 }
 
@@ -453,16 +455,16 @@ void FormMain::OnClose(wxCloseEvent& event)
 {
 	timerMain->Stop();
 
-	if (UDP)
+	if (udpSocket)
 	{
-		UDP->Destroy();
-		UDP = nullptr;
+		udpSocket->Destroy();
+		udpSocket = nullptr;
 	}
 
-	if (COM)
+	if (serialPort)
 	{
-		COM->Delete();
-		COM = nullptr;
+		serialPort->Delete();
+		serialPort = nullptr;
 	}
 
 	if (drawData)
@@ -478,7 +480,7 @@ void FormMain::OnClose(wxCloseEvent& event)
 }
 
 // Обработчик кнопки Подключить/отключить
-void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
+void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
 {
 	rowToView = -1;
 	colToView = -1;
@@ -487,10 +489,10 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 	try
 	{
 		// если порт не открыт - открыть, иначе - закрыть
-		if (COM == nullptr)
+		if (serialPort == nullptr)
 		{
 			DWORD serialSpeed = 0;
-			if (comboBoxSerialSpeed->GetValue().ToULong(&serialSpeed, 10))
+			if (comboBoxSerialSpeed->GetValue().ToULong(&serialSpeed))
 			{
 				frames.Clear();
 
@@ -500,20 +502,15 @@ void FormMain::ButtonConDiscon_OnClick(wxCommandEvent& event)
 					gridCANView->DeleteRows(0, gridCANView->GetNumberRows());
 				}
 
-				COM = new ThreadedSerialPort(comboBoxSerialPort->GetValue(), serialSpeed, (wxFrame*)this);
+				serialPort = new ThreadedSerialPort(comboBoxSerialPort->GetValue(), serialSpeed, (wxFrame*)this);
+				// поток стартует с задержкой, все остальные проверки его состояния в событии таймера MainTimer_OnTimer
 				buttonConnectDisconnect->SetLabelText(DISCONNECT);
 			}
 		}
 		else
 		{
-			if (COM->hSerial != INVALID_HANDLE_VALUE)
-			{
-				COM->Delete();
-			}
-			COM = nullptr;
-
-			buttonConnectDisconnect->SetLabelText(CONNECT);
-
+			// просто запустить процесс остановки потока, все остальные проверки его состояния в событии таймера MainTimer_OnTimer
+			serialPort->Delete();
 			// записать все log-файлы
 			FlushLogs();
 			logFiles.clear();
@@ -531,9 +528,9 @@ void FormMain::Thread_OnUpdate(wxThreadEvent& event)
 {
 	CANFrameIn frame;
 
-	if (COM)
+	if (serialPort)
 	{
-		while (COM->GetNextFrame(frame))
+		while (serialPort->GetNextFrame(frame))
 		{
 			ProcessCANFrame(frame);
 		}
@@ -543,11 +540,17 @@ void FormMain::Thread_OnUpdate(wxThreadEvent& event)
 // По событию от потока забирать все принятые CAN-пакеты, которые есть в буфере
 void FormMain::Thread_OnExit(wxThreadEvent& event)
 {
-	if (COM)
+	if (serialPort)
 	{
-		COM = nullptr;
+		serialPort = nullptr;
 	}
 	buttonConnectDisconnect->SetLabelText(CONNECT);
+}
+
+// Сообщение от потока прои ошибке
+void FormMain::Thread_OnMessage(wxThreadEvent& event)
+{
+	wxMessageBox(event.GetPayload<wxString>(), ERROR_CAPTION, wxICON_ERROR);
 }
 
 // Обработка поступившего CAN-пакета
@@ -977,16 +980,18 @@ wxString FormMain::ToBinary(uint8_t value)
 // Срабатывание таймера
 void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 {
-	if (COM && COM->hSerial != INVALID_HANDLE_VALUE && !COM->IsAlive())
+	// проверка состояния последовательного порта
+	if (serialPort && serialPort->hSerial == INVALID_HANDLE_VALUE)
 	{
-		COM->Delete();
-		COM = nullptr;
+		delete serialPort;
+		serialPort = nullptr;
 		buttonConnectDisconnect->SetLabelText(CONNECT);
 	}
+
 	// обновить данные в таблице
 	RefreshGridCANView();
 	// это вызовет событие OnPaint для панели
-	drawPanel->Refresh(true, &drawRect);
+	drawPanel->Refresh(true, &drawRectangle);
 }
 
 // Обновить данные CAN-пакетов в таблице, вызывается по таймеру
@@ -1050,11 +1055,11 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 
 	// нарисовать рамку и фон
 	dc.SetPen(blackPen);
-	dc.DrawRectangle(drawRect);
+	dc.DrawRectangle(drawRectangle);
 
 	if (drawData && colToView >= 0)
 	{
-		double drawMul = (drawMaxValue != 0) ? (double)drawRect.height / drawMaxValue : 1.0;
+		double drawMul = (drawMaxValue != 0) ? (double)drawRectangle.height / drawMaxValue : 1.0;
 
 		dc.SetPen(graphPen);
 
@@ -1063,8 +1068,8 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 		for (size_t index = 1; index < drawFrameSize; index++)
 		{
 			// рисовать отмасштабированную линию
-			dc.DrawLine(index, drawRect.height - *(frame + index - 1) * drawMul,
-						index, drawRect.height - *(frame + index)     * drawMul);
+			dc.DrawLine(index, drawRectangle.height - *(frame + index - 1) * drawMul,
+						index, drawRectangle.height - *(frame + index)     * drawMul);
 
 			// сохранение наибольшего значения для следующей итерации
 			if (*(frame + index) > drawMaxValue)
@@ -1078,8 +1083,8 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 // Изменение размеров панели графика
 void FormMain::DrawPanel_OnSize(wxSizeEvent& event)
 {
-	drawRect = drawPanel->GetClientRect();
-	this->Refresh(true, &drawRect);
+	drawRectangle = drawPanel->GetClientRect();
+	this->Refresh(true, &drawRectangle);
 	//event.Skip();
 }
 
@@ -1175,11 +1180,11 @@ void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
 		answerID = 0;
 
 	// отправить данные
-	if (COM)
+	if (serialPort)
 	{
-		COM->SendFrame(frame);
+		serialPort->SendFrame(frame);
 	}
-	if (UDP)
+	if (udpSocket)
 	{
 		UDPSocket_SendFrame(frame);
 	}
@@ -1200,7 +1205,7 @@ void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
 
 	if (event.GetSocketEvent() == wxSOCKET_INPUT)
 	{
-		size_t receivedDataLen = UDP->RecvFrom(espIpAddress, receivedData, UDP_BUFFER_SIZE).LastCount();
+		size_t receivedDataLen = udpSocket->RecvFrom(espIpAddress, receivedData, UDP_BUFFER_SIZE).LastCount();
 		if (receivedDataLen)
 		{
 			CANFrameIn frame;
@@ -1223,5 +1228,5 @@ void FormMain::UDPSocket_SendFrame(CANFrameOut& frame)
 {
 	SendCANFrame sendCANFrame;
 	sendCANFrame.Frame = frame;
-	UDP->SendTo(espIpAddress, &sendCANFrame, sizeof(SendCANFrame));
+	udpSocket->SendTo(espIpAddress, &sendCANFrame, sizeof(SendCANFrame));
 }

@@ -1,5 +1,4 @@
-﻿# wxCAN Sniffer
-## _CAN bus sniffer (PC side)_ ##
+﻿# wxCAN Sniffer - CAN bus sniffer (PC side)
 
 #### Возможности
 - Отображение передаваемых в CAN-шине пакетов
@@ -27,6 +26,7 @@ cmake --build build -j --config Release
 ```sh
 cmake --build build -j
 ```
+PS: Если по каким-либо причинам подготовка завершается с ошибкой, то в файле **CMakeLists.txt** можно убрать строку **GIT_TAG v3.2.5**. В таком случае, будет использоваться самая свежая версия wxWidgets.
 
 ## Сборка приложения используя Visual Studio 2022
 Сначала необходимо собрать **wxWidgets** в static-режиме и потом само приложение.
@@ -35,8 +35,8 @@ cmake --build build -j
 1. Понадобится [Visual Studio 2022 Community](https://visualstudio.microsoft.com/ru/downloads/)
 2. Скачать и установить [wxWidgets](https://www.wxwidgets.org/downloads/) если это установщик, либо распаковать, если это архив. Например в директорию `C:/wxWidget`
 3. Создать переменную окружения `WXWIN` и присвоить ей значение директории `C:/wxWidget`
-4. В директории `C:/wxWidgets/build/msw` открыть файл решения `wx_vc17.sln` для Visual Studio 2022)
-5. В **Solution Explorer**, с помощью клавиши Shift, выделить все проекты, кроме **_custom_build** и зайти в **Properties** проектов.
+4. В директории `C:/wxWidgets/build/msw` открыть файл решения `wx_vc17.sln` для Visual Studio 2022
+5. В **Solution Explorer**, с помощью клавиши Shift, выделить все проекты, кроме **_custom_build** и зайти в **Properties** проектов
 6. В разделе **C/C++** → **Code Generation** изменить параметр **Runtime Library**:
     - для конфигурации **Debug** выбрать **/MTd**
     - для конфигурации **Release** выбрать **/MT**

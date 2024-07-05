@@ -6,7 +6,7 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxF
 	// создать новый поток
 	if (this->Create() != wxTHREAD_NO_ERROR)
 	{
-		throw new exception(ERROR_THREAD_CREATE);
+		throw new std::exception(ERROR_THREAD_CREATE);
 	}
 
 	portName = wxT("\\\\.\\") + serialPort;
@@ -17,7 +17,7 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxF
 	auto runError = this->Run();
 	if (runError != wxTHREAD_NO_ERROR)
 	{
-		throw new exception(ERROR_THREAD_START);
+		throw new std::exception(ERROR_THREAD_START);
 	}
 }
 
@@ -32,149 +32,160 @@ ThreadedSerialPort::~ThreadedSerialPort()
 	}
 }
 
+// Настройка параметров последовательного порта
+bool ThreadedSerialPort::SetParameters()
+{
+	DCB dcbSerialParams = { 0 };
+	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+	if (!GetCommState(hSerial, &dcbSerialParams))
+	{
+		return false;
+	}
+	dcbSerialParams.BaudRate = baudRate;
+	dcbSerialParams.ByteSize = 8;
+	dcbSerialParams.StopBits = ONESTOPBIT;
+	dcbSerialParams.Parity   = NOPARITY;
+	if (!SetCommState(hSerial, &dcbSerialParams))
+	{
+		return false;
+	}
+
+	COMMTIMEOUTS commTimeouts = { 0 };
+	commTimeouts.ReadIntervalTimeout         = MAXDWORD;
+	commTimeouts.ReadTotalTimeoutMultiplier  = MAXDWORD;
+	commTimeouts.ReadTotalTimeoutConstant    = 0;
+	commTimeouts.WriteTotalTimeoutMultiplier = 0;
+	commTimeouts.WriteTotalTimeoutConstant   = 0;
+
+	if (!SetCommTimeouts(hSerial, &commTimeouts))
+	{
+		return false;
+	}
+
+	PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR);
+
+	return true;
+}
+
 // Основной цикл потока
 wxThread::ExitCode ThreadedSerialPort::Entry()
 {
 	uint8_t* bufferHead;		// указатель на начало данных в буфере
 	uint8_t* bufferTail;		// указатель на конец данных в буфере
 	uint8_t* bufferEnd;			// указатель на конец буфера для контроля
-	DWORD bytesRead = 0;		// количество прочитанных из последовательного порта данных
-	DWORD bytesToSend;			// количество байтов для отправки
-	DWORD bytesSent;			// количество отправленных байтов
-	DWORD bufferFreeLength;		// размер свободного места в буфере	
+	DWORD    bytesRead = 0;		// количество прочитанных из последовательного порта данных
+	DWORD    bytesToSend;		// количество байтов для отправки
+	DWORD    bytesSent;			// количество отправленных байтов
+	DWORD    bufferFreeLength;	// размер свободного места в буфере	
 	uint32_t dataLength;		// количество байтов с данными в буфере
 	uint32_t freeLength;		// количество свободных байтов в буфере до начала данных в нём
-	BOOL readError;				// результат чтения данных из последовательного порта
+	BOOL     readError;			// результат чтения данных из последовательного порта
 
-	hSerial = CreateFile(portName, GENERIC_READ | GENERIC_WRITE, NULL, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (hSerial != INVALID_HANDLE_VALUE)
+	// открытие порта и установка его параметров
+	hSerial = CreateFileW(portName, GENERIC_READ | GENERIC_WRITE, NULL, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hSerial == INVALID_HANDLE_VALUE)
 	{
-		DCB dcbSerialParams = { 0 };
-		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-		if (!GetCommState(hSerial, &dcbSerialParams))
+		SendLastErrorMessage(ERROR_SERIAL_OPEN);
+		Exit((wxThread::ExitCode)-1);
+	}
+	if (!SetParameters())
+	{
+		SendLastErrorMessage(ERROR_SERIAL_SET_PARAMETERS);
+		Exit((wxThread::ExitCode)-1);
+	}
+
+	// выделить память под буфер и установка указателей в исходные состояния
+	buffer = new uint8_t[BUFFER_SIZE + 1];
+	bufferHead = bufferTail = buffer;
+	bufferEnd = buffer + BUFFER_SIZE;
+
+	// проверка на запрос для выхода
+	while (!TestDestroy())
+	{
+		// контроль границ буфера
+		// если хвост буфера дошёл до конца буфера...
+		if (bufferTail >= bufferEnd)
 		{
-			wxMessageBox(ERROR_SERIAL_GET_PARAMETERS + wxString::Format(FORMAT_HEX8, GetLastError()), ERROR_CAPTION, wxICON_ERROR);
-			return (wxThread::ExitCode)0;
-		}
-		dcbSerialParams.BaudRate = baudRate;
-		dcbSerialParams.ByteSize = 8;
-		dcbSerialParams.StopBits = ONESTOPBIT;
-		dcbSerialParams.Parity = NOPARITY;
-		if (!SetCommState(hSerial, &dcbSerialParams))
-		{
-			wxMessageBox(ERROR_SERIAL_SET_PARAMETERS + wxString::Format(FORMAT_HEX8, GetLastError()), ERROR_CAPTION, wxICON_ERROR);
-			return (wxThread::ExitCode)0;
-		}
-
-		COMMTIMEOUTS commTimeouts = { 0 };
-		commTimeouts.ReadIntervalTimeout = MAXDWORD;
-		commTimeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
-		commTimeouts.ReadTotalTimeoutConstant = 0;
-		commTimeouts.WriteTotalTimeoutMultiplier = 0;
-		commTimeouts.WriteTotalTimeoutConstant = 0;
-
-		if (!SetCommTimeouts(hSerial, &commTimeouts))
-		{
-			wxMessageBox(ERROR_SERIAL_SET_TIMEOUTS + wxString::Format(FORMAT_HEX8, GetLastError()), ERROR_CAPTION, wxICON_ERROR);
-			return (wxThread::ExitCode)0;
-		}
-
-		PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR);
-
-		// выделить память под буфер и установка указателей в исходные состояния
-		buffer = new uint8_t[BUFFERLEN + 1];
-		bufferHead = bufferTail = buffer;
-		bufferEnd = buffer + BUFFERLEN;
-
-		// проверка на запрос для выхода
-		while (!TestDestroy())
-		{
-			// контроль границ буфера
-			// если хвост буфера дошёл до конца буфера...
-			if (bufferTail >= bufferEnd)
+			// и если голова буфера не сдвинулась с начала - данные не обрабатываются
+			if (bufferHead == buffer)
 			{
-				// и если голова буфера не сдвинулась с начала - данные не обрабатываются
-				if (bufferHead == buffer)
-				{
-					// обнуление буфера, чтобы данные читались непрерывно
-					bufferHead = bufferTail = buffer;
-				}
-				else
-				{
-					// необходимо сдвинуть буфер: скопировать данные массива в начало
-					dataLength = bufferTail - bufferHead;
-					freeLength = bufferHead - buffer;
-					if (dataLength < freeLength)
-					{
-						memcpy_s(buffer, freeLength, bufferHead, dataLength);
-						// коррекция указателей
-						bufferHead = buffer;
-						bufferTail = buffer + dataLength;
-					}
-					else
-					{
-						throw;
-					}
-				}
-			}
-
-			// теперь чтение данных из порта в хвост буфера
-			bufferFreeLength = bufferEnd - bufferTail;
-			readError = ReadFile(hSerial, bufferTail, bufferFreeLength, &bytesRead, NULL);
-			if (readError)
-			{
-				bufferTail += bytesRead;
+				// обнуление буфера, чтобы данные читались непрерывно
+				bufferHead = bufferTail = buffer;
 			}
 			else
 			{
-				// встретил только ошибку отключения порта (0x5), поэтому выход из цикла
-				//DWORD lastError = GetLastError();
-				break;
-			}
-
-			// поиск CAN-пакета и формирование данных
-			while (bufferTail - bufferHead >= CAN_DATA_MINIMAL)
-			{
-				CANFrameIn frame;
-
-				// пакет собран - положить пакет в очередь
-				if (CANParser::Parse(&bufferHead, frame))
+				// необходимо сдвинуть буфер: скопировать данные массива в начало
+				dataLength = bufferTail - bufferHead;
+				freeLength = bufferHead - buffer;
+				if (dataLength < freeLength)
 				{
-					syncCANBuffer.Lock();
-					canBuffer.push(frame);
-					syncCANBuffer.Unlock();
-
-					// сгенерировать событие
-					wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_UPDATE));
+					memcpy_s(buffer, freeLength, bufferHead, dataLength);
+					// коррекция указателей
+					bufferHead = buffer;
+					bufferTail = buffer + dataLength;
+				}
+				else
+				{
+					throw;
 				}
 			}
-
-			// если есть данные на отправку - отправить
-			if (frameToSend.Frame.id != 0)
-			{
-				syncCANSend.Lock();
-				// 4 байта сигнатуры + 4 байта ID-пакета + 1 байт длина данных + сами данные
-				bytesToSend = 9 + frameToSend.Frame.length;
-				WriteFile(hSerial, &frameToSend, bytesToSend, &bytesSent, NULL);
-				// после отправки - сбросить флаг наличия данных
-				frameToSend.Frame.id = 0;
-				syncCANSend.Unlock();
-			}
-			/*else
-			{
-				// код для тестирования поиска данных в потоке мусора на стороне Arduino
-				// если нет никаких данных на отправку - отправлять всякий мусор
-				byte randomByte = rand() % 255;
-				WriteFile(hSerial, &randomByte, 1, &bytesWritten, NULL);
-			}*/
 		}
 
-		if (hSerial && hSerial != INVALID_HANDLE_VALUE)
+		// чтение данных из порта в хвост буфера
+		bufferFreeLength = bufferEnd - bufferTail;
+		readError = ReadFile(hSerial, bufferTail, bufferFreeLength, &bytesRead, NULL);
+		if (readError)
 		{
-			CloseHandle(hSerial);
-			hSerial = nullptr;
+			bufferTail += bytesRead;
 		}
+		else
+		{
+			// встретил только ошибку отключения порта (0x5), поэтому выход из цикла
+			//DWORD lastError = GetLastError();
+			break;
+		}
+
+		// поиск CAN-пакета и формирование данных
+		while (bufferTail - bufferHead >= CAN_DATA_MINIMAL)
+		{
+			CANFrameIn frame;
+
+			// пакет собран - положить пакет в очередь
+			if (CANParser::Parse(&bufferHead, frame))
+			{
+				syncCANBuffer.Lock();
+				canBuffer.push(frame);
+				syncCANBuffer.Unlock();
+
+				// сгенерировать событие
+				handleFrame->GetEventHandler()->AddPendingEvent(wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_UPDATE));
+			}
+		}
+
+		// если есть данные на отправку - отправить
+		if (frameToSend.Frame.id)
+		{
+			syncCANSend.Lock();
+			// 4 байта сигнатуры + 4 байта ID-пакета + 1 байт длина данных + сами данные
+			bytesToSend = 9 + frameToSend.Frame.length;
+			WriteFile(hSerial, &frameToSend, bytesToSend, &bytesSent, NULL);
+			// после отправки - сбросить флаг (ID пакета) наличия данных
+			frameToSend.Frame.id = 0;
+			syncCANSend.Unlock();
+		}
+		/*else
+		{
+			// код для тестирования поиска данных в потоке мусора на стороне Arduino
+			// если нет никаких данных на отправку - отправлять всякий мусор
+			byte randomByte = rand() % 255;
+			WriteFile(hSerial, &randomByte, 1, &bytesWritten, NULL);
+		}*/
+	}
+
+	if (hSerial && hSerial != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(hSerial);
+		hSerial = nullptr;
 	}
 
 	// удалить буфер приёма сообщений
@@ -186,13 +197,13 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 
 	// очистка буферов
 	syncCANBuffer.Lock();
-	while (canBuffer.size() > 0)
+	while (!canBuffer.empty())
 	{
 		canBuffer.pop();
 	}
 	syncCANBuffer.Unlock();
 
-	wxQueueEvent(handleFrame, new wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_EXIT));
+	handleFrame->GetEventHandler()->AddPendingEvent(wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_EXIT));
 	return (wxThread::ExitCode)0;
 }
 
@@ -200,7 +211,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 bool ThreadedSerialPort::GetNextFrame(CANFrameIn& frame)
 {
 	wxMutexLocker lock(syncCANBuffer);
-	if (canBuffer.size() > 0)
+	if (!canBuffer.empty())
 	{
 		frame = canBuffer.front();
 		canBuffer.pop();
@@ -214,7 +225,7 @@ void ThreadedSerialPort::SendFrame(CANFrameOut& frame)
 {
 	// создаётся локальная копия пакета данных
 	wxMutexLocker lock(syncCANSend);
-	memcpy_s(&frameToSend.Frame, sizeof(CANFrameIn), &frame, sizeof(CANFrameIn));
+	memcpy_s(&frameToSend.Frame, sizeof(CANFrameOut), &frame, sizeof(CANFrameOut));
 	// если понадобится - поменять порядок байтов в идентификаторе
 	//frameToSend.Frame.ID = SwapBytes(frameToSend.Frame.ID);
 }
@@ -229,9 +240,10 @@ uint32_t ThreadedSerialPort::SwapBytes(uint32_t value)
 	return revValue;
 }
 
-vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
+// Возвращает список доступных последовательных портов
+std::vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 {
-	vector<Information> ports;
+	std::vector<Information> ports;
 
 	HDEVINFO hDevicesInformation = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_COMPORT, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 	if (hDevicesInformation != INVALID_HANDLE_VALUE)
@@ -249,24 +261,24 @@ vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 			{
 				wxChar port[256] = { 0 };
 				DWORD dwSize = 255;
-				auto registryResult = RegQueryValueEx(hRegKey, wxT("PortName"), NULL, NULL, (BYTE*)port, &dwSize);
+				auto registryResult = RegQueryValueExW(hRegKey, wxT("PortName"), NULL, NULL, (BYTE*)port, &dwSize);
 				if (registryResult == ERROR_SUCCESS)
 				{
 					RegCloseKey(hRegKey);
 					information.Port = port;
 
-					// идентификатор оборудования
-					wxChar hardwareId[256] = { 0 };
-					if (SetupDiGetDeviceRegistryProperty(hDevicesInformation, &devicesInformation, SPDRP_HARDWAREID, NULL, (PBYTE)hardwareId, sizeof(hardwareId), NULL))
-					{
-						information.HardwareID = hardwareId;
-					}
-
 					// полное название
 					wxChar description[256] = { 0 };
-					if (SetupDiGetDeviceRegistryProperty(hDevicesInformation, &devicesInformation, SPDRP_FRIENDLYNAME, NULL, (PBYTE)description, sizeof(description), NULL))
+					if (SetupDiGetDeviceRegistryPropertyW(hDevicesInformation, &devicesInformation, SPDRP_FRIENDLYNAME, NULL, (PBYTE)description, sizeof(description), NULL))
 					{
 						information.Description = description;
+					}
+
+					// идентификатор оборудования
+					wxChar hardwareId[256] = { 0 };
+					if (SetupDiGetDeviceRegistryPropertyW(hDevicesInformation, &devicesInformation, SPDRP_HARDWAREID, NULL, (PBYTE)hardwareId, sizeof(hardwareId), NULL))
+					{
+						information.HardwareID = hardwareId;
 					}
 
 					ports.push_back(information);
@@ -278,4 +290,11 @@ vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 	}
 
 	return ports;
+}
+
+void ThreadedSerialPort::SendLastErrorMessage(const wxChar* prefix)
+{
+	wxThreadEvent event(wxEVT_SERIAL_PORT_THREAD_MESSAGE);
+	event.SetPayload(prefix + wxString::Format(FORMAT_HEX8, GetLastError()));
+	handleFrame->GetEventHandler()->AddPendingEvent(event);
 }

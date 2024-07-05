@@ -168,7 +168,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="FormMain.h" />
     <ClInclude Include="FramesContainer.h" />
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="resources.h" />
     <ClInclude Include="ThreadedSerialPort.h" />
   </ItemGroup>
   <ItemGroup>
