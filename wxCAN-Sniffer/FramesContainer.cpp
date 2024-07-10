@@ -48,7 +48,7 @@ void FramesContainer::AddFrame(CANFrameIn& frame)
 							curentColorValue += 0x00010100;
 							frames[iID].color[iData] = curentColorValue;
 						}
-					}						
+					}
 				}
 				else
 				{

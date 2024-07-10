@@ -3,7 +3,16 @@
 #include <wx/wx.h>
 #include <wx/ffile.h>
 
-#define CAPTION				wxT("CAN Sniffer 2.1.2")
+#ifdef __WINDOWS__
+#define MEMCOPY(dest, source, size)	memcpy_s(dest, size, source, size)
+#endif
+
+#ifdef __LINUX__
+#include <stdint.h>
+#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
+#endif
+
+#define CAPTION				wxT("CAN Sniffer 2.2.0")
 
 #define SIGNATURE_DWORD		0x55AA55AA	// сигнатура пакета (big-endian)
 #define UDP_PORT			0xAA55		// UDP порт
@@ -81,7 +90,8 @@ public:
 #define ERROR_SERIAL				wxT("Невозможно работать с этим последовательным портом")
 #define ERROR_SERIAL_OPEN			wxT("Невозможно открыть порт.\nОшибка: 0x")
 #define ERROR_SERIAL_SET_PARAMETERS	wxT("Невозможно установить параметры порта.\nОшибка: 0x")
-#define ERROR_UDP_OPEN				wxT("Ошибка открытия UDP-сокета: "
+#define ERROR_SERIAL_READ			wxT("Ошибка чтения данных: 0x")
+#define ERROR_UDP_OPEN				wxT("Ошибка открытия UDP-сокета: ")
 
 #define ERROR_THREAD_CREATE			"Невозможно создать поток"
 #define ERROR_THREAD_START			"Невозможно запустить поток"

@@ -5,7 +5,7 @@ CircularFrameBuffer::CircularFrameBuffer(size_t windowSize)
 {
 	// размер буфера должен быть минимум в два раза больше размера окна
 	bufferSize = windowSize * 2;
-	buffer = new uint32_t[bufferSize + 1] { 0 };
+	buffer = new uint32_t[bufferSize + 1]{ 0 };
 	frameSize = windowSize;
 	frameBegin = 0;
 	frameEnd = frameSize;
@@ -36,7 +36,7 @@ void CircularFrameBuffer::Add(uint32_t value)
 	// если достигнут предел массива - надо сдвинуть данные
 	if (frameEnd >= bufferSize)
 	{
-		memcpy_s(buffer, frameSizeBytesCount, &buffer[frameBegin], frameSizeBytesCount);
+		MEMCOPY(buffer, &buffer[frameBegin], frameSizeBytesCount);
 		frameBegin = 0;
 		frameEnd = frameSize;
 	}

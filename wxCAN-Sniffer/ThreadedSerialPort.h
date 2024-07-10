@@ -3,9 +3,45 @@
 #include "Common.h"
 #include "CANParser.h"
 #include <queue>
+
+#ifdef __WINDOWS__
 #include <windows.h>
 #include <SetupAPI.h>
 #pragma comment(lib, "SetupAPI.lib")
+
+#define PORT_PREFIX wxT("\\\\.\\")
+#endif
+
+#ifdef __LINUX__
+#include <wx/dir.h>
+#include <wx/textfile.h>
+#include <stdio.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+
+#ifndef BOTHER
+#define BOTHER 0010000
+#endif
+struct termios2
+{
+	tcflag_t c_iflag; /* input mode flags */
+	tcflag_t c_oflag; /* output mode flags */
+	tcflag_t c_cflag; /* control mode flags */
+	tcflag_t c_lflag; /* local mode flags */
+	cc_t c_line;      /* line discipline */
+	cc_t c_cc[19];    /* control characters */
+	speed_t c_ispeed; /* input speed */
+	speed_t c_ospeed; /* output speed */
+};
+
+#define TTY_DIRECTORY   		wxT("/sys/class/tty/")
+#define TTY_DEVICE      		wxT("/device/uevent")
+#define TTY_DRIVER      		wxT("DRIVER=")
+#define TTY_MODALIAS    		wxT("MODALIAS=")
+#define DEV_DIRECTORY   		wxT("/dev/")
+#define PORT_PREFIX 			wxT("/dev/")
+#define INVALID_HANDLE_VALUE	-1
+#endif
 
 #define BUFFER_SIZE	1000000				// ёмкость буфера приёма данных
 
@@ -20,13 +56,19 @@ wxDECLARE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
 class ThreadedSerialPort : public wxThread
 {
 public:
-	ThreadedSerialPort(wxString serialPort, DWORD portSpeed, wxFrame* handleWindow);
+	ThreadedSerialPort(wxString serialPort, uint32_t portSpeed, wxFrame* handleWindow);
 	~ThreadedSerialPort();
 
 	bool GetNextFrame(CANFrameIn& frame);
 	void SendFrame(CANFrameOut& frame);
 
+#ifdef __WINDOWS__
 	HANDLE hSerial = nullptr;			// хэндл открытого последовательного порта
+#endif
+
+#ifdef __LINUX__
+	int hSerial = 0;
+#endif
 
 	struct Information					// структура описания последовательного порта
 	{
@@ -34,6 +76,14 @@ public:
 		wxString Port;
 		wxString HardwareID;
 		wxString Description;
+
+		// оператор сравнения для естественной сортировки
+		bool operator < (const Information& anotherInformation) const
+		{
+			return (Port.Length() == anotherInformation.Port.Length()) ?
+				(Port < anotherInformation.Port) :
+				(Port.Length() < anotherInformation.Port.Length());
+		}
 	};
 
 	static std::vector<Information> Enumerate();
@@ -45,7 +95,7 @@ private:
 	void SendLastErrorMessage(const wxChar* prefix);
 
 	wxString portName;					// полное наименование последовательно порта с префиксами
-	DWORD    baudRate;					// указанная скорость
+	uint32_t baudRate;					// указанная скорость
 	wxFrame* handleFrame = nullptr;		// указатель на окно для генерации события для него
 	uint8_t* buffer = nullptr;			// байтовый буфер последовательного порта
 	std::queue<CANFrameIn> canBuffer;	// буфер полученных CAN-пакетов
