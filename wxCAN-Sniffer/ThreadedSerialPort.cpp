@@ -9,7 +9,6 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, uint32_t portSpeed, 
 #ifdef __WINDOWS__
 		throw new std::exception(ERROR_THREAD_CREATE);
 #endif
-
 #ifdef __LINUX__
 		throw new std::exception();
 #endif
@@ -26,7 +25,6 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, uint32_t portSpeed, 
 #ifdef __WINDOWS__
 		throw new std::exception(ERROR_THREAD_START);
 #endif
-
 #ifdef __LINUX__
 		throw new std::exception();
 #endif
@@ -95,28 +93,28 @@ bool ThreadedSerialPort::SetParameters()
 		return false;
 	}
 
-	tty.c_cflag &= ~PARENB;                 // no parity
-	tty.c_cflag &= ~INPCK;                  // disable parity control
+	tty.c_cflag &= ~PARENB;                 // без проверки чётности
+	tty.c_cflag &= ~INPCK;
 	tty.c_cflag &= ~CSIZE;
-	tty.c_cflag |= CS8;                     // 8 data bits
-	tty.c_cflag &= ~CSTOPB;                 // one stop bit
-	tty.c_cflag |= CLOCAL | CREAD;          // read data
-	tty.c_cflag &= ~CRTSCTS;                // no flow control
+	tty.c_cflag |= CS8;                     // 8 бит данных
+	tty.c_cflag &= ~CSTOPB;                 // 1 стоп-бит
+	tty.c_cflag |= CLOCAL | CREAD;          // для чтения данных
+	tty.c_cflag &= ~CRTSCTS;                // без контроля потока
 
-	tty.c_oflag &= ~OPOST;                  // no special chars
-	tty.c_oflag &= ~ONLCR;                  // no new line
+	tty.c_oflag &= ~OPOST;                  // без спецсимволов
+	tty.c_oflag &= ~ONLCR;                  // без перевода каретки
 
-	tty.c_lflag &= ~ICANON;                 // non canonical mode
-	tty.c_lflag &= ~ECHO;                   // no echo
-	tty.c_lflag &= ~ECHOE;                  // no erasure
-	tty.c_lflag &= ~ECHONL;                 // no new line echo
-	tty.c_lflag &= ~ISIG;                   // no signal chars
+	tty.c_lflag &= ~ICANON;                 // не каноничный режим
+	tty.c_lflag &= ~ECHO;                   // без эхо
+	tty.c_lflag &= ~ECHOE;                  // без стирания через эхо
+	tty.c_lflag &= ~ECHONL;                 // без перевода каретки в эхо
+	tty.c_lflag &= ~ISIG;                   // без сигнальных символов
 
-	tty.c_iflag &= ~(IXON | IXOFF | IXANY); // no software flow control
-	tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);    // no special chars
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY); // без программного контроля потока
+	tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);    // без спецсимволов
 
-	tty.c_cc[VTIME] = 1;                    // wait 100 ms (steps by 100 ms)
-	tty.c_cc[VMIN] = 20;                   // or wait amount of bytes
+	tty.c_cc[VTIME] = 1;                    // ожидание 100 мс (шаг по 100 мс)
+	tty.c_cc[VMIN] = 19;					// или ожидения 19 байтов в буфере
 
 	tcflush(hSerial, TCIFLUSH);
 
@@ -132,11 +130,11 @@ bool ThreadedSerialPort::SetParameters()
 		return false;
 	}
 
-	tty2.c_cflag &= ~CBAUD;             // remove current baud rate
-	tty2.c_cflag |= BOTHER;             // allow custom speed
+	tty2.c_cflag &= ~CBAUD;					// очистить текущую скорость
+	tty2.c_cflag |= BOTHER;					// разрешить любую скорость
 
-	tty2.c_ispeed = baudRate;           // set the input speed
-	tty2.c_ospeed = baudRate;           // set the output speed
+	tty2.c_ispeed = baudRate;				// задать скорость ввода
+	tty2.c_ospeed = baudRate;				// задать скорость вывода
 
 	if (ioctl(hSerial, TCSETS2, &tty2) < 0)
 	{
@@ -226,11 +224,9 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 
 		// чтение данных из порта в хвост буфера
 		bufferFreeLength = bufferEnd - bufferTail;
-
 #ifdef __WINDOWS__
 		readResult = ReadFile(hSerial, bufferTail, bufferFreeLength, &bytesRead, NULL);
 #endif
-
 #ifdef __LINUX__
 		bytesRead = read(hSerial, bufferTail, bufferFreeLength);
 		readResult = (bytesRead > 0);
@@ -272,7 +268,6 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 #ifdef __WINDOWS__
 			WriteFile(hSerial, &frameToSend, bytesToSend, &bytesSent, NULL);
 #endif
-
 #ifdef __LINUX__
 			write(hSerial, &frameToSend, bytesToSend);
 #endif
@@ -296,7 +291,6 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 		CloseHandle(hSerial);
 		hSerial = nullptr;
 #endif
-
 #ifdef __LINUX__
 		close(hSerial);
 		hSerial = -1;
@@ -473,12 +467,10 @@ void ThreadedSerialPort::SendLastErrorMessage(const wxChar* prefix)
 	uint32_t errorCode = GetLastError();
 	errorMessage += wxString::Format(FORMAT_HEX8, errorCode);
 #endif
-
 #ifdef __LINUX__
 	uint32_t errorCode = errno;
 	errorMessage += wxString::Format(FORMAT_HEX8, errorCode) + wxT(" - ") + strerror(errorCode);
 #endif
-
 	wxThreadEvent event(wxEVT_SERIAL_PORT_THREAD_MESSAGE);
 	event.SetPayload(errorMessage);
 	handleFrame->GetEventHandler()->AddPendingEvent(event);

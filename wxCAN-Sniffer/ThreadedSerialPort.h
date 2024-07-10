@@ -5,42 +5,42 @@
 #include <queue>
 
 #ifdef __WINDOWS__
-#include <windows.h>
-#include <SetupAPI.h>
-#pragma comment(lib, "SetupAPI.lib")
+	#include <windows.h>
+	#include <SetupAPI.h>
+	#pragma comment(lib, "SetupAPI.lib")
 
-#define PORT_PREFIX wxT("\\\\.\\")
+	#define PORT_PREFIX wxT("\\\\.\\")
 #endif
 
 #ifdef __LINUX__
-#include <wx/dir.h>
-#include <wx/textfile.h>
-#include <stdio.h>
-#include <termios.h>
-#include <sys/ioctl.h>
+	#include <wx/dir.h>
+	#include <wx/textfile.h>
+	#include <stdio.h>
+	#include <termios.h>
+	#include <sys/ioctl.h>
 
-#ifndef BOTHER
-#define BOTHER 0010000
-#endif
-struct termios2
-{
-	tcflag_t c_iflag; /* input mode flags */
-	tcflag_t c_oflag; /* output mode flags */
-	tcflag_t c_cflag; /* control mode flags */
-	tcflag_t c_lflag; /* local mode flags */
-	cc_t c_line;      /* line discipline */
-	cc_t c_cc[19];    /* control characters */
-	speed_t c_ispeed; /* input speed */
-	speed_t c_ospeed; /* output speed */
-};
+	#ifndef BOTHER
+	#define BOTHER 0010000
+	#endif
+	struct termios2
+	{
+		tcflag_t c_iflag;
+		tcflag_t c_oflag;
+		tcflag_t c_cflag;
+		tcflag_t c_lflag;
+		cc_t c_line;
+		cc_t c_cc[19];
+		speed_t c_ispeed;
+		speed_t c_ospeed;
+	};
 
-#define TTY_DIRECTORY   		wxT("/sys/class/tty/")
-#define TTY_DEVICE      		wxT("/device/uevent")
-#define TTY_DRIVER      		wxT("DRIVER=")
-#define TTY_MODALIAS    		wxT("MODALIAS=")
-#define DEV_DIRECTORY   		wxT("/dev/")
-#define PORT_PREFIX 			wxT("/dev/")
-#define INVALID_HANDLE_VALUE	-1
+	#define TTY_DIRECTORY   		wxT("/sys/class/tty/")
+	#define TTY_DEVICE      		wxT("/device/uevent")
+	#define TTY_DRIVER      		wxT("DRIVER=")
+	#define TTY_MODALIAS    		wxT("MODALIAS=")
+	#define DEV_DIRECTORY   		wxT("/dev/")
+	#define PORT_PREFIX 			wxT("/dev/")
+	#define INVALID_HANDLE_VALUE	-1
 #endif
 
 #define BUFFER_SIZE	1000000				// ёмкость буфера приёма данных
@@ -65,7 +65,6 @@ public:
 #ifdef __WINDOWS__
 	HANDLE hSerial = nullptr;			// хэндл открытого последовательного порта
 #endif
-
 #ifdef __LINUX__
 	int hSerial = 0;
 #endif

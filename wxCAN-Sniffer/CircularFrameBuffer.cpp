@@ -5,7 +5,7 @@ CircularFrameBuffer::CircularFrameBuffer(size_t windowSize)
 {
 	// размер буфера должен быть минимум в два раза больше размера окна
 	bufferSize = windowSize * 2;
-	buffer = new uint32_t[bufferSize + 1]{ 0 };
+	buffer = new uint32_t[bufferSize + 1] { 0 };
 	frameSize = windowSize;
 	frameBegin = 0;
 	frameEnd = frameSize;

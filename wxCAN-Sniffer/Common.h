@@ -4,12 +4,11 @@
 #include <wx/ffile.h>
 
 #ifdef __WINDOWS__
-#define MEMCOPY(dest, source, size)	memcpy_s(dest, size, source, size)
+	#define MEMCOPY(dest, source, size)	memcpy_s(dest, size, source, size)
 #endif
-
 #ifdef __LINUX__
-#include <stdint.h>
-#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
+	#include <stdint.h>
+	#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
 #endif
 
 #define CAPTION				wxT("CAN Sniffer 2.2.0")

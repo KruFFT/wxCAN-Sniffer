@@ -7,25 +7,25 @@ wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
 
 // Талица событий
 wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
-EVT_CLOSE(FormMain::OnClose)
-EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConnectDisconnect_OnClick)
-EVT_BUTTON(ID_BUTTON_ADD, FormMain::FormMain::ButtonAdd_OnClick)
-EVT_BUTTON(ID_BUTTON_REMOVE, FormMain::ButtonRemove_OnClick)
-EVT_BUTTON(ID_BUTTON_REMOVE_ALL, FormMain::ButtonRemoveAll_OnClick)
-EVT_BUTTON(ID_BUTTON_SEND, FormMain::ButtonSend_OnClick)
-EVT_BUTTON(ID_BUTTON_CLEAR_LOG, FormMain::ButtonClearCANLog_OnClick)
-EVT_GRID_CMD_SELECT_CELL(ID_GRID_CAN_VIEW, FormMain::GridCANView_OnSelectCell)
-EVT_CHOICE(ID_COMBO_EXT, FormMain::ComboExt_OnChoice)
-EVT_CHOICE(ID_COMBO_SEP, FormMain::ComboSep_OnChoice)
-EVT_CHECKBOX(ID_CHECKBOX_LOG_ENABLE, FormMain::CheckLogEnable_OnClick)
-EVT_CHECKBOX(ID_CHECKBOX_DEC, FormMain::CheckDec_OnClick)
-EVT_CHECKBOX(ID_CHECKBOX_SINGLE, FormMain::CheckSingle_OnClick)
-EVT_CHECKBOX(ID_CHECKBOX_ENDIAN, FormMain::CheckEndian_OnClick)
-EVT_CHECKBOX(ID_CHECKBOX_ASCII, FormMain::CheckASCII_OnClick)
-EVT_TEXT_ENTER(ID_TEXT_DEC_WORD_MUL, FormMain::TextDecWordMul_OnEnter)
-EVT_TEXT_ENTER(ID_TEXT_CAN_ANSWER_ID, FormMain::TextCANAnswerID_OnEnter)
-EVT_TIMER(ID_MAIN_TIMER, FormMain::MainTimer_OnTimer)
-EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
+	EVT_CLOSE(FormMain::OnClose)
+	EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConnectDisconnect_OnClick)
+	EVT_BUTTON(ID_BUTTON_ADD, FormMain::FormMain::ButtonAdd_OnClick)
+	EVT_BUTTON(ID_BUTTON_REMOVE, FormMain::ButtonRemove_OnClick)
+	EVT_BUTTON(ID_BUTTON_REMOVE_ALL, FormMain::ButtonRemoveAll_OnClick)
+	EVT_BUTTON(ID_BUTTON_SEND, FormMain::ButtonSend_OnClick)
+	EVT_BUTTON(ID_BUTTON_CLEAR_LOG, FormMain::ButtonClearCANLog_OnClick)
+	EVT_GRID_CMD_SELECT_CELL(ID_GRID_CAN_VIEW, FormMain::GridCANView_OnSelectCell)
+	EVT_CHOICE(ID_COMBO_EXT, FormMain::ComboExt_OnChoice)
+	EVT_CHOICE(ID_COMBO_SEP, FormMain::ComboSep_OnChoice)
+	EVT_CHECKBOX(ID_CHECKBOX_LOG_ENABLE, FormMain::CheckLogEnable_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_DEC, FormMain::CheckDec_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_SINGLE, FormMain::CheckSingle_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_ENDIAN, FormMain::CheckEndian_OnClick)
+	EVT_CHECKBOX(ID_CHECKBOX_ASCII, FormMain::CheckASCII_OnClick)
+	EVT_TEXT_ENTER(ID_TEXT_DEC_WORD_MUL, FormMain::TextDecWordMul_OnEnter)
+	EVT_TEXT_ENTER(ID_TEXT_CAN_ANSWER_ID, FormMain::TextCANAnswerID_OnEnter)
+	EVT_TIMER(ID_MAIN_TIMER, FormMain::MainTimer_OnTimer)
+	EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
 wxEND_EVENT_TABLE()
 
 // Конструктор окна
@@ -194,14 +194,13 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 				for (auto& port : ports)
 				{
 					comboBoxSerialPort->Append(port.Port);
-					//serialPortToolTip += port.Port + wxT("\n    ") + port.Description + wxT("\n    ") + port.HardwareID + wxT("\n\n");
 					if (port.HardwareID.IsEmpty())
 					{
-						serialPortToolTip += port.Port + wxT("  ") + port.Description + wxT("\n");
+						serialPortToolTip += port.Port + wxT(", ") + port.Description + wxT("\n");
 					}
 					else
 					{
-						serialPortToolTip += port.Port + wxT("  ") + port.Description + wxT("  ") + port.HardwareID + wxT("\n");
+						serialPortToolTip += port.Port + wxT(", ") + port.Description + wxT(", ") + port.HardwareID + wxT("\n");
 					}
 
 				}
