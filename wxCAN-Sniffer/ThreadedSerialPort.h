@@ -37,6 +37,7 @@
 	#define TTY_DIRECTORY   		wxT("/sys/class/tty/")
 	#define TTY_DEVICE      		wxT("/device/uevent")
 	#define TTY_DRIVER      		wxT("DRIVER=")
+	#define TTY_PORT_DRIVER			wxT("port")
 	#define TTY_MODALIAS    		wxT("MODALIAS=")
 	#define DEV_DIRECTORY   		wxT("/dev/")
 	#define PORT_PREFIX 			wxT("/dev/")

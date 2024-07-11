@@ -138,7 +138,7 @@ private:
 	CircularFrameBuffer* drawData = nullptr;	// круговой массив данных для отрисовки
 	size_t drawFrameSize;						// размер кадра отрисовки (равен ширине области панель)
 	uint32_t drawDataBegin = 0;					// начало данных в массиве
-	uint32_t drawMaxValue = 0;					// наибольшее отрисовываемое значение для масштабирования графика
+	uint32_t drawMaxValue = 0;					// наибольшее рисуемое значение для масштабирования графика
 
 	uint32_t answerID = 0x7E8;					// ID пакета, от которого будут отображаться данные
 	bool bigEndian = true;						// порядок следования байтов в слове big-endian
@@ -153,6 +153,7 @@ private:
 	void FlushLogs();
 	void LogWriteLine(wxFFile* file, CANFrameIn& frame);
 	wxString ToBinary(uint8_t value);
+	void AddToDraw();
 	void ShowNumbers();
 	void UDPSocket_SendFrame(CANFrameOut& frame);
 

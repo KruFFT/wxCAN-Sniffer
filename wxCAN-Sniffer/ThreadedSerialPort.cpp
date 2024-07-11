@@ -401,6 +401,7 @@ std::vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 #endif
 
 #ifdef __LINUX__
+	bool nonStandardPortFound = false;
 	wxDir ttyDirectory(TTY_DIRECTORY);
 	if (ttyDirectory.IsOpened())
 	{
@@ -426,6 +427,12 @@ std::vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 								auto ttyDeviceName = ttyFileLine.AfterFirst(wxT('='));
 								if (!ttyDeviceName.IsEmpty())
 								{
+									// если обнаружен "нестандартный" последовательный порт - убрать стандартные и оставлять только их
+									if (!nonStandardPortFound && ttyDeviceName != TTY_PORT_DRIVER)
+									{
+										nonStandardPortFound = true;
+										ports.clear();
+									}
 									info.Description = ttyDeviceName;
 								}
 							}
@@ -446,7 +453,18 @@ std::vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 						}
 						if (!info.Description.IsEmpty())
 						{
-							ports.push_back(info);
+							// фильтр стандартных портов, если найден любой другой
+							if (nonStandardPortFound)
+							{
+								if (info.Description != TTY_PORT_DRIVER)
+								{
+									ports.push_back(info);
+								}
+							}
+							else
+							{
+								ports.push_back(info);
+							}
 						}
 					}
 				}

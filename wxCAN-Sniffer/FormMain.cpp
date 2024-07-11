@@ -35,7 +35,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 #ifdef __WINDOWS__
 	this->SetIcon(wxICON(wxicon));
 #endif
-	this->SetSizeHints(this->FromDIP(wxSize(1110, 600)));
+	this->SetSizeHints(this->FromDIP(wxSize(1200, 600)));
 
 	// главный сайзер окна
 	auto sizerMain = new wxBoxSizer(wxHORIZONTAL);
@@ -180,6 +180,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 		splitterLeft->SplitHorizontally(panelLeftTop, panelLeftBottom, -1);
 		splitterLeft->SetMinimumPaneSize(this->FromDIP(30));
 
+		// ширина левой области
 		sizerMain->Add(splitterLeft, 1, wxALL | wxEXPAND, 4);
 
 		// правый сайзер
@@ -188,7 +189,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			// последовательный порт, кнопка управления и статистика буфера
 			auto sizerControls = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("Управление")), wxHORIZONTAL);
 			{
-				comboBoxSerialPort = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, this->FromDIP(wxSize(70, 22)), 0, nullptr, wxTE_CENTRE | wxBORDER_SIMPLE);
+				comboBoxSerialPort = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, this->FromDIP(wxSize(90, 22)), 0, nullptr, wxTE_CENTRE | wxBORDER_SIMPLE);
 				auto ports = ThreadedSerialPort::Enumerate();
 				wxString serialPortToolTip;
 				for (auto& port : ports)
@@ -196,40 +197,40 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 					comboBoxSerialPort->Append(port.Port);
 					if (port.HardwareID.IsEmpty())
 					{
-						serialPortToolTip += port.Port + wxT(", ") + port.Description + wxT("\n");
+						serialPortToolTip += port.Port + wxT("\n  ") + port.Description + wxT("\n\n");
 					}
 					else
 					{
-						serialPortToolTip += port.Port + wxT(", ") + port.Description + wxT(", ") + port.HardwareID + wxT("\n");
+						serialPortToolTip += port.Port + wxT("\n  ") + port.Description + wxT("\n  ") + port.HardwareID + wxT("\n\n");
 					}
-
 				}
-				// по умолчанию выбрать последний порт из списка
+				serialPortToolTip.RemoveLast(2);
+				// по умолчанию выбрать первый порт из списка
 				if (ports.size() > 0)
 				{
-					comboBoxSerialPort->Select(ports.size() - 1);
+					comboBoxSerialPort->Select(0);
 				}
 				comboBoxSerialPort->SetToolTip(serialPortToolTip);
-				sizerControls->Add(comboBoxSerialPort, 0, wxALL, 2);
+				sizerControls->Add(comboBoxSerialPort, 25, wxALL, 2);
 
-				comboBoxSerialSpeed = new wxComboBox(this, wxID_ANY, wxT("500000"), wxDefaultPosition, this->FromDIP(wxSize(75, 22)), 0, nullptr, wxTE_CENTRE | wxBORDER_SIMPLE);
+				comboBoxSerialSpeed = new wxComboBox(this, wxID_ANY, wxT("500000"), wxDefaultPosition, this->FromDIP(wxSize(90, 22)), 0, nullptr, wxTE_CENTRE | wxBORDER_SIMPLE);
 				comboBoxSerialSpeed->Append(wxT("57600"));
 				comboBoxSerialSpeed->Append(wxT("115200"));
 				comboBoxSerialSpeed->Append(wxT("250000"));
 				comboBoxSerialSpeed->Append(wxT("500000"));
 				comboBoxSerialSpeed->Append(wxT("1000000"));
 				comboBoxSerialSpeed->Append(wxT("2000000"));
-				sizerControls->Add(comboBoxSerialSpeed, 0, wxALL, 2);
+				sizerControls->Add(comboBoxSerialSpeed, 25, wxALL, 2);
 
-				buttonConnectDisconnect = new wxButton(this, ID_BUTON_CONNECT_DISCONNECT, wxT("Подключить"), wxDefaultPosition, this->FromDIP(wxSize(70, 25)));
+				buttonConnectDisconnect = new wxButton(this, ID_BUTON_CONNECT_DISCONNECT, wxT("Подключить"), wxDefaultPosition, this->FromDIP(wxSize(80, 25)));
 				buttonConnectDisconnect->SetFocus();
-				sizerControls->Add(buttonConnectDisconnect, 1, wxALL, 0);
+				sizerControls->Add(buttonConnectDisconnect, 25, wxALL, 0);
 
-				textFPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, this->FromDIP(wxSize(40, 22)), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
-				sizerControls->Add(textFPS, 0, wxALL, 2);
+				textFPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, this->FromDIP(wxSize(50, 22)), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
+				sizerControls->Add(textFPS, 12, wxALL, 2);
 
-				textBPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, this->FromDIP(wxSize(40, 22)), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
-				sizerControls->Add(textBPS, 0, wxALL, 2);
+				textBPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, this->FromDIP(wxSize(50, 22)), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
+				sizerControls->Add(textBPS, 13, wxALL, 2);
 
 				sizerRight->Add(sizerControls, 0, wxALL | wxEXPAND, 2);
 			}
@@ -246,20 +247,22 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 					// кнопки журнала
 					auto sizerLogButtons = new wxBoxSizer(wxVERTICAL);
 					{
-						buttonAdd = new wxButton(this, ID_BUTTON_ADD, wxT("Добавить ID в фильтр >>"), wxDefaultPosition, this->FromDIP(wxSize(150, -1)));
-						sizerLogButtons->Add(buttonAdd, 0, wxALL, 2);
+						buttonAdd = new wxButton(this, ID_BUTTON_ADD, wxT("Добавить ID в фильтр >>"));
+						sizerLogButtons->Add(buttonAdd, 1, wxALL | wxEXPAND, 2);
 
-						buttonRemove = new wxButton(this, ID_BUTTON_REMOVE, wxT("Убрать ID из фильтра <<"), wxDefaultPosition, this->FromDIP(wxSize(150, -1)));
-						sizerLogButtons->Add(buttonRemove, 0, wxALL, 2);
+						buttonRemove = new wxButton(this, ID_BUTTON_REMOVE, wxT("Убрать ID из фильтра <<"));
+						sizerLogButtons->Add(buttonRemove, 1, wxALL | wxEXPAND, 2);
 
-						buttonRemoveAll = new wxButton(this, ID_BUTTON_REMOVE_ALL, wxT("Очистить фильтр"), wxDefaultPosition, this->FromDIP(wxSize(150, -1)));
-						sizerLogButtons->Add(buttonRemoveAll, 0, wxALL, 2);
+						buttonRemoveAll = new wxButton(this, ID_BUTTON_REMOVE_ALL, wxT("Очистить фильтр"));
+						sizerLogButtons->Add(buttonRemoveAll, 1, wxALL | wxEXPAND, 2);
 
-						sizerLogButtonsList->Add(sizerLogButtons, 0, wxEXPAND, 2);
+						// ширина кнопок фильтров
+						sizerLogButtonsList->Add(sizerLogButtons, 60, wxALL, 2);
 					}
 					// список кадров журнала
-					listLog = new wxListBox(this, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), 0, nullptr);
-					sizerLogButtonsList->Add(listLog, 1, wxALL | wxEXPAND, 2);
+					listLog = new wxListBox(this, wxID_ANY);//, wxDefaultPosition, this->FromDIP(wxSize(-1, -1)));
+					// ширина списка фильтров
+					sizerLogButtonsList->Add(listLog, 40, wxALL | wxEXPAND, 4);
 
 					sizerLog->Add(sizerLogButtonsList, 0, wxEXPAND, 2);
 				}
@@ -386,7 +389,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			drawPanel = new wxPanel(this, ID_DRAW_PANEL, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
 			drawPanel->SetBackgroundColour(wxColour(255, 255, 255));
 			sizerRight->Add(drawPanel, 1, wxALL | wxEXPAND, 2);
-
+			// ширина правой области
 			sizerMain->Add(sizerRight, 0, wxALL | wxEXPAND, 2);
 		}
 	}
@@ -584,8 +587,8 @@ void FormMain::ProcessCANFrame(CANFrameIn& frame)
 	{
 		frames.AddFrame(frame);
 
-		// показать числа в разных форматах
-		ShowNumbers();
+		// добавить для отрисовки
+		AddToDraw();
 
 		// запись в лог по необходимости
 		// если в фильтре ничего не выбрано - запись всех данных
@@ -634,6 +637,31 @@ void FormMain::ProcessCANFrame(CANFrameIn& frame)
 	}
 }
 
+// Добавление полученных данных в очередь на отрисовку
+void FormMain::AddToDraw()
+{
+	if (rowToView >= 0 && colToView >= 0)
+	{
+		// если полученных данных ещё нет
+		if (rowToView >= frames.Size())
+		{
+			return;
+		}
+
+		// добавить полученные данные в очередь на отрисовку
+		if (drawData && colToView >= 0)
+		{
+			auto vFrame = frames.GetFrame(rowToView);
+			uint8_t firstByte = vFrame.frame.data[colToView];
+			uint8_t secondByte = colToView < 7 ? vFrame.frame.data[colToView + 1] : 0;
+			// выбор между big endian и little endian
+			uint32_t value = bigEndian ? (firstByte << 8) + secondByte : (secondByte << 8) + firstByte;
+			uint32_t mulValue = (double)value * mul;
+			drawData->Add(mulValue);
+		}
+	}
+}
+
 // Отображение выделенной ячейки в разных форматах
 void FormMain::ShowNumbers()
 {
@@ -648,23 +676,13 @@ void FormMain::ShowNumbers()
 		auto vFrame = frames.GetFrame(rowToView);
 		uint8_t firstByte = vFrame.frame.data[colToView];
 		uint8_t secondByte = colToView < 7 ? vFrame.frame.data[colToView + 1] : 0;
-
-		// выбор между big endian и little endian
-		uint32_t value = bigEndian ? (firstByte << 8) + secondByte : (secondByte << 8) + firstByte;
-
-		textDecWord->ChangeValue(wxString::Format(FORMAT_INT, value));
-
-		uint32_t mulValue = (double)value * mul;
-		textDecWordResult->ChangeValue(wxString::Format(FORMAT_INT, mulValue));
-
 		textBinByte->ChangeValue(ToBinary(firstByte));
 		textDecByte->ChangeValue(wxString::Format(FORMAT_INT, firstByte));
-
-		// добавить полученные данные в очередь на отрисовку
-		if (drawData && colToView >= 0)
-		{
-			drawData->Add(mulValue);
-		}
+		// выбор между big endian и little endian
+		uint32_t value = bigEndian ? (firstByte << 8) + secondByte : (secondByte << 8) + firstByte;
+		textDecWord->ChangeValue(wxString::Format(FORMAT_INT, value));
+		uint32_t mulValue = (double)value * mul;
+		textDecWordResult->ChangeValue(wxString::Format(FORMAT_INT, mulValue));
 	}
 }
 
@@ -1004,6 +1022,9 @@ void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 
 	// обновить данные в таблице
 	RefreshGridCANView();
+
+	ShowNumbers();
+
 	// это вызовет событие OnPaint для панели
 	drawPanel->Refresh(true, &drawRectangle);
 }
