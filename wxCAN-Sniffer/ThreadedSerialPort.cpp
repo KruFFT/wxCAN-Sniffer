@@ -12,6 +12,9 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, uint32_t portSpeed, 
 #ifdef __LINUX__
 		throw new std::exception();
 #endif
+#ifdef __APPLE__
+		throw new std::exception();
+#endif
 	}
 
 	portName = PORT_PREFIX + serialPort;
@@ -26,6 +29,9 @@ ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, uint32_t portSpeed, 
 		throw new std::exception(ERROR_THREAD_START);
 #endif
 #ifdef __LINUX__
+		throw new std::exception();
+#endif
+#ifdef __APPLE__
 		throw new std::exception();
 #endif
 	}
@@ -142,6 +148,63 @@ bool ThreadedSerialPort::SetParameters()
 	}
 #endif
 
+#ifdef __APPLE__
+	// очистка всех флагов состояния
+	if (fcntl(hSerial, F_SETFL, 0) < 0)
+	{
+		SendLastErrorMessage(ERROR_SERIAL_SET_PARAMETERS);
+		close(hSerial);
+		hSerial = INVALID_HANDLE_VALUE;
+		return false;
+	}
+
+	termios tty;
+
+	if (tcgetattr(hSerial, &tty) < 0)
+	{
+		return false;
+	}
+
+	tty.c_cflag &= ~PARENB;                 // без проверки чётности
+	tty.c_cflag &= ~INPCK;
+	tty.c_cflag &= ~CSIZE;
+	tty.c_cflag |= CS8;                     // 8 бит данных
+	tty.c_cflag &= ~CSTOPB;                 // 1 стоп-бит
+	tty.c_cflag |= CLOCAL | CREAD;          // для чтения данных
+	tty.c_cflag &= ~CRTSCTS;                // без контроля потока
+
+	tty.c_oflag &= ~OPOST;                  // без спецсимволов
+	tty.c_oflag &= ~ONLCR;                  // без перевода каретки
+
+	tty.c_lflag &= ~ICANON;                 // не каноничный режим
+	tty.c_lflag &= ~ECHO;                   // без эхо
+	tty.c_lflag &= ~ECHOE;                  // без стирания через эхо
+	tty.c_lflag &= ~ECHONL;                 // без перевода каретки в эхо
+	tty.c_lflag &= ~ISIG;                   // без сигнальных символов
+
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY); // без программного контроля потока
+	tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);    // без спецсимволов
+
+	tty.c_cc[VTIME] = 1;                    // ожидание 100 мс (шаг по 100 мс)
+	tty.c_cc[VMIN] = 19;					// или ожидения 19 байтов в буфере
+
+	tcflush(hSerial, TCIFLUSH);
+
+	if (tcsetattr(hSerial, TCSANOW, &tty) < 0)
+	{
+		return false;
+	}
+
+	speed_t speedBaudRate = (speed_t)baudRate;
+	if (ioctl(fd, IOSSIOSPEED, &speedBaudRate) < 0)
+	{
+		SendLastErrorMessage(ERROR_SERIAL_SET_PARAMETERS);
+		close(hSerial);
+		hSerial = INVALID_HANDLE_VALUE;
+		return false;
+	}
+#endif
+
 	return true;
 }
 
@@ -153,6 +216,10 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 	DWORD bytesSent;			// количество отправленных байтов
 #endif
 #ifdef __LINUX__
+	int32_t  bytesRead = 0;		// количество прочитанных из последовательного порта данных
+	uint32_t bytesSent;			// количество отправленных байтов
+#endif
+#ifdef __APPLE__
 	int32_t  bytesRead = 0;		// количество прочитанных из последовательного порта данных
 	uint32_t bytesSent;			// количество отправленных байтов
 #endif	
@@ -171,6 +238,9 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 	hSerial = CreateFileW(portName, GENERIC_READ | GENERIC_WRITE, NULL, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 #endif
 #ifdef __LINUX__
+	hSerial = open(portName.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
+#endif
+#ifdef __APPPLE__
 	hSerial = open(portName.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
 #endif
 
@@ -231,6 +301,10 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 		bytesRead = read(hSerial, bufferTail, bufferFreeLength);
 		readResult = (bytesRead > 0);
 #endif
+#ifdef __APPLE__
+		bytesRead = read(hSerial, bufferTail, bufferFreeLength);
+		readResult = (bytesRead > 0);
+#endif
 
 		if (readResult)
 		{
@@ -271,6 +345,9 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 #ifdef __LINUX__
 			write(hSerial, &frameToSend, bytesToSend);
 #endif
+#ifdef __APPLE__
+			write(hSerial, &frameToSend, bytesToSend);
+#endif
 
 			// после отправки - сбросить флаг (ID пакета) наличия данных
 			frameToSend.Frame.id = 0;
@@ -293,7 +370,11 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 #endif
 #ifdef __LINUX__
 		close(hSerial);
-		hSerial = -1;
+		hSerial = INVALID_HANDLE_VALUE;
+#endif
+#ifdef __APPLE__
+		close(hSerial);
+		hSerial = INVALID_HANDLE_VALUE;
 #endif
 	}
 
@@ -347,6 +428,27 @@ uint32_t ThreadedSerialPort::SwapBytes(uint32_t value)
 	revValue = (revValue << 8) | ((value >> 16) & 0xFF);
 	revValue = (revValue << 8) | ((value >> 24) & 0xFF);
 	return revValue;
+}
+
+// Отправить сообщение об ошибке
+void ThreadedSerialPort::SendLastErrorMessage(const wxChar* prefix)
+{
+	wxString errorMessage = prefix;
+#ifdef __WINDOWS__
+	uint32_t errorCode = GetLastError();
+	errorMessage += wxString::Format(FORMAT_HEX8, errorCode);
+#endif
+#ifdef __LINUX__
+	uint32_t errorCode = errno;
+	errorMessage += wxString::Format(FORMAT_HEX8, errorCode) + wxT(" - ") + strerror(errorCode);
+#endif
+#ifdef __APPLE__
+	uint32_t errorCode = errno;
+	errorMessage += wxString::Format(FORMAT_HEX8, errorCode) + wxT(" - ") + strerror(errorCode);
+#endif
+	wxThreadEvent event(wxEVT_SERIAL_PORT_THREAD_MESSAGE);
+	event.SetPayload(errorMessage);
+	handleFrame->GetEventHandler()->AddPendingEvent(event);
 }
 
 // Возвращает список доступных последовательных портов
@@ -474,22 +576,10 @@ std::vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 	}
 #endif
 
+#ifdef __APPLE__
+	// TODO перечисление списка доступны портов
+#endif
+
 	sort(ports.begin(), ports.end());
 	return ports;
-}
-
-void ThreadedSerialPort::SendLastErrorMessage(const wxChar* prefix)
-{
-	wxString errorMessage = prefix;
-#ifdef __WINDOWS__
-	uint32_t errorCode = GetLastError();
-	errorMessage += wxString::Format(FORMAT_HEX8, errorCode);
-#endif
-#ifdef __LINUX__
-	uint32_t errorCode = errno;
-	errorMessage += wxString::Format(FORMAT_HEX8, errorCode) + wxT(" - ") + strerror(errorCode);
-#endif
-	wxThreadEvent event(wxEVT_SERIAL_PORT_THREAD_MESSAGE);
-	event.SetPayload(errorMessage);
-	handleFrame->GetEventHandler()->AddPendingEvent(event);
 }

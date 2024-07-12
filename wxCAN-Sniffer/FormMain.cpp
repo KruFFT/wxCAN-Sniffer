@@ -5,7 +5,7 @@ wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_UPDATE, wxThreadEvent);
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_EXIT, wxThreadEvent);
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
 
-// Талица событий
+// Таблица событий
 wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
 	EVT_CLOSE(FormMain::OnClose)
 	EVT_BUTTON(ID_BUTON_CONNECT_DISCONNECT, FormMain::ButtonConnectDisconnect_OnClick)
@@ -192,25 +192,32 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 				comboBoxSerialPort = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, this->FromDIP(wxSize(90, 22)), 0, nullptr, wxTE_CENTRE | wxBORDER_SIMPLE);
 				auto ports = ThreadedSerialPort::Enumerate();
 				wxString serialPortToolTip;
-				for (auto& port : ports)
-				{
-					comboBoxSerialPort->Append(port.Port);
-					if (port.HardwareID.IsEmpty())
-					{
-						serialPortToolTip += port.Port + wxT("\n  ") + port.Description + wxT("\n\n");
-					}
-					else
-					{
-						serialPortToolTip += port.Port + wxT("\n  ") + port.Description + wxT("\n  ") + port.HardwareID + wxT("\n\n");
-					}
-				}
-				serialPortToolTip.RemoveLast(2);
-				// по умолчанию выбрать первый порт из списка
 				if (ports.size() > 0)
 				{
-					comboBoxSerialPort->Select(0);
+					for (auto& port : ports)
+					{
+						comboBoxSerialPort->Append(port.Port);
+						if (port.HardwareID.IsEmpty())
+						{
+							serialPortToolTip += port.Port + wxT("\n  ") + port.Description + wxT("\n\n");
+						}
+						else
+						{
+							serialPortToolTip += port.Port + wxT("\n  ") + port.Description + wxT("\n  ") + port.HardwareID + wxT("\n\n");
+						}
+					}
+					serialPortToolTip.RemoveLast(2);
+					// по умолчанию выбрать первый порт из списка
+					if (ports.size() > 0)
+					{
+						comboBoxSerialPort->Select(0);
+					}
+					comboBoxSerialPort->SetToolTip(serialPortToolTip);
 				}
-				comboBoxSerialPort->SetToolTip(serialPortToolTip);
+				else
+				{
+					comboBoxSerialPort->SetToolTip(wxT("Последовательный порт"));
+				}
 				sizerControls->Add(comboBoxSerialPort, 25, wxALL, 2);
 
 				comboBoxSerialSpeed = new wxComboBox(this, wxID_ANY, wxT("500000"), wxDefaultPosition, this->FromDIP(wxSize(90, 22)), 0, nullptr, wxTE_CENTRE | wxBORDER_SIMPLE);
@@ -220,6 +227,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 				comboBoxSerialSpeed->Append(wxT("500000"));
 				comboBoxSerialSpeed->Append(wxT("1000000"));
 				comboBoxSerialSpeed->Append(wxT("2000000"));
+				comboBoxSerialSpeed->SetToolTip(wxT("Скорость соединения"));
 				sizerControls->Add(comboBoxSerialSpeed, 25, wxALL, 2);
 
 				buttonConnectDisconnect = new wxButton(this, ID_BUTON_CONNECT_DISCONNECT, wxT("Подключить"), wxDefaultPosition, this->FromDIP(wxSize(80, 25)));
@@ -227,9 +235,11 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 				sizerControls->Add(buttonConnectDisconnect, 25, wxALL, 0);
 
 				textFPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, this->FromDIP(wxSize(50, 22)), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
+				textFPS->SetToolTip(wxT("пакетов/с"));
 				sizerControls->Add(textFPS, 12, wxALL, 2);
 
 				textBPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, this->FromDIP(wxSize(50, 22)), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
+				textBPS->SetToolTip(wxT("байтов/с (исключая служебную информацию)"));
 				sizerControls->Add(textBPS, 13, wxALL, 2);
 
 				sizerRight->Add(sizerControls, 0, wxALL | wxEXPAND, 2);
@@ -397,7 +407,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 	this->SetSizer(sizerMain);
 	this->SetAutoLayout(true);
 	this->Layout();
-	this->Centre(wxBOTH);
+	this->Center(wxCENTER_ON_SCREEN);
 	this->SetDoubleBuffered(true);
 	this->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 

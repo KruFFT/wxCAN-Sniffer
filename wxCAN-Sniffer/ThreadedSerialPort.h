@@ -44,6 +44,19 @@
 	#define INVALID_HANDLE_VALUE	-1
 #endif
 
+#ifdef __APPLE__
+	#include <sys/param.h>	
+	#include <IOKit/IOKitLib.h>
+	#include <IOKit/usb/IOUSBLib.h>
+	#include <IOKit/serial/IOSerialKeys.h>
+	#include <IOKit/serial/ioss.h>
+	#include <CoreFoundation/CoreFoundation.h>
+
+	#define DEV_DIRECTORY   		wxT("/dev/")
+	#define PORT_PREFIX 			wxT("/dev/")
+	#define INVALID_HANDLE_VALUE	-1
+#endif
+
 #define BUFFER_SIZE	1000000				// ёмкость буфера приёма данных
 
 static wxMutex syncCANBuffer;
@@ -69,13 +82,16 @@ public:
 #ifdef __LINUX__
 	int hSerial = 0;
 #endif
+#ifdef __APPLE__
+	int hSerial = 0;
+#endif
 
 	struct Information					// структура описания последовательного порта
 	{
 	public:
 		wxString Port;
-		wxString HardwareID;
 		wxString Description;
+		wxString HardwareID;		
 
 		// оператор сравнения для естественной сортировки
 		bool operator < (const Information& anotherInformation) const
