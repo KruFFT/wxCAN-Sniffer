@@ -10,8 +10,12 @@
 	#include <stdint.h>
 	#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
 #endif
+#ifdef __APPLE__
+	#include <stdint.h>
+	#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
+#endif
 
-#define CAPTION				wxT("CAN Sniffer 2.2.0 beta 2")
+#define CAPTION				wxT("CAN Sniffer 2.2.0")
 
 #define SIGNATURE_DWORD		0x55AA55AA	// сигнатура пакета (big-endian)
 #define UDP_PORT			0xAA55		// UDP порт

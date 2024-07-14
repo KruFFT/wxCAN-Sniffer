@@ -12,7 +12,7 @@ include(FetchContent)
 FetchContent_Declare(
    wxWidgets
    GIT_REPOSITORY https://github.com/wxWidgets/wxWidgets.git
-   GIT_TAG v3.2.5
+   #GIT_TAG v3.2.5
    GIT_SHALLOW ON
 )
 FetchContent_MakeAvailable(wxWidgets)
@@ -21,12 +21,12 @@ FetchContent_MakeAvailable(wxWidgets)
 set(Sources "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}")
 set(SRCS
 	${Sources}/Application.h
-	${Sources}/Application.cpp    
+	${Sources}/Application.cpp
 	${Sources}/CANParser.h
 	${Sources}/CANParser.cpp
 	${Sources}/CircularFrameBuffer.h
 	${Sources}/CircularFrameBuffer.cpp
-	${Sources}/Common.h	
+	${Sources}/Common.h
 	${Sources}/FormMain.h
 	${Sources}/FormMain.cpp
 	${Sources}/FramesContainer.h

@@ -8,8 +8,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D6E6DD6C-F675-4E06-ACA2-D5C0B6EAF174}"
 	ProjectSection(SolutionItems) = preProject
 		CMakeLists.txt = CMakeLists.txt
+		wxCAN-Sniffer\.vscode\c_cpp_properties.json = wxCAN-Sniffer\.vscode\c_cpp_properties.json
+		wxCAN-Sniffer\.vscode\launch.json = wxCAN-Sniffer\.vscode\launch.json
 		LICENSE = LICENSE
 		README.md = README.md
+		wxCAN-Sniffer\.vscode\settings.json = wxCAN-Sniffer\.vscode\settings.json
+		wxCAN-Sniffer\.vscode\tasks.json = wxCAN-Sniffer\.vscode\tasks.json
 	EndProjectSection
 EndProject
 Global
@@ -25,5 +29,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {13BEFDE9-4814-4D22-B5B7-6E9DD93F6D5A}
 	EndGlobalSection
 EndGlobal
