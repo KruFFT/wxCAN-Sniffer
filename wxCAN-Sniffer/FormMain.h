@@ -1,6 +1,10 @@
 ﻿#pragma once
 
 #include "Common.h"
+#include <wx/splitter.h>
+#include <wx/grid.h>
+#include <wx/dcbuffer.h>
+#include <wx/socket.h>
 #include "ThreadedSerialPort.h"
 #include "CircularFrameBuffer.h"
 #include "FramesContainer.h"
@@ -41,7 +45,7 @@ public:
 
 	// обработчики событий
 	void OnClose(wxCloseEvent& event);
-	void ButtonConDiscon_OnClick(wxCommandEvent& event);
+	void ButtonConnectDisconnect_OnClick(wxCommandEvent& event);
 	void ButtonAdd_OnClick(wxCommandEvent& event);
 	void ButtonRemove_OnClick(wxCommandEvent& event);
 	void ButtonRemoveAll_OnClick(wxCommandEvent& event);
@@ -63,6 +67,7 @@ public:
 	void DrawPanel_OnEraseBackground(wxEraseEvent& event);
 	void Thread_OnUpdate(wxThreadEvent& event);
 	void Thread_OnExit(wxThreadEvent& event);
+	void Thread_OnMessage(wxThreadEvent& event);
 	void UDPSocket_OnEvent(wxSocketEvent& event);
 
 private:
@@ -108,38 +113,38 @@ private:
 	wxPanel* drawPanel;
 	wxTimer* timerMain;
 
-	ThreadedSerialPort* COM = nullptr;	// последовательный порт в отдельном потоке
-	FramesContainer frames;				// список отображаемых на экране пакетов
+	ThreadedSerialPort* serialPort = nullptr;	// последовательный порт в отдельном потоке
+	FramesContainer frames;						// список отображаемых на экране пакетов
 
-	vector<int32_t> logFilterIDs;		// список ID для записи в log-файл
-	int32_t rowToLog = -1;				// выбранная в таблице строка для добавления в фильтр log-файла
-	wxString logExt;					// расширение log-файла
-	wxString logSeparator;				// разделитель значений в log-файле
-	bool logEnable = true;				// переключатель разрешения записи в log-файл
-	bool logDecimal = false;			// переключатель режима записи чисел в log-файле: десятичный или шестнадцатиричный
-	bool logSingle = true;				// переключатель режима записи в log-файле: в один или в раздельные
-	bool logASCII = false;				// добавлять или нет в log-файле текстовые данные
-	vector<LogFile> logFiles;			// массив log-файлов
-	wxFFile* logFile = nullptr;			// единый log-файл
-	wxString decimalSeparator;			// выбранный символ разделитель для данных в log-файле
+	std::vector<int32_t> logFilterIDs;			// список ID для записи в log-файл
+	int32_t rowToLog = -1;						// выбранная в таблице строка для добавления в фильтр log-файла
+	wxString logExt;							// расширение log-файла
+	wxString logSeparator;						// разделитель значений в log-файле
+	bool logEnable = true;						// переключатель разрешения записи в log-файл
+	bool logDecimal = false;					// переключатель режима записи чисел в log-файле: десятичный или шестнадцатеричный
+	bool logSingle = true;						// переключатель режима записи в log-файле: в один или в раздельные
+	bool logASCII = false;						// добавлять или нет в log-файле текстовые данные
+	std::vector<LogFile> logFiles;				// массив log-файлов
+	wxFFile* logFile = nullptr;					// единый log-файл
+	wxString decimalSeparator;					// выбранный символ разделитель для данных в log-файле
 
-	int32_t rowToView = -1;				// номер строки выбранной ячейки для отображения данных о ней
-	int32_t colToView = -1;				// номер столбца выбранной ячейки для отображения данных о ней
-	double mul = 0.125;					// множитель для отображаемых чисел
+	int32_t rowToView = -1;						// номер строки выбранной ячейки для отображения данных о ней
+	int32_t colToView = -1;						// номер столбца выбранной ячейки для отображения данных о ней
+	double mul = 0.125;							// множитель для отображаемых чисел
 
-	wxPen blackPen = *wxBLACK;			// кисть рамки для отрисовки графика
+	wxPen blackPen = *wxBLACK;					// кисть рамки для отрисовки графика
 	wxPen graphPen = wxPen(wxColour(DRAW_COLOR, 0, 0), 3);	// кисть для отрисовки графика заданной ширины
-	wxRect drawRect;					// область отрисовки графика
+	wxRect drawRectangle;						// область отрисовки графика
 	CircularFrameBuffer* drawData = nullptr;	// круговой массив данных для отрисовки
-	size_t drawFrameSize;				// размер кадра отрисовки (равен ширине области панель)
-	uint32_t drawDataBegin = 0;			// начало данных в массиве
-	uint32_t drawMaxValue = 0;			// наибольшее отрисовываемое значение для масштабирования графика
-	
-	uint32_t answerID = 0x7E8;			// ID пакета, от которого будут отображаться данные
-	bool bigEndian = true;				// порядок следования байтов в слове big-endian
+	size_t drawFrameSize;						// размер кадра отрисовки (равен ширине области панель)
+	uint32_t drawDataBegin = 0;					// начало данных в массиве
+	uint32_t drawMaxValue = 0;					// наибольшее рисуемое значение для масштабирования графика
 
-	wxDatagramSocket* UDP = nullptr;	// UDP-сокет
-	wxIPV4address espIpAddress;			// запомненый адрес ESP8266
+	uint32_t answerID = 0x7E8;					// ID пакета, от которого будут отображаться данные
+	bool bigEndian = true;						// порядок следования байтов в слове big-endian
+
+	wxDatagramSocket* udpSocket = nullptr;		// UDP-сокет
+	wxIPV4address espIpAddress;					// сохранённый адрес ESP
 
 	void ProcessCANFrame(CANFrameIn& frame);
 	void RefreshGridCANView();
@@ -148,6 +153,7 @@ private:
 	void FlushLogs();
 	void LogWriteLine(wxFFile* file, CANFrameIn& frame);
 	wxString ToBinary(uint8_t value);
+	void AddToDraw();
 	void ShowNumbers();
 	void UDPSocket_SendFrame(CANFrameOut& frame);
 

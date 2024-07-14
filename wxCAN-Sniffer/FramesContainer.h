@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #include "Common.h"
 
 #define FRAMES_DATA_RESERV	1000		// количество элементов для резерва в векторе
@@ -19,5 +20,5 @@ public:
 	VisualCANFrame GetFrame(size_t index);
 
 private:
-	vector<VisualCANFrame> frames;		// хранилище пакетов с данными для визуализации
+	std::vector<VisualCANFrame> frames;		// хранилище пакетов с данными для визуализации
 };

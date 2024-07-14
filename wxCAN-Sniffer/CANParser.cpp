@@ -4,7 +4,7 @@
 bool CANParser::Parse(uint8_t** bufferHead, CANFrameIn& frame)
 {
     // поиск сигнатуры в потоке байтов
-    if (*(uint32_t*)*bufferHead == SIG_DWORD)
+    if (*(uint32_t*)*bufferHead == SIGNATURE_DWORD)
     {
         *bufferHead += 4;
         // сборка пакета

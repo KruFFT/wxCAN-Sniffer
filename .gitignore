@@ -338,4 +338,4 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/wxCAN Sniffer/CAN.csv
+*.csv

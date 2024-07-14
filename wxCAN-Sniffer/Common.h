@@ -1,35 +1,26 @@
 ﻿#pragma once
 
-//#include <wx/wxprec.h>
-//#ifndef WX_PRECOMP
-	#include <wx/wx.h>
-//#endif
-#include <wx/grid.h>
-#include <wx/splitter.h>
+#include <wx/wx.h>
 #include <wx/ffile.h>
-#include <wx/thread.h>
-#include <wx/graphics.h>
-#include <wx/dcbuffer.h>
-#include <wx/socket.h>
-#include <windows.h>
-#include <stdint.h>
-#include <iostream>
-#include <queue>
-#include <vector>
 
-using namespace std;
+#ifdef __WINDOWS__
+	#define MEMCOPY(dest, source, size)	memcpy_s(dest, size, source, size)
+#endif
+#ifdef __LINUX__
+	#include <stdint.h>
+	#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
+#endif
+#ifdef __APPLE__
+	#include <stdint.h>
+	#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
+#endif
 
-#define CAPTION		wxT("CAN Sniffer 2.1.1")
+#define CAPTION				wxT("CAN Sniffer 2.2.0")
 
-#define SIG_BYTE_0	0xAA
-#define SIG_BYTE_1	0x55
-#define SIG_BYTE_2	0xAA
-#define SIG_BYTE_3	0x55
-#define SIG_DWORD	(uint32_t)(SIG_BYTE_3 << 24 | SIG_BYTE_2 << 16 | SIG_BYTE_1 << 8 | SIG_BYTE_0)
-
-#define UDP_PORT			0xAA55	// UDP порт
-#define UDP_BUFFER_SIZE		1000	// размер буфера приёма пакетов
-#define CAN_DATA_MINIMAL	19		// минимальный размер данных для парсера: сигнатура (4 байта) + ID пакета (4 байта) + интервал (2 байта) + длина (1 байт) + данные (8 байт) = 19 байт
+#define SIGNATURE_DWORD		0x55AA55AA	// сигнатура пакета (big-endian)
+#define UDP_PORT			0xAA55		// UDP порт
+#define UDP_BUFFER_SIZE		1000		// размер буфера приёма пакетов
+#define CAN_DATA_MINIMAL	19			// минимальный размер данных для парсера: сигнатура (4 байта) + ID пакета (4 байта) + интервал (2 байта) + длина (1 байт) + данные (8 байт) = 19 байт
 
 // CAN-пакет для приёма данных
 #pragma pack (push, 1)
@@ -74,7 +65,7 @@ public:
 struct SendCANFrame
 {
 public:
-	uint32_t Signature = SIG_DWORD;
+	uint32_t Signature = SIGNATURE_DWORD;
 	CANFrameOut Frame;		// пакет для отправки
 };
 #pragma pack(pop)
@@ -84,7 +75,7 @@ struct LogFile
 {
 public:
 	uint32_t id;			// идентификатор пакета
-	wxFFile* file;			// хэндл ассоциированного файла
+	wxFFile* file;			// ассоциированный файл
 };
 
 #define CONNECT						wxT("Подключить")
@@ -99,11 +90,11 @@ public:
 #define FORMAT_FLOAT				wxT("%1.6f")
 
 #define ERROR_CAPTION				wxT("Ошибка")
-#define ERROR_SERIAL_GET_PARAMETERS	wxT("Невозможно получить параметры порта.\nОшибка: ")
-#define ERROR_SERIAL_SET_PARAMETERS	wxT("Невозможно установить параметры порта.\nОшибка: ")
-#define ERROR_SERIAL_SET_TIMEOUTS	wxT("Невозможно установить тайм-ауты порта.\nОшибка: ")
 #define ERROR_SERIAL				wxT("Невозможно работать с этим последовательным портом")
-#define ERROR_UDP_OPEN				wxT("Ошибка открытия UDP-сокета: "
+#define ERROR_SERIAL_OPEN			wxT("Невозможно открыть порт.\nОшибка: 0x")
+#define ERROR_SERIAL_SET_PARAMETERS	wxT("Невозможно установить параметры порта.\nОшибка: 0x")
+#define ERROR_SERIAL_READ			wxT("Ошибка чтения данных: 0x")
+#define ERROR_UDP_OPEN				wxT("Ошибка открытия UDP-сокета: ")
 
 #define ERROR_THREAD_CREATE			"Невозможно создать поток"
 #define ERROR_THREAD_START			"Невозможно запустить поток"

@@ -36,7 +36,7 @@ void CircularFrameBuffer::Add(uint32_t value)
 	// если достигнут предел массива - надо сдвинуть данные
 	if (frameEnd >= bufferSize)
 	{
-		memcpy_s(buffer, frameSizeBytesCount, &buffer[frameBegin], frameSizeBytesCount);
+		MEMCOPY(buffer, &buffer[frameBegin], frameSizeBytesCount);
 		frameBegin = 0;
 		frameEnd = frameSize;
 	}

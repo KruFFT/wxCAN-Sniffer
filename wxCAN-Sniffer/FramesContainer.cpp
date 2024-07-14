@@ -48,7 +48,7 @@ void FramesContainer::AddFrame(CANFrameIn& frame)
 							curentColorValue += 0x00010100;
 							frames[iID].color[iData] = curentColorValue;
 						}
-					}						
+					}
 				}
 				else
 				{
@@ -64,10 +64,10 @@ void FramesContainer::AddFrame(CANFrameIn& frame)
 	// если ID не найден - добавить новый с зелёным цветом
 	VisualCANFrame vFrame;
 	vFrame.frame = frame;
-	fill_n(vFrame.color, 8, NEW_COLOR);
+	std::fill_n(vFrame.color, 8, NEW_COLOR);
 
 	frames.push_back(vFrame);
-	sort(frames.begin(), frames.end());
+	std::sort(frames.begin(), frames.end());
 }
 
 // Вернуть размер хранилища
