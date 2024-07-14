@@ -1,6 +1,5 @@
 ﻿# wxCAN-Sniffer - CAN bus sniffer (PC side)
 
-[TOC]
 - [Возможности](#Возможности)
 - [Статья](#Статья)
 - [Сборка приложения в Windows](#Сборка-приложения-в-Windows)
