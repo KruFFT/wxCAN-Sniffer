@@ -574,7 +574,7 @@ void FormMain::Thread_OnExit(wxThreadEvent& event)
 	buttonConnectDisconnect->SetLabelText(CONNECT);
 }
 
-// Сообщение от потока прои ошибке
+// Сообщение от потока при ошибке
 void FormMain::Thread_OnMessage(wxThreadEvent& event)
 {
 	wxMessageBox(event.GetPayload<wxString>(), ERROR_CAPTION, wxICON_ERROR);

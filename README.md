@@ -12,6 +12,7 @@
   - [Используя Visual Studio Code](#Используя-Visual-Studio-Code)
     - [1. Сборка Linux wxWidgets](#1.-Сборка-Linux-wxWidgets)
     - [2. Сборка приложения в Visual Studio Code](#2.-Сборка-приложения-в-Visual-Studio-Code)
+- [Сборка приложения в macOS](#Сборка-приложения-в-macOS)
 - [License](#License)
 
 ## Возможности
@@ -41,7 +42,7 @@ cmake --build build -j --config Release
 cmake --build build -j
 ```
 
-Если по каким-либо причинам подготовка завершается с ошибкой, то в файле **CMakeLists.txt** можно указать версию wxWidgets раскомментировав строку **GIT_TAG v3.2.5** и задав в ней номер версии.
+Если по каким-либо причинам подготовка завершается с ошибкой, то в файле **CMakeLists.txt** можно указать версию wxWidgets убрав комментарий со строки **GIT_TAG v3.2.5** и задав в ней номер версии.
 
 ### Используя Visual Studio 2022 Community
 Сначала необходимо собрать **wxWidgets** в static-режиме и потом само приложение.
@@ -75,7 +76,7 @@ sudo apt-get install cmake
 ```sh
 cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
 ```
-или отладчной сборки в `./build-debug`:
+или отладочной сборки в `./build-debug`:
 ```sh
 cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug
 ```
@@ -96,7 +97,7 @@ sudo mkswap /swapfile
 sudo swapon /swapfile
 ```
 
-Если по каким-либо причинам подготовка завершается с ошибкой, то в файле **CMakeLists.txt** можно указать версию wxWidgets раскомментировав строку **GIT_TAG v3.2.5** и задав в ней номер версии.
+Если по каким-либо причинам подготовка завершается с ошибкой, то в файле **CMakeLists.txt** можно указать версию wxWidgets убрав комментарий со строки **GIT_TAG v3.2.5** и задав в ней номер версии.
 
 ### Используя Visual Studio Code
 #### 1. Сборка Linux wxWidgets
@@ -142,6 +143,9 @@ sudo cp ./lib/wx/include/gtk3-unicode-static-3.3/wx/setup.h /usr/local/include/w
 1. Открыть директорию проекта `./wxCAN-Sniffer/wxCAN-Sniffer` в редакторе Visual Studio Code
 2. Открыть файл **Application.cpp**
 3. В меню **Terminal** выбрать пункт **Run Task**, выбрать необходимую конфигурацию **C/C++: GCC build release** или **C/C++: GCC build debug** (результат будет в этой же директории)
+
+## Сборка приложения в macOS
+Сборка и работа приложения возможна и находится в процессе тестирования
 
 ## License
 MIT
