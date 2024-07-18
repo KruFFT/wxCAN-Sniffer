@@ -45,6 +45,7 @@
 #endif
 
 #ifdef __APPLE__
+	#include <sys/ioctl.h>
 	#include <sys/param.h>	
 	#include <IOKit/IOKitLib.h>
 	#include <IOKit/usb/IOUSBLib.h>

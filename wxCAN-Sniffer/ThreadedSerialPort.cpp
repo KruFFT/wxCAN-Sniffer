@@ -196,7 +196,7 @@ bool ThreadedSerialPort::SetParameters()
 	}
 
 	speed_t speedBaudRate = (speed_t)baudRate;
-	if (ioctl(fd, IOSSIOSPEED, &speedBaudRate) < 0)
+	if (ioctl(fd, IOSSIOSPEED, &speedBaudRate, 1) < 0)
 	{
 		SendLastErrorMessage(ERROR_SERIAL_SET_PARAMETERS);
 		close(hSerial);
@@ -213,7 +213,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 {
 #ifdef __WINDOWS__
 	DWORD  bytesRead = 0;		// количество прочитанных из последовательного порта данных
-	DWORD bytesSent;			// количество отправленных байтов
+	DWORD  bytesSent;			// количество отправленных байтов
 #endif
 #ifdef __LINUX__
 	int32_t  bytesRead = 0;		// количество прочитанных из последовательного порта данных
@@ -240,8 +240,9 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 #ifdef __LINUX__
 	hSerial = open(portName.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
 #endif
-#ifdef __APPPLE__
-	hSerial = open(portName.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
+#ifdef __APPLE__
+	const char* asciiPortName = portName.mb_str().data();
+	hSerial = open(asciiPortName, O_RDWR | O_NOCTTY | O_NDELAY | O_EXLOCK | O_NONBLOCK);
 #endif
 
 	if (hSerial == INVALID_HANDLE_VALUE)
@@ -577,7 +578,7 @@ std::vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 #endif
 
 #ifdef __APPLE__
-	// TODO перечисление списка доступны портов
+	// TODO перечисление списка доступных портов
 #endif
 
 	sort(ports.begin(), ports.end());
