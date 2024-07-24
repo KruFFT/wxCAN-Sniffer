@@ -4,12 +4,12 @@
 CircularFrameBuffer::CircularFrameBuffer(size_t windowSize)
 {
 	// размер буфера должен быть минимум в два раза больше размера окна
-	bufferSize = windowSize * 2;
-	buffer = new uint32_t[bufferSize + 1] { 0 };
+	bufferSize = windowSize * 4;
+	buffer = new float[bufferSize + 1] { 0 };
 	frameSize = windowSize;
 	frameBegin = 0;
 	frameEnd = frameSize;
-	frameSizeBytesCount = bufferSize * sizeof(uint32_t);
+	frameSizeBytesCount = bufferSize * sizeof(float);
 }
 
 // Деструктор
@@ -31,7 +31,7 @@ void CircularFrameBuffer::Clear()
 }
 
 // Добавить новое значение со сдвигом при необходимости
-void CircularFrameBuffer::Add(uint32_t value)
+void CircularFrameBuffer::Add(float value)
 {
 	// если достигнут предел массива - надо сдвинуть данные
 	if (frameEnd >= bufferSize)
@@ -47,7 +47,7 @@ void CircularFrameBuffer::Add(uint32_t value)
 }
 
 // Вернуть указатель на начало кадра
-uint32_t* CircularFrameBuffer::Frame()
+float* CircularFrameBuffer::Frame()
 {
 	return &buffer[frameBegin];
 }

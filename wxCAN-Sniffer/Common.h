@@ -15,7 +15,7 @@
 	#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
 #endif
 
-#define CAPTION				wxT("CAN Sniffer 2.2.1 beta 1")
+#define CAPTION				wxT("CAN Sniffer 2.2.1 beta 2")
 
 #define SIGNATURE_DWORD		0x55AA55AA	// сигнатура пакета (big-endian)
 #define UDP_PORT			0xAA55		// UDP порт
@@ -85,9 +85,11 @@ public:
 #define FORMAT_HEX3					wxT("%03X")
 #define FORMAT_HEX8					wxT("%08X")
 #define FORMAT_INT					wxT("%i")
+#define FORMAT_UINT					wxT("%u")
 #define FORMAT_INT0					wxT("%0i")
 #define FORMAT_INT3					wxT("%03i")
-#define FORMAT_FLOAT				wxT("%1.6f")
+#define FORMAT_FLOAT1_0				wxT("%1.0f")
+#define FORMAT_FLOAT1_3				wxT("%1.3f")
 
 #define ERROR_CAPTION				wxT("Ошибка")
 #define ERROR_SERIAL				wxT("Невозможно работать с этим последовательным портом")

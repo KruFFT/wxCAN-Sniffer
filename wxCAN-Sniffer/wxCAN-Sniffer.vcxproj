@@ -188,6 +188,9 @@
   <ItemGroup>
     <Manifest Include="wxCAN-Sniffer.manifest" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Info.plist" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

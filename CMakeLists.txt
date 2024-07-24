@@ -45,7 +45,7 @@ message(STATUS "wxWidgets sources: " ${wxWidgets_SOURCE_DIR})
 # Building
 if(APPLE)
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SRCS})
-    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist)
+    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${Sources}/Info.plist)
 else()
     add_executable(${PROJECT_NAME} WIN32 ${SRCS} ${Sources}/${PROJECT_NAME}.manifest)
 endif()

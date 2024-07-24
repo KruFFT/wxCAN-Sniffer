@@ -8,6 +8,16 @@ bool Application::OnInit()
 		//locale.AddCatalog(GetAppDir() + wxT("\\."));
 	}
 
+	// определение системной темы, если тёмная
+	/*if (wxSystemSettings::GetAppearance().AreAppsDark())
+	{
+
+	}
+	else
+	{
+
+	}*/
+
 	auto form = new FormMain();
 	form->Show(true);
 	SetTopWindow(form);

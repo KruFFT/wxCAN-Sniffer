@@ -114,10 +114,16 @@ git clone https://github.com/wxWidgets/wxWidgets.git
 3. Обновить необходимые зависимости:
 ```
 cd wxWidgets
-git submodule update --init src/stc/scintilla
 git submodule update --init src/stc/lexilla
+git submodule update --init src/stc/scintilla
+git submodule update --init src/expat
+git submodule update --init src/jpeg
+git submodule update --init src/png
+git submodule update --init src/tiff
+git submodule update --init src/zlib
 git submodule update --init 3rdparty/catch
 git submodule update --init 3rdparty/nanosvg
+git submodule update --init 3rdparty/pcre
 ```
 4. Подготовить директорию `./gtk-build` для сборки и запустить настройку:
 ```

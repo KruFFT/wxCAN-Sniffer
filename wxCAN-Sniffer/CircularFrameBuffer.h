@@ -9,12 +9,12 @@ public:
 	~CircularFrameBuffer();
 
 	void Clear();
-	void Add(uint32_t value);
-	uint32_t* Frame();
+	void Add(float value);
+	float* Frame();
 	size_t FrameSize();
 
 private:
-	uint32_t* buffer = nullptr;		// массив данных
+	float* buffer = nullptr;		// массив данных
 	size_t bufferSize;				// размер массива данных
 	size_t frameSize;				// размер окна данных
 	size_t frameBegin;				// начало окна данных
