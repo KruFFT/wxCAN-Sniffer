@@ -4,13 +4,13 @@
 #include <wx/splitter.h>
 #include <wx/grid.h>
 #include <wx/collpane.h>
+#include <wx/time.h>
 #include <wx/dcbuffer.h>
 #include <wx/socket.h>
 #include "ThreadedSerialPort.h"
 #include "CircularFrameBuffer.h"
 #include "FramesContainer.h"
 
-#define DRAW_COLOR			0xFF0000FFlu	// (ABGR) красный
 #define TIMER_INTERVAL		40				// интервал срабатывания таймера обновления данных на экране (около 25 кадров/с)
 
 #define TEXT_UINT8			wxT("UInt8")
@@ -25,7 +25,7 @@
 class FormMain : public wxFrame
 {
 public:
-	FormMain();
+	FormMain(WindowColors& colors);
 
 	// обработчики событий
 	void OnClose(wxCloseEvent& event);
@@ -120,7 +120,7 @@ private:
 	};
 
 	ThreadedSerialPort* serialPort = nullptr;	// последовательный порт в отдельном потоке
-	FramesContainer frames;						// список отображаемых на экране пакетов
+	FramesContainer* frames = nullptr;			// список отображаемых на экране пакетов
 
 	std::vector<int32_t> logFilterIDs;			// список ID для записи в log-файл
 	int32_t rowToLog = -1;						// выбранная в таблице строка для добавления в фильтр log-файла
@@ -139,8 +139,11 @@ private:
 	float mul = 1.0;							// множитель для отображаемых чисел
 	DataTypes dataType = DataTypes::UInt8;		// тип данных для отображения
 
-	wxPen blackPen = *wxBLACK;					// кисть рамки для отрисовки графика
-	wxPen graphPen = wxPen(wxColour(DRAW_COLOR), 3);	// кисть для отрисовки графика заданной ширины
+	WindowColors themeColors;					// цвета объектов
+	wxPen graphFramePen;						// перо рамки для отрисовки графика
+	wxBrush graphBackgroundBrush;				// кисть фоновой заливки графика
+	wxPen graphPen;								// перо для отрисовки графика заданной ширины
+	wxColour graphText;							// цвет для текста графика
 	CircularFrameBuffer* drawData = nullptr;	// круговой массив данных для отрисовки
 	size_t drawFrameSize;						// размер кадра отрисовки (равен ширине области панель)
 	uint32_t drawDataBegin = 0;					// начало данных в массиве

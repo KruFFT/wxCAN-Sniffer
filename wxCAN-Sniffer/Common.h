@@ -15,7 +15,7 @@
 	#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
 #endif
 
-#define CAPTION				wxT("CAN Sniffer 2.2.1 beta 2")
+#define CAPTION				wxT("CAN Sniffer 2.2.1 beta 3")
 
 #define SIGNATURE_DWORD		0x55AA55AA	// сигнатура пакета (big-endian)
 #define UDP_PORT			0xAA55		// UDP порт
@@ -40,7 +40,9 @@ struct VisualCANFrame
 {
 public:
 	CANFrameIn frame;		// пакет с данными
-	wxColour color[8];		// цвет фона ячейки
+	wxColour color[8];		// цвет фона каждой ячейки
+	int	lightness[8];		// яркость каждой ячейки
+	wxLongLong ms[8];		// время фиксации новых данных
 
 	// оператор сравнения CAN-пакета необходим для сортировки
 	bool operator < (const VisualCANFrame& anotherFrame) const
@@ -76,6 +78,23 @@ struct LogFile
 public:
 	uint32_t id;			// идентификатор пакета
 	wxFFile* file;			// ассоциированный файл
+};
+
+// Цветовые стили для окна
+struct WindowColors
+{
+public:
+	bool IsDark;						// признак тёмной темы
+	wxColour GridFont;					// цвет текста
+	wxColour GridLines;					// цвет линий
+	wxColour GridBackground;			// цвет фона ячеек по умолчанию
+	wxColour GridNewBackground;			// цвет фона новых данных
+	wxColour GridUpdateBackground;		// цвет фона обновляемых данных
+	wxColour GridSelectedBackground;	// цвет фона выделенных ячеек
+	wxColour GraphFrame;				// цвет рамки графика
+	wxBrush  GraphBackground;			// кисть фоновой заливки графика
+	wxColour GraphDraw;					// цвет линии графика
+	wxColour GraphText;					// цвет текста графика
 };
 
 #define CONNECT						wxT("Подключить")

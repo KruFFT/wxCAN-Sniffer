@@ -7,12 +7,19 @@ wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
 
 // Таблица событий (только событие для UDP-сокета)
 wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
-	EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
+EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
 wxEND_EVENT_TABLE()
 
 // Конструктор окна
-FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE)
+FormMain::FormMain(WindowColors& colors) : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE)
 {
+	// сохранение цветов
+	themeColors = colors;
+	graphFramePen = wxPen(themeColors.GraphFrame, 1);
+	graphBackgroundBrush = wxBrush(themeColors.GraphBackground);
+	graphPen = wxPen(themeColors.GraphDraw, 3);
+	graphText = themeColors.GraphText;
+
 	// иконка и размер окна
 #ifdef __WINDOWS__
 	this->SetIcon(wxICON(wxicon));
@@ -67,6 +74,9 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			}
 			// внешний вид
 			gridCANView->SetSelectionMode(wxGrid::wxGridSelectionModes::wxGridSelectNone);
+			gridCANView->SetDefaultCellTextColour(themeColors.GridFont);
+			gridCANView->SetDefaultCellBackgroundColour(themeColors.GridBackground);
+			gridCANView->SetGridLineColour(themeColors.GridLines);
 		}
 		sizerLeftTop->Add(gridCANView, 1, wxEXPAND, 0);
 		panelLeftTop->SetSizer(sizerLeftTop);
@@ -154,6 +164,11 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 				gridCANLog->SetColSize(iCol, FromDIP(60));
 			}
 			gridCANLog->SetSelectionMode(wxGrid::wxGridSelectionModes::wxGridSelectNone);
+			// внешний вид
+			gridCANLog->SetSelectionMode(wxGrid::wxGridSelectionModes::wxGridSelectNone);
+			gridCANLog->SetDefaultCellTextColour(themeColors.GridFont);
+			gridCANLog->SetDefaultCellBackgroundColour(themeColors.GridBackground);
+			gridCANLog->SetGridLineColour(themeColors.GridLines);
 			sizerLeftBottom->Add(gridCANLog, 1, wxEXPAND, 0);
 		}
 		panelLeftBottom->SetSizer(sizerLeftBottom);
@@ -394,7 +409,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 			// панель для графика
 			drawPanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
 			drawPanel->SetBackgroundStyle(wxBG_STYLE_PAINT);
-			drawPanel->SetBackgroundColour(wxColour(255, 255, 255));
+			drawPanel->SetBackgroundColour(*wxWHITE);
 			
 			sizerRight->Add(drawPanel, 1, wxALL | wxEXPAND, 2);
 		}
@@ -446,6 +461,9 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
 
 	// событие таймера
 	this->Bind(wxEVT_TIMER, &FormMain::MainTimer_OnTimer, this, ID_MAIN_TIMER);
+
+	// создание хранилища пакетов
+	frames = new FramesContainer(themeColors);
 
 	// настройка и запуск таймера
 	timerMain = new wxTimer(this, ID_MAIN_TIMER);
@@ -506,6 +524,12 @@ void FormMain::OnClose(wxCloseEvent& event)
 		drawData = nullptr;
 	}
 
+	if (frames)
+	{
+		delete frames;
+		frames = nullptr;
+	}
+
 	// записать все файлы
 	FlushLogs();
 
@@ -527,7 +551,7 @@ void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
 			unsigned long serialSpeed = 0;
 			if (comboBoxSerialSpeed->GetValue().ToULong(&serialSpeed))
 			{
-				frames.Clear();
+				frames->Clear();
 
 				// удалить все строки таблицы
 				if (gridCANView->GetNumberRows() > 0)
@@ -601,7 +625,7 @@ void FormMain::ProcessCANFrame(CANFrameIn& frame)
 	}
 	else
 	{
-		frames.AddFrame(frame);
+		frames->AddFrame(frame);
 
 		// добавить для отрисовки
 		AddToDraw();
@@ -692,19 +716,19 @@ void FormMain::TextDecWordMul_OnEnter(wxCommandEvent& event)
 // Добавить ID в список фильтра для записи в log
 void FormMain::ButtonAdd_OnClick(wxCommandEvent& event)
 {
-	if (rowToLog >= 0 && (int)frames.Size() > rowToLog)
+	if (rowToLog >= 0 && (int)frames->Size() > rowToLog)
 	{
 		bool found = false;
 		for (size_t iID = 0; iID < logFilterIDs.size(); iID++)
 		{
-			if (frames.GetFrame(rowToLog).frame.id == logFilterIDs[iID])
+			if (frames->GetFrame(rowToLog).frame.id == logFilterIDs[iID])
 			{
 				found = true;
 				break;
 			}
 		}
 		if (!found)
-			logFilterIDs.push_back(frames.GetFrame(rowToLog).frame.id);
+			logFilterIDs.push_back(frames->GetFrame(rowToLog).frame.id);
 	}
 
 	RefreshListLog();
@@ -1052,7 +1076,7 @@ void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 // Обновить данные CAN-пакетов в таблице, вызывается по таймеру
 void FormMain::RefreshGridCANView()
 {
-	size_t framesAmount = frames.Size();
+	size_t framesAmount = frames->Size();
 
 	// заполнить таблицу строками
 	while (gridCANView->GetNumberRows() < framesAmount)
@@ -1064,10 +1088,16 @@ void FormMain::RefreshGridCANView()
 		for (size_t iFrame = 0; iFrame < framesAmount; iFrame++)
 		{
 			// вывод ID, интервала и длины пакета
-			auto vFrame = frames.GetFrame(iFrame);
+			auto vFrame = frames->GetFrame(iFrame);
 			gridCANView->SetCellValue(iFrame, 0, wxString::Format(FORMAT_HEX3, vFrame.frame.id));
 			gridCANView->SetCellValue(iFrame, 1, wxString::Format(FORMAT_INT, vFrame.frame.interval));
 			gridCANView->SetCellValue(iFrame, 2, wxString::Format(FORMAT_INT, vFrame.frame.length));
+			gridCANView->SetCellBackgroundColour(iFrame, 0, themeColors.GridBackground);
+			gridCANView->SetCellBackgroundColour(iFrame, 1, themeColors.GridBackground);
+			gridCANView->SetCellBackgroundColour(iFrame, 2, themeColors.GridBackground);
+			gridCANView->SetCellTextColour(iFrame, 0, themeColors.GridFont);
+			gridCANView->SetCellTextColour(iFrame, 1, themeColors.GridFont);
+			gridCANView->SetCellTextColour(iFrame, 2, themeColors.GridFont);
 
 			// заполнение столбцов данных
 			for (size_t iData = 0; iData < 8; iData++)
@@ -1076,27 +1106,31 @@ void FormMain::RefreshGridCANView()
 				{
 					// вывод данных с их фоновым цветом
 					gridCANView->SetCellValue(iFrame, iData + 3, wxString::Format(FORMAT_HEX2, vFrame.frame.data[iData]));
-					gridCANView->SetCellBackgroundColour(iFrame, iData + 3, vFrame.color[iData]);
+					//auto color = vFrame.color[iData];
+					auto tunedColor = vFrame.color[iData].ChangeLightness(vFrame.lightness[iData]);
+					gridCANView->SetCellBackgroundColour(iFrame, iData + 3, tunedColor);
+					gridCANView->SetCellTextColour(iFrame, iData + 3, themeColors.GridFont);
 				}
 				else
 				{
 					// вывод пустых ячеек
 					gridCANView->SetCellValue(iFrame, iData + 3, wxT(" "));
-					gridCANView->SetCellBackgroundColour(iFrame, iData + 3, wxColour(DEFAULT_COLOR));
+					gridCANView->SetCellBackgroundColour(iFrame, iData + 3, themeColors.GridBackground);
+					gridCANView->SetCellTextColour(iFrame, iData + 3, themeColors.GridFont);
 				}
 			}
 		}
 		// раскраска выделенных ячеек
 		if (colToView >= 0)
 		{
-			gridCANView->SetCellBackgroundColour(rowToView, colToView + 3, wxColour(SELECTED_COLOR));
+			gridCANView->SetCellBackgroundColour(rowToView, colToView + 3, themeColors.GridSelectedBackground);
 			switch (dataType)
 			{
 				case DataTypes::UInt16:
 				case DataTypes::Int16:
 					if (colToView < 7)
 					{
-						gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, wxColour(SELECTED_COLOR));
+						gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, themeColors.GridSelectedBackground);
 					}
 					break;
 
@@ -1105,18 +1139,18 @@ void FormMain::RefreshGridCANView()
 				case DataTypes::Float:
 					if (colToView < 5)
 					{
-						gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, wxColour(SELECTED_COLOR));
-						gridCANView->SetCellBackgroundColour(rowToView, colToView + 5, wxColour(SELECTED_COLOR));
-						gridCANView->SetCellBackgroundColour(rowToView, colToView + 6, wxColour(SELECTED_COLOR));
+						gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, themeColors.GridSelectedBackground);
+						gridCANView->SetCellBackgroundColour(rowToView, colToView + 5, themeColors.GridSelectedBackground);
+						gridCANView->SetCellBackgroundColour(rowToView, colToView + 6, themeColors.GridSelectedBackground);
 					}
 					else if (colToView < 6)
 					{
-						gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, wxColour(SELECTED_COLOR));
-						gridCANView->SetCellBackgroundColour(rowToView, colToView + 5, wxColour(SELECTED_COLOR));
+						gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, themeColors.GridSelectedBackground);
+						gridCANView->SetCellBackgroundColour(rowToView, colToView + 5, themeColors.GridSelectedBackground);
 					}
 					else if (colToView < 7)
 					{
-						gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, wxColour(SELECTED_COLOR));
+						gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, themeColors.GridSelectedBackground);
 					}
 					break;
 			}
@@ -1132,12 +1166,12 @@ void FormMain::ShowNumbers()
 	if (rowToView >= 0 && colToView >= 0)
 	{
 		// если полученных данных ещё нет
-		if (rowToView >= frames.Size())
+		if (rowToView >= frames->Size())
 		{
 			return;
 		}
 
-		auto vFrame = frames.GetFrame(rowToView);
+		auto vFrame = frames->GetFrame(rowToView);
 
 		switch (dataType)
 		{
@@ -1242,7 +1276,7 @@ void FormMain::AddToDraw()
 	if (rowToView >= 0 && colToView >= 0)
 	{
 		// если полученных данных ещё нет
-		if (rowToView >= frames.Size())
+		if (rowToView >= frames->Size())
 		{
 			return;
 		}
@@ -1250,7 +1284,7 @@ void FormMain::AddToDraw()
 		// добавить полученные данные в очередь на отрисовку
 		if (drawData && colToView >= 0)
 		{
-			auto vFrame = frames.GetFrame(rowToView);
+			auto vFrame = frames->GetFrame(rowToView);
 
 			switch (dataType)
 			{
@@ -1345,7 +1379,8 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 	auto drawRectangle = drawPanel->GetClientRect();
 
 	// нарисовать рамку и фон
-	dc.SetPen(blackPen);
+	dc.SetPen(graphFramePen);
+	dc.SetBrush(graphBackgroundBrush);
 	dc.DrawRectangle(drawRectangle);
 
 	if (drawData && colToView >= 0)
@@ -1367,6 +1402,7 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 		float scaleFactor = -height / (maxValue - minValue);
 
 		// нарисовать осевую линию по нулю
+		dc.SetPen(graphText);
 		wxCoord y = (-minValue) * scaleFactor + height;
 		dc.DrawLine(0, y, drawRectangle.width, y);
 
@@ -1380,6 +1416,7 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 			y = yy;
 		}
 
+		dc.SetTextForeground(graphText);
 		auto fontMetrics = dc.GetFontMetrics();
 		dc.DrawText(wxString::Format(FORMAT_FLOAT1_0, maxValue), fontMetrics.internalLeading, 0);
 		dc.DrawText(wxString::Format(FORMAT_FLOAT1_0, minValue), fontMetrics.internalLeading, drawRectangle.height - fontMetrics.height - fontMetrics.descent);
