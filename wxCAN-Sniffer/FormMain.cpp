@@ -7,7 +7,7 @@ wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
 
 // Таблица событий (только событие для UDP-сокета)
 wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
-EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
+	EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
 wxEND_EVENT_TABLE()
 
 // Конструктор окна
@@ -1190,7 +1190,7 @@ void FormMain::ShowNumbers()
 				uint8_t byte1 = vFrame.frame.data[colToView];
 				uint8_t byte2 = colToView < 7 ? vFrame.frame.data[colToView + 1] : 0;
 				// выбор между big endian и little endian
-				uint16_t value = bigEndian ? (byte1 << 8) + byte2 : (byte2 << 8) + byte1;
+				uint16_t value = bigEndian ? (byte1 << 8) | byte2 : (byte2 << 8) | byte1;
 				textBin->ChangeValue(ToBinary((uint16_t)value));
 				textDec->ChangeValue(wxString::Format(FORMAT_UINT, value));
 				uint32_t mulValue = (float)value * mul;
@@ -1205,7 +1205,7 @@ void FormMain::ShowNumbers()
 				uint8_t byte3 = colToView < 6 ? vFrame.frame.data[colToView + 2] : 0;
 				uint8_t byte4 = colToView < 5 ? vFrame.frame.data[colToView + 3] : 0;
 				// выбор между big endian и little endian
-				uint32_t value = bigEndian ? (byte1 << 24) + (byte2 << 16) + (byte3 << 8) + byte4 : (byte4 << 24) + (byte3 << 16) + (byte2 << 8) + byte1;
+				uint32_t value = bigEndian ? (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4 : (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | byte1;
 				textBin->ChangeValue(ToBinary(value));
 				textDec->ChangeValue(wxString::Format(FORMAT_UINT, value));
 				uint32_t mulValue = (float)value * mul;
@@ -1228,7 +1228,7 @@ void FormMain::ShowNumbers()
 				uint8_t byte1 = vFrame.frame.data[colToView];
 				uint8_t byte2 = colToView < 7 ? vFrame.frame.data[colToView + 1] : 0;
 				// выбор между big endian и little endian
-				uint16_t value = bigEndian ? (byte1 << 8) + byte2 : (byte2 << 8) + byte1;
+				uint16_t value = bigEndian ? (byte1 << 8) | byte2 : (byte2 << 8) | byte1;
 				textBin->ChangeValue(ToBinary((uint16_t)value));
 				textDec->ChangeValue(wxString::Format(FORMAT_INT, (int16_t)value));
 				int32_t mulValue = (float)((int16_t)value) * mul;
@@ -1243,7 +1243,7 @@ void FormMain::ShowNumbers()
 				uint8_t byte3 = colToView < 6 ? vFrame.frame.data[colToView + 2] : 0;
 				uint8_t byte4 = colToView < 5 ? vFrame.frame.data[colToView + 3] : 0;
 				// выбор между big endian и little endian
-				uint32_t value = bigEndian ? (byte1 << 24) + (byte2 << 16) + (byte3 << 8) + byte4 : (byte4 << 24) + (byte3 << 16) + (byte2 << 8) + byte1;
+				uint32_t value = bigEndian ? (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4 : (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | byte1;
 				textBin->ChangeValue(ToBinary(value));
 				textDec->ChangeValue(wxString::Format(FORMAT_INT, (int32_t)value));
 				int32_t mulValue = (float)((int32_t)value) * mul;
@@ -1258,7 +1258,7 @@ void FormMain::ShowNumbers()
 				uint8_t byte3 = colToView < 6 ? vFrame.frame.data[colToView + 2] : 0;
 				uint8_t byte4 = colToView < 5 ? vFrame.frame.data[colToView + 3] : 0;
 				// выбор между big endian и little endian
-				uint32_t value = bigEndian ? (byte1 << 24) + (byte2 << 16) + (byte3 << 8) + byte4 : (byte4 << 24) + (byte3 << 16) + (byte2 << 8) + byte1;
+				uint32_t value = bigEndian ? (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4 : (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | byte1;
 				textBin->ChangeValue(ToBinary(value));
 				auto floatValue = *(float*)((uint32_t*)&value);
 				textDec->ChangeValue(wxString::Format(FORMAT_FLOAT1_3, floatValue));
@@ -1301,7 +1301,7 @@ void FormMain::AddToDraw()
 					uint8_t byte1 = vFrame.frame.data[colToView];
 					uint8_t byte2 = colToView < 7 ? vFrame.frame.data[colToView + 1] : 0;
 					// выбор между big endian и little endian
-					uint16_t value = bigEndian ? (byte1 << 8) + byte2 : (byte2 << 8) + byte1;
+					uint16_t value = bigEndian ? (byte1 << 8) | byte2 : (byte2 << 8) | byte1;
 					float mulValue = (float)value * mul;
 					drawData->Add(mulValue);
 					break;
@@ -1314,7 +1314,7 @@ void FormMain::AddToDraw()
 					uint8_t byte3 = colToView < 6 ? vFrame.frame.data[colToView + 2] : 0;
 					uint8_t byte4 = colToView < 5 ? vFrame.frame.data[colToView + 3] : 0;
 					// выбор между big endian и little endian
-					uint32_t value = bigEndian ? (byte1 << 24) + (byte2 << 16) + (byte3 << 8) + byte4 : (byte4 << 24) + (byte3 << 16) + (byte2 << 8) + byte1;
+					uint32_t value = bigEndian ? (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4 : (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | byte1;
 					float mulValue = (float)value * mul;
 					drawData->Add(mulValue);
 					break;
@@ -1333,7 +1333,7 @@ void FormMain::AddToDraw()
 					uint8_t byte1 = vFrame.frame.data[colToView];
 					uint8_t byte2 = colToView < 7 ? vFrame.frame.data[colToView + 1] : 0;
 					// выбор между big endian и little endian
-					uint16_t value = bigEndian ? (byte1 << 8) + byte2 : (byte2 << 8) + byte1;
+					uint16_t value = bigEndian ? (byte1 << 8) | byte2 : (byte2 << 8) | byte1;
 					float mulValue = (float)((int16_t)value) * mul;
 					drawData->Add(mulValue);
 					break;
@@ -1346,7 +1346,7 @@ void FormMain::AddToDraw()
 					uint8_t byte3 = colToView < 6 ? vFrame.frame.data[colToView + 2] : 0;
 					uint8_t byte4 = colToView < 5 ? vFrame.frame.data[colToView + 3] : 0;
 					// выбор между big endian и little endian
-					uint32_t value = bigEndian ? (byte1 << 24) + (byte2 << 16) + (byte3 << 8) + byte4 : (byte4 << 24) + (byte3 << 16) + (byte2 << 8) + byte1;
+					uint32_t value = bigEndian ? (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4 : (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | byte1;
 					float mulValue = (float)((int32_t)value) * mul;
 					drawData->Add(mulValue);
 					break;
@@ -1359,7 +1359,7 @@ void FormMain::AddToDraw()
 					uint8_t byte3 = colToView < 6 ? vFrame.frame.data[colToView + 2] : 0;
 					uint8_t byte4 = colToView < 5 ? vFrame.frame.data[colToView + 3] : 0;
 					// выбор между big endian и little endian
-					uint32_t value = bigEndian ? (byte1 << 24) + (byte2 << 16) + (byte3 << 8) + byte4 : (byte4 << 24) + (byte3 << 16) + (byte2 << 8) + byte1;
+					uint32_t value = bigEndian ? (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4 : (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | byte1;
 					float mulValue = *(float*)((uint32_t*)&value) * mul;
 					drawData->Add(mulValue);
 					break;

@@ -17,9 +17,9 @@ bool Application::OnInit()
 		colors.GridFont = *wxWHITE;
 		colors.GridLines = wxColour(0xFF404040ul);					// ABGR
 		colors.GridBackground = *wxBLACK;
-		colors.GridNewBackground = wxColour(0xFF008000lu);			// ABGR
+		colors.GridNewBackground = wxColour(0xFF008000ul);			// ABGR
 		colors.GridUpdateBackground = *wxRED;
-		colors.GridSelectedBackground = wxColour(0xFFE3A04Clu);		// ABGR
+		colors.GridSelectedBackground = wxColour(0xFFE3A04Cul);		// ABGR
 
 		colors.GraphFrame = *wxWHITE;
 		colors.GraphBackground = *wxBLACK;
@@ -34,7 +34,7 @@ bool Application::OnInit()
 		colors.GridBackground = *wxWHITE;
 		colors.GridNewBackground = *wxGREEN;
 		colors.GridUpdateBackground = *wxRED;
-		colors.GridSelectedBackground = wxColour(0xFFE3A04Clu);		// ABGR
+		colors.GridSelectedBackground = wxColour(0xFFE3A04Cul);		// ABGR
 
 		colors.GraphFrame = *wxBLACK;
 		colors.GraphBackground = *wxWHITE;

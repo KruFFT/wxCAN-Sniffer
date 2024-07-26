@@ -196,7 +196,7 @@ bool ThreadedSerialPort::SetParameters()
 	}
 
 	speed_t speedBaudRate = (speed_t)baudRate;
-	if (ioctl(fd, IOSSIOSPEED, &speedBaudRate, 1) < 0)
+	if (ioctl(hSerial, IOSSIOSPEED, &speedBaudRate, 1) < 0)
 	{
 		SendLastErrorMessage(ERROR_SERIAL_SET_PARAMETERS);
 		close(hSerial);
