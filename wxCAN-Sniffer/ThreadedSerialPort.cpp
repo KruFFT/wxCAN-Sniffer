@@ -186,7 +186,7 @@ bool ThreadedSerialPort::SetParameters()
 	tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);    // без спецсимволов
 
 	tty.c_cc[VTIME] = 1;                    // ожидание 100 мс (шаг по 100 мс)
-	tty.c_cc[VMIN] = 19;					// или ожидения 19 байтов в буфере
+	tty.c_cc[VMIN] = 19;					// или ожидания 19 байтов в буфере
 
 	tcflush(hSerial, TCIFLUSH);
 
