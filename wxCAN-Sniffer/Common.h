@@ -4,33 +4,33 @@
 #include <wx/ffile.h>
 
 #ifdef __WINDOWS__
-	#define MEMCOPY(dest, source, size)	memcpy_s(dest, size, source, size)
+    #define MEMCOPY(dest, source, size) memcpy_s(dest, size, source, size)
 #endif
 #ifdef __LINUX__
-	#include <stdint.h>
-	#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
+    #include <stdint.h>
+    #define MEMCOPY(dest, source, size) memcpy(dest, source, size);
 #endif
 #ifdef __APPLE__
-	#include <stdint.h>
-	#define MEMCOPY(dest, source, size)	memcpy(dest, source, size);
+    #include <stdint.h>
+    #define MEMCOPY(dest, source, size) memcpy(dest, source, size);
 #endif
 
-#define CAPTION				wxT("CAN Sniffer 2.2.1 beta 3")
+#define CAPTION             wxT("CAN Sniffer 2.2.1 beta 3")
 
-#define SIGNATURE_DWORD		0x55AA55AA	// сигнатура пакета (big-endian)
-#define UDP_PORT			0xAA55		// UDP порт
-#define UDP_BUFFER_SIZE		1000		// размер буфера приёма пакетов
-#define CAN_DATA_MINIMAL	19			// минимальный размер данных для парсера: сигнатура (4 байта) + ID пакета (4 байта) + интервал (2 байта) + длина (1 байт) + данные (8 байт) = 19 байт
+#define SIGNATURE_DWORD     0x55AA55AA  // сигнатура пакета (big-endian)
+#define UDP_PORT            0xAA55      // UDP порт
+#define UDP_BUFFER_SIZE     1000        // размер буфера приёма пакетов
+#define CAN_DATA_MINIMAL    19          // минимальный размер данных для парсера: сигнатура (4 байта) + ID пакета (4 байта) + интервал (2 байта) + длина (1 байт) + данные (8 байт) = 19 байт
 
 // CAN-пакет для приёма данных
 #pragma pack (push, 1)
 struct CANFrameIn
 {
 public:
-	uint32_t id;			// идентификатор пакета
-	uint16_t interval;		// интервал между пакетами (мс)
-	uint8_t  length;		// длина пакета
-	uint8_t  data[8];		// массив данных пакета, до 8 байт
+    uint32_t id;            // идентификатор пакета
+    uint16_t interval;      // интервал между пакетами (мс)
+    uint8_t  length;        // длина пакета
+    uint8_t  data[8];       // массив данных пакета, до 8 байт
 };
 #pragma pack(pop)
 
@@ -39,16 +39,16 @@ public:
 struct VisualCANFrame
 {
 public:
-	CANFrameIn frame;		// пакет с данными
-	wxColour color[8];		// цвет фона каждой ячейки
-	int	lightness[8];		// яркость каждой ячейки
-	wxLongLong ms[8];		// время фиксации новых данных
+    CANFrameIn frame;       // пакет с данными
+    wxColour color[8];      // цвет фона каждой ячейки
+    int lightness[8];       // яркость каждой ячейки
+    wxLongLong ms[8];       // время фиксации новых данных
 
-	// оператор сравнения CAN-пакета необходим для сортировки
-	bool operator < (const VisualCANFrame& anotherFrame) const
-	{
-		return (frame.id < anotherFrame.frame.id);
-	}
+    // оператор сравнения CAN-пакета необходим для сортировки
+    bool operator < (const VisualCANFrame& anotherFrame) const
+    {
+        return (frame.id < anotherFrame.frame.id);
+    }
 };
 #pragma pack(pop)
 
@@ -57,9 +57,9 @@ public:
 struct CANFrameOut
 {
 public:
-	uint32_t id;			// идентификатор пакета
-	uint8_t  length;		// длина пакета
-	uint8_t  data[8];		// массив данных пакета, до 8 байт
+    uint32_t id;            // идентификатор пакета
+    uint8_t  length;        // длина пакета
+    uint8_t  data[8];       // массив данных пакета, до 8 байт
 };
 #pragma pack(pop)
 
@@ -67,8 +67,8 @@ public:
 struct SendCANFrame
 {
 public:
-	uint32_t Signature = SIGNATURE_DWORD;
-	CANFrameOut Frame;		// пакет для отправки
+    uint32_t Signature = SIGNATURE_DWORD;
+    CANFrameOut Frame;      // пакет для отправки
 };
 #pragma pack(pop)
 
@@ -76,46 +76,47 @@ public:
 struct LogFile
 {
 public:
-	uint32_t id;			// идентификатор пакета
-	wxFFile* file;			// ассоциированный файл
+    uint32_t id;            // идентификатор пакета
+    wxFFile* file;          // ассоциированный файл
 };
 
 // Цветовые стили для окна
 struct WindowColors
 {
 public:
-	bool IsDark;						// признак тёмной темы
-	wxColour GridFont;					// цвет текста
-	wxColour GridLines;					// цвет линий
-	wxColour GridBackground;			// цвет фона ячеек по умолчанию
-	wxColour GridNewBackground;			// цвет фона новых данных
-	wxColour GridUpdateBackground;		// цвет фона обновляемых данных
-	wxColour GridSelectedBackground;	// цвет фона выделенных ячеек
-	wxColour GraphFrame;				// цвет рамки графика
-	wxBrush  GraphBackground;			// кисть фоновой заливки графика
-	wxColour GraphDraw;					// цвет линии графика
-	wxColour GraphText;					// цвет текста графика
+    bool IsDark;                        // признак тёмной темы
+    wxColour WindowBackground;          // фон окна
+    wxColour GridFont;                  // цвет текста
+    wxColour GridLines;                 // цвет линий
+    wxColour GridBackground;            // цвет фона ячеек по умолчанию
+    wxColour GridNewBackground;         // цвет фона новых данных
+    wxColour GridUpdateBackground;      // цвет фона обновляемых данных
+    wxColour GridSelectedBackground;    // цвет фона выделенных ячеек
+    wxColour GraphFrame;                // цвет рамки графика
+    wxBrush  GraphBackground;           // кисть фоновой заливки графика
+    wxColour GraphDraw;                 // цвет линии графика
+    wxColour GraphText;                 // цвет текста графика
 };
 
-#define CONNECT						wxT("Подключить")
-#define DISCONNECT					wxT("Отключить")
+#define CONNECT                     wxT("Подключить")
+#define DISCONNECT                  wxT("Отключить")
 
-#define FORMAT_HEX2					wxT("%02X")
-#define FORMAT_HEX3					wxT("%03X")
-#define FORMAT_HEX8					wxT("%08X")
-#define FORMAT_INT					wxT("%i")
-#define FORMAT_UINT					wxT("%u")
-#define FORMAT_INT0					wxT("%0i")
-#define FORMAT_INT3					wxT("%03i")
-#define FORMAT_FLOAT1_0				wxT("%1.0f")
-#define FORMAT_FLOAT1_3				wxT("%1.3f")
+#define FORMAT_HEX2                 wxT("%02X")
+#define FORMAT_HEX3                 wxT("%03X")
+#define FORMAT_HEX8                 wxT("%08X")
+#define FORMAT_INT                  wxT("%i")
+#define FORMAT_UINT                 wxT("%u")
+#define FORMAT_INT0                 wxT("%0i")
+#define FORMAT_INT3                 wxT("%03i")
+#define FORMAT_FLOAT1_0             wxT("%1.0f")
+#define FORMAT_FLOAT1_3             wxT("%1.3f")
 
-#define ERROR_CAPTION				wxT("Ошибка")
-#define ERROR_SERIAL				wxT("Невозможно работать с этим последовательным портом")
-#define ERROR_SERIAL_OPEN			wxT("Невозможно открыть порт.\nОшибка: 0x")
-#define ERROR_SERIAL_SET_PARAMETERS	wxT("Невозможно установить параметры порта.\nОшибка: 0x")
-#define ERROR_SERIAL_READ			wxT("Ошибка чтения данных: 0x")
-#define ERROR_UDP_OPEN				wxT("Ошибка открытия UDP-сокета: ")
+#define ERROR_CAPTION               wxT("Ошибка")
+#define ERROR_SERIAL                wxT("Невозможно работать с этим последовательным портом")
+#define ERROR_SERIAL_OPEN           wxT("Невозможно открыть порт.\nОшибка: 0x")
+#define ERROR_SERIAL_SET_PARAMETERS wxT("Невозможно установить параметры порта.\nОшибка: 0x")
+#define ERROR_SERIAL_READ           wxT("Ошибка чтения данных: 0x")
+#define ERROR_UDP_OPEN              wxT("Ошибка открытия UDP-сокета: ")
 
-#define ERROR_THREAD_CREATE			"Невозможно создать поток"
-#define ERROR_THREAD_START			"Невозможно запустить поток"
+#define ERROR_THREAD_CREATE         "Невозможно создать поток"
+#define ERROR_THREAD_START          "Невозможно запустить поток"

@@ -50,7 +50,7 @@ cmake --build build -j
 #### 1. Сборка Windows wxWidgets
 1. Понадобится [Visual Studio 2022 Community](https://visualstudio.microsoft.com/ru/downloads/)
 2. Скачать и установить [wxWidgets](https://www.wxwidgets.org/downloads/) если это установщик, либо распаковать, если это архив. Например в директорию `C:/wxWidget`
-3. Создать переменную окружения `WXWIN` и присвоить ей значение директории `C:/wxWidget`
+3. Создать переменную окружения `WXWIN` и присвоить ей значение директории `C:/wxWidgets`
 4. В директории `C:/wxWidgets/build/msw` открыть файл решения `wx_vc17.sln` для Visual Studio 2022
 5. В **Solution Explorer**, с помощью клавиши Shift, выделить все проекты, кроме **_custom_build** и зайти в **Properties** проектов
 6. В разделе **C/C++** → **Code Generation** изменить параметр **Runtime Library**:

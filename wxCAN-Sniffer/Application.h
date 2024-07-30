@@ -4,14 +4,15 @@
 //#include <vld.h>
 
 #include "Common.h"
+#include <wx/settings.h>
 
 //  Класс приложения
 class Application : public wxApp
 {
 public:
-	bool OnInit();
+    bool OnInit();
 private:
-	wxLocale locale;
+    wxLocale locale;
 };
 
 wxDECLARE_APP(Application);
