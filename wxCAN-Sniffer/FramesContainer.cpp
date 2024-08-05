@@ -20,77 +20,6 @@ void FramesContainer::Clear()
     frames.clear();
 }
 
-// Добавить данные нового CAN-пакет с раскраской его данных в таблицу
-void FramesContainer::AddFrame(CANFrameIn& frame)
-{
-    auto ms = wxGetUTCTimeMillis();
-
-    // поиск ID в таблице
-    size_t idCount = frames.size();
-    for (size_t iID = 0; iID < idCount; iID++)
-    {
-        // если найден - выделить яркостью цвета изменяющиеся данные и заменить CAN-пакет
-        if (frames[iID].frame.id == frame.id)
-        {
-            // обновить данные раскраски элементов
-            for (size_t iData = 0; iData < frames[iID].frame.length; iData++)
-            {
-                // если новые данные такие же, что были ранее - необходимо плавно осветлять фоновую заливку
-                if (frames[iID].frame.data[iData] == frame.data[iData])
-                {
-                    if (frames[iID].color[iData] == themeColors.GridNewBackground)
-                    {
-                        frames[iID].color[iData] = themeColors.GridUpdateBackground;
-                        frames[iID].ms[iData] = ms;
-                    }
-                    else
-                    {
-                        // постепенно менять яркость для достижения фонового цвета по интервалу времени
-                        if (ms - frames[iID].ms[iData] > LIGTHNESS_INTERVAL)
-                        {
-                            if (themeColors.IsDark)
-                            {
-                                if (frames[iID].lightness[iData] > 0)
-                                {
-                                    frames[iID].lightness[iData]--;
-                                    frames[iID].ms[iData] = ms;
-                                }
-                            }
-                            else
-                            {
-                                if (frames[iID].lightness[iData] < 200)
-                                {
-                                    frames[iID].lightness[iData]++;
-                                    frames[iID].ms[iData] = ms;
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    frames[iID].color[iData] = themeColors.GridUpdateBackground;
-                    frames[iID].lightness[iData] = 100;
-                    frames[iID].ms[iData] = ms;
-                }
-            }
-            // обновить данные пакета
-            frames[iID].frame = frame;
-            return;
-        }
-    }
-
-    // если ID не найден - добавить новый с зелёным цветом
-    VisualCANFrame vFrame;
-    vFrame.frame = frame;
-    std::fill_n(vFrame.color, 8, themeColors.GridNewBackground);
-    int defaultLightness = 100;
-    std::fill_n(vFrame.lightness, 8, defaultLightness);
-    std::fill_n(vFrame.ms, 8, ms);
-    frames.push_back(vFrame);
-    std::sort(frames.begin(), frames.end());
-}
-
 // Вернуть размер хранилища
 size_t FramesContainer::Size()
 {
@@ -101,4 +30,77 @@ size_t FramesContainer::Size()
 VisualCANFrame FramesContainer::GetFrame(size_t index)
 {
     return frames[index];
+}
+
+// Добавить данные нового CAN-пакет с раскраской его данных в таблицу
+void FramesContainer::AddFrame(CANFrameIn& frame)
+{
+    auto ms = wxGetUTCTimeMillis();
+
+    size_t idCount = frames.size();
+    for (size_t iID = 0; iID < idCount; iID++)
+    {
+        auto& currentFrame = frames[iID];
+        // поиск ID пакета в таблице
+        if (currentFrame.frame.id == frame.id)
+        {   
+            // если ID пакета найден - проверка всех его данных по очереди
+            for (size_t iData = 0; iData < currentFrame.frame.length; iData++)
+            {
+                // если новый байт данных совпадают с предыдущими...
+                if (currentFrame.frame.data[iData] == frame.data[iData])
+                {
+                    // если пакет ранее был новым...
+                    if (currentFrame.ticks[iData] == NEW_PACKET)
+                    {
+                        // ... пометить его, как обновлённый
+                        currentFrame.color[iData] = themeColors.GridUpdateBackground;
+                        currentFrame.ticks[iData] = UPDATED_PACKET;
+                        currentFrame.ms[iData] = ms;
+                    }
+                }
+                else
+                {
+                    currentFrame.color[iData] = themeColors.GridUpdateBackground;
+                    currentFrame.ticks[iData] = UPDATED_PACKET;
+                    currentFrame.ms[iData] = ms;
+                }
+            }
+            // обновить данные пакета
+            currentFrame.frame = frame;
+            return;
+        }
+    }
+
+    // если ID не найден - добавить с цветом нового пакета
+    VisualCANFrame vFrame;
+    vFrame.frame = frame;
+    std::fill_n(vFrame.color, 8, themeColors.GridNewBackground);
+    uint8_t defaultShift = NEW_PACKET;
+    std::fill_n(vFrame.ticks, 8, defaultShift);
+    std::fill_n(vFrame.ms, 8, ms);
+    frames.push_back(vFrame);
+    std::sort(frames.begin(), frames.end());
+}
+
+void FramesContainer::ProcessAllFrames()
+{
+    auto ms = wxGetUTCTimeMillis();
+
+    size_t idCount = frames.size();
+    for (size_t iID = 0; iID < idCount; iID++)
+    {
+        auto& currentFrame = frames[iID];
+
+        // цикл по всем байтам пакета
+        for (size_t iData = 0; iData < currentFrame.frame.length; iData++)
+        {
+            // постепенно менять яркость для достижения фонового цвета по интервалу времени
+            if (currentFrame.ticks[iData] >= UPDATED_PACKET && currentFrame.ticks[iData] < TIMEOUT_PACKET)
+            {
+                currentFrame.ticks[iData]++;
+                currentFrame.ms[iData] = ms;
+            }
+        }
+    }
 }

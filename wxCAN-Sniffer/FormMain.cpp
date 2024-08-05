@@ -11,7 +11,7 @@ wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
 wxEND_EVENT_TABLE()
 
 // Конструктор окна
-FormMain::FormMain(WindowColors& colors) : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE)
+FormMain::FormMain(const WindowColors& colors) : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE)
 {
     // сохранение цветов
     themeColors = colors;
@@ -617,9 +617,9 @@ void FormMain::ProcessCANFrame(CANFrameIn& frame)
     // если это пакет с адресом 000 - это статистика и её надо вывести отдельно
     if (frame.id == 0 && frame.length >= 4)
     {
-        uint16_t fps = ((uint16_t)frame.data[0] << 8) + (uint16_t)frame.data[1];
+        uint16_t fps = frame.data[0] << 8 | frame.data[1];
         textFPS->ChangeValue(wxString::Format(FORMAT_INT, fps));    // кадров в секунду
-        uint16_t bps = ((uint16_t)frame.data[2] << 8) + (uint16_t)frame.data[3];
+        uint16_t bps = frame.data[2] << 8 | frame.data[3];
         textBPS->ChangeValue(wxString::Format(FORMAT_INT, bps));    // байтов в секунду
     }
     else
@@ -907,7 +907,7 @@ void FormMain::LogWriteLine(wxFFile* file, CANFrameIn& frame)
             {
                 newLine += logSeparator;
             }
-            newLine += '|' + logSeparator;
+            newLine += wxT('|') + logSeparator;
 
             // добавить ASCII данные из пакета
             buf = newLine.ToStdString();
@@ -1063,13 +1063,22 @@ void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
         buttonConnectDisconnect->SetLabelText(CONNECT);
     }
 
-    // обновить данные в таблице
-    RefreshGridCANView();
+    // обработка всех пакетов на "выцветание"
+    frames->ProcessAllFrames();
 
-    ShowNumbers();
+    if (screenUpdateCounter >= SCREEN_UPDATE_COUNTER_LIMIT)
+    {
+        // обновить данные в таблице
+        RefreshGridCANView();
 
-    // это вызовет событие OnPaint для панели
-    drawPanel->Refresh();
+        ShowNumbers();
+
+        // это вызовет событие OnPaint для панели
+        drawPanel->Refresh();
+        screenUpdateCounter = 0;
+    }
+
+    screenUpdateCounter++;
 }
 
 // Обновить данные CAN-пакетов в таблице, вызывается по таймеру
@@ -1105,17 +1114,54 @@ void FormMain::RefreshGridCANView()
                 {
                     // вывод данных с их фоновым цветом
                     gridCANView->SetCellValue(iFrame, iData + 3, wxString::Format(FORMAT_HEX2, vFrame.frame.data[iData]));
-                    //auto color = vFrame.color[iData];
-                    auto tunedColor = vFrame.color[iData].ChangeLightness(vFrame.lightness[iData]);
-                    gridCANView->SetCellBackgroundColour(iFrame, iData + 3, tunedColor);
                     gridCANView->SetCellTextColour(iFrame, iData + 3, themeColors.GridFont);
+
+                    uint8_t shift = vFrame.ticks[iData];
+                    if (shift == TIMEOUT_PACKET)
+                    {
+                        gridCANView->SetCellBackgroundColour(iFrame, iData + 3, themeColors.GridBackground);
+                    }
+                    else if (shift == NEW_PACKET)
+                    {
+                        gridCANView->SetCellBackgroundColour(iFrame, iData + 3, themeColors.GridNewBackground);
+                    }
+                    else
+                    {
+                        auto backGroundColor = themeColors.GridBackground;
+                        auto color = vFrame.color[iData];
+
+                        uint8_t rBackground = backGroundColor.GetRed();
+                        uint8_t gBackground = backGroundColor.GetGreen();
+                        uint8_t bBackground = backGroundColor.GetBlue();
+
+                        uint8_t rColor = color.GetRed();
+                        uint8_t gColor = color.GetGreen();
+                        uint8_t bColor = color.GetBlue();
+                        
+                        wxColour tunedColor;
+                        if (themeColors.IsDark)
+                        {
+                            uint8_t rDelta = shift * (rColor - rBackground) / PACKET_DELTA;
+                            uint8_t gDelta = shift * (gColor - gBackground) / PACKET_DELTA;
+                            uint8_t bDelta = shift * (bColor - bBackground) / PACKET_DELTA;
+                            tunedColor = wxColour(rColor - rDelta, gColor - gDelta, bColor - bDelta);
+                        }
+                        else
+                        {
+                            uint8_t rDelta = shift * (rBackground - rColor) / PACKET_DELTA;
+                            uint8_t gDelta = shift * (gBackground - gColor) / PACKET_DELTA;
+                            uint8_t bDelta = shift * (bBackground - bColor) / PACKET_DELTA;
+                            tunedColor = wxColour(rColor + rDelta, gColor + gDelta, bColor + bDelta);
+                        }
+                        gridCANView->SetCellBackgroundColour(iFrame, iData + 3, tunedColor);
+                    }
                 }
                 else
                 {
                     // вывод пустых ячеек
                     gridCANView->SetCellValue(iFrame, iData + 3, wxT(" "));
-                    gridCANView->SetCellBackgroundColour(iFrame, iData + 3, themeColors.GridBackground);
                     gridCANView->SetCellTextColour(iFrame, iData + 3, themeColors.GridFont);
+                    gridCANView->SetCellBackgroundColour(iFrame, iData + 3, themeColors.GridBackground);                    
                 }
             }
         }

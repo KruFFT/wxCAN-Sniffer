@@ -12,7 +12,8 @@
 #include "CircularFrameBuffer.h"
 #include "FramesContainer.h"
 
-#define TIMER_INTERVAL      40              // интервал срабатывания таймера обновления данных на экране (около 25 кадров/с)
+#define TIMER_INTERVAL              10              // интервал срабатывания таймера обновления данных
+#define SCREEN_UPDATE_COUNTER_LIMIT 2               // лимит счётчика обновления данных на экране (2 по 10 мс = около 50 кадров/с)
 
 #define TEXT_UINT8          wxT("UInt8")
 #define TEXT_UINT16         wxT("UInt16")
@@ -26,7 +27,7 @@
 class FormMain : public wxFrame
 {
 public:
-    FormMain(WindowColors& colors);
+    FormMain(const WindowColors& colors);
 
     // обработчики событий
     void OnClose(wxCloseEvent& event);
@@ -140,6 +141,7 @@ private:
     float mul = 1.0;                            // множитель для отображаемых чисел
     DataTypes dataType = DataTypes::UInt8;      // тип данных для отображения
 
+    size_t screenUpdateCounter = 0;             // счётчик обновления данных на экране
     WindowColors themeColors;                   // цвета объектов
     wxPen graphFramePen;                        // перо рамки для отрисовки графика
     wxBrush graphBackgroundBrush;               // кисть фоновой заливки графика

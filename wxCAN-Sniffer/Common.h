@@ -15,7 +15,7 @@
     #define MEMCOPY(dest, source, size) memcpy(dest, source, size);
 #endif
 
-#define CAPTION             wxT("CAN Sniffer 2.2.1 beta 3")
+#define CAPTION             wxT("CAN Sniffer 2.2.1 beta 4")
 
 #define SIGNATURE_DWORD     0x55AA55AA  // сигнатура пакета (big-endian)
 #define UDP_PORT            0xAA55      // UDP порт
@@ -34,17 +34,22 @@ public:
 };
 #pragma pack(pop)
 
+#define NEW_PACKET      0   // новый пакет
+#define UPDATED_PACKET  1   // обновлённый пакет
+#define TIMEOUT_PACKET  100 // не более 255! давно не обновлявшийся пакет (выцвел) - косвенно задаёт время выцветания пакета тактами по 10 мс
+#define PACKET_DELTA    TIMEOUT_PACKET - UPDATED_PACKET
+
 // CAN-пакет для отображения в таблице
 #pragma pack (push, 1)
 struct VisualCANFrame
 {
 public:
     CANFrameIn frame;       // пакет с данными
-    wxColour color[8];      // цвет фона каждой ячейки
-    int lightness[8];       // яркость каждой ячейки
+    wxColour   color[8];    // цвет фона каждой ячейки
+    uint8_t    ticks[8];    // счётчик тактов обновления цвета: 101 - новый пакет, 100 - обновлённый пакет, 0 - пакет "выцвел"
     wxLongLong ms[8];       // время фиксации новых данных
 
-    // оператор сравнения CAN-пакета необходим для сортировки
+    // оператор сравнения CAN-пакета для сортировки
     bool operator < (const VisualCANFrame& anotherFrame) const
     {
         return (frame.id < anotherFrame.frame.id);
@@ -93,7 +98,7 @@ public:
     wxColour GridUpdateBackground;      // цвет фона обновляемых данных
     wxColour GridSelectedBackground;    // цвет фона выделенных ячеек
     wxColour GraphFrame;                // цвет рамки графика
-    wxBrush  GraphBackground;           // кисть фоновой заливки графика
+    wxColour GraphBackground;           // кисть фоновой заливки графика
     wxColour GraphDraw;                 // цвет линии графика
     wxColour GraphText;                 // цвет текста графика
 };

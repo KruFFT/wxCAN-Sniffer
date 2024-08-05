@@ -3,7 +3,6 @@
 #include "Common.h"
 
 #define FRAMES_DATA_RESERV  1000            // количество элементов для резерва в векторе
-#define LIGTHNESS_INTERVAL  20              // интервал изменения яркости цвета ячейки
 
 class FramesContainer
 {
@@ -13,6 +12,7 @@ public:
 
     void Clear();
     void AddFrame(CANFrameIn& frame);
+    void ProcessAllFrames();
     size_t Size();
     VisualCANFrame GetFrame(size_t index);
 

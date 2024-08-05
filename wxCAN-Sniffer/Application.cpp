@@ -8,7 +8,6 @@ bool Application::OnInit()
         //locale.AddCatalog(GetAppDir() + wxT("\\."));
     }
 
-    auto systemAppearance = wxSystemSettings::GetAppearance();
     WindowColors colors;
 
     // https://docs.wxwidgets.org/latest/settings_8h.html
@@ -24,9 +23,9 @@ bool Application::OnInit()
         colors.IsDark = true;
         
         colors.GridFont = *wxWHITE;
-        colors.GridLines = wxColour(0xFF404040ul);                  // ABGR
+        colors.GridLines = wxColour(0x404040ul);                  // BGR
         colors.GridBackground = *wxBLACK;
-        colors.GridNewBackground = wxColour(0xFF008000ul);          // ABGR
+        colors.GridNewBackground = wxColour(0x008000ul);          // BGR
         colors.GridUpdateBackground = *wxRED;
         
         colors.GraphFrame = *wxWHITE;
@@ -39,7 +38,7 @@ bool Application::OnInit()
         colors.IsDark = false;
 
         colors.GridFont = *wxBLACK;
-        colors.GridLines = wxColour(0xFFC0C0C0ul);                  // ABGR
+        colors.GridLines = wxColour(0xC0C0C0ul);                  // BGR
         colors.GridBackground = *wxWHITE;
         colors.GridNewBackground = *wxGREEN;
         colors.GridUpdateBackground = *wxRED;
