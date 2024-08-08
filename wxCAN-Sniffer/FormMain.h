@@ -12,16 +12,16 @@
 #include "CircularFrameBuffer.h"
 #include "FramesContainer.h"
 
-#define TIMER_INTERVAL              10              // интервал срабатывания таймера обновления данных
+#define TIMER_INTERVAL              10              // интервал срабатывания таймера обновления данных (мс)
 #define SCREEN_UPDATE_COUNTER_LIMIT 2               // лимит счётчика обновления данных на экране (2 по 10 мс = около 50 кадров/с)
 
-#define TEXT_UINT8          wxT("UInt8")
-#define TEXT_UINT16         wxT("UInt16")
-#define TEXT_UINT32         wxT("UInt32")
-#define TEXT_INT8           wxT("Int8")
-#define TEXT_INT16          wxT("Int16")
-#define TEXT_INT32          wxT("Int32")
-#define TEXT_FLOAT          wxT("Float")
+#define TEXT_UINT8                  wxT("UInt8")
+#define TEXT_UINT16                 wxT("UInt16")
+#define TEXT_UINT32                 wxT("UInt32")
+#define TEXT_INT8                   wxT("Int8")
+#define TEXT_INT16                  wxT("Int16")
+#define TEXT_INT32                  wxT("Int32")
+#define TEXT_FLOAT                  wxT("Float")
 
 //  Класс окна
 class FormMain : public wxFrame
@@ -49,7 +49,6 @@ public:
     void CheckEndian_OnClick(wxCommandEvent& event);
     void TextDecWordMul_OnEnter(wxCommandEvent& event);
     void TextCANAnswerID_OnEnter(wxCommandEvent& event);
-    void DrawPanel_OnSize(wxSizeEvent& event);
     void DrawPanel_OnPaint(wxPaintEvent& event);
     void DrawPanel_OnEraseBackground(wxEraseEvent& event);
     void Thread_OnUpdate(wxThreadEvent& event);
@@ -124,7 +123,7 @@ private:
     ThreadedSerialPort* serialPort = nullptr;   // последовательный порт в отдельном потоке
     FramesContainer* frames = nullptr;          // список отображаемых на экране пакетов
 
-    std::vector<int32_t> logFilterIDs;          // список ID для записи в log-файл
+    std::vector<uint32_t> logFilterIDs;         // список ID для записи в log-файл
     int32_t rowToLog = -1;                      // выбранная в таблице строка для добавления в фильтр log-файла
     wxString logExt;                            // расширение log-файла
     wxString logSeparator;                      // разделитель значений в log-файле
@@ -146,7 +145,6 @@ private:
     wxPen graphFramePen;                        // перо рамки для отрисовки графика
     wxBrush graphBackgroundBrush;               // кисть фоновой заливки графика
     wxPen graphPen;                             // перо для отрисовки графика заданной ширины
-    wxColour graphText;                         // цвет для текста графика
     CircularFrameBuffer* drawData = nullptr;    // круговой массив данных для отрисовки
     size_t drawFrameSize;                       // размер кадра отрисовки (равен ширине области панель)
     uint32_t drawDataBegin = 0;                 // начало данных в массиве
@@ -157,18 +155,18 @@ private:
     wxDatagramSocket* udpSocket = nullptr;      // UDP-сокет
     wxIPV4address espIpAddress;                 // сохранённый адрес ESP
 
-    void ProcessCANFrame(CANFrameIn& frame);
-    void RefreshGridCANView();
-    void RefreshListLog();
-    void SaveToLog(CANFrameIn& frame);
-    void FlushLogs();
-    void LogWriteLine(wxFFile* file, CANFrameIn& frame);
-    wxString ToBinary(uint8_t value);
-    wxString ToBinary(uint16_t value);
-    wxString ToBinary(uint32_t value);
-    void AddToDraw();
-    void ShowNumbers();
-    void UDPSocket_SendFrame(CANFrameOut& frame);
+    void ProcessCANFrame(CANFrameIn& frame);    // обработка полученного CAN-пакета
+    void RefreshGridCANView();                  // обновить таблицу CAN-пакетов с раскраской ячеек
+    void RefreshListLog();                      // обновить список журнала
+    void SaveToLog(CANFrameIn& frame);          // сохранить в журнал
+    void FlushLogs();                           // сохранить на диск все файловые буферы журналов
+    void LogWriteLine(wxFFile* file, CANFrameIn& frame);    // записать строку в журнал
+    wxString ToBinary(uint8_t value);           // преобразовать в двоичное представление байт
+    wxString ToBinary(uint16_t value);          // преобразовать в двоичное представление слово
+    wxString ToBinary(uint32_t value);          // преобразовать в двоичное представление двойное слово
+    void AddToDraw();                           // добавить значение для рисования графика
+    void ShowNumbers();                         // показать числовые представления выбранных ячеек
+    void UDPSocket_SendFrame(CANFrameOut& frame);   // отправить пакет через сетевое подключение
 
     wxDECLARE_EVENT_TABLE();
 };

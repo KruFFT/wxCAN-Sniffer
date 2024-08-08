@@ -13,12 +13,11 @@ wxEND_EVENT_TABLE()
 // Конструктор окна
 FormMain::FormMain(const WindowColors& colors) : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE)
 {
-    // сохранение цветов
+    // сохранение цветов и настройка кистей
     themeColors = colors;
     graphFramePen = wxPen(themeColors.GraphFrame, 1);
     graphBackgroundBrush = wxBrush(themeColors.GraphBackground);
     graphPen = wxPen(themeColors.GraphDraw, 3);
-    graphText = themeColors.GraphText;
 
     // иконка и размер окна
     auto icon = wxIcon(canIcon);
@@ -420,8 +419,9 @@ FormMain::FormMain(const WindowColors& colors) : wxFrame(nullptr, ID_MAIN_FORM, 
     this->SetAutoLayout(true);
     this->Layout();
     this->Center(wxCENTER_ON_SCREEN);
-    //this->SetDoubleBuffered(true);
     this->SetBackgroundColour(themeColors.WindowBackground);
+    // почему-то установка двойной буфферизации корректно работает только после инициализации всех сайзеров
+    gridCANView->SetDoubleBuffered(true);
 
     // привязка событий
     this->Bind(wxEVT_CLOSE_WINDOW, &FormMain::OnClose, this, ID_MAIN_FORM);
@@ -445,7 +445,6 @@ FormMain::FormMain(const WindowColors& colors) : wxFrame(nullptr, ID_MAIN_FORM, 
 
     // события панели графика
     drawPanel->Bind(wxEVT_PAINT, &FormMain::DrawPanel_OnPaint, this);
-    drawPanel->Bind(wxEVT_SIZE, &FormMain::DrawPanel_OnSize, this);
     drawPanel->Bind(wxEVT_ERASE_BACKGROUND, &FormMain::DrawPanel_OnEraseBackground, this);
     drawFrameSize = drawPanel->GetClientSize().GetWidth();
     drawData = new CircularFrameBuffer(drawFrameSize);
@@ -1447,7 +1446,7 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
         float scaleFactor = -height / (maxValue - minValue);
 
         // нарисовать осевую линию по нулю
-        dc.SetPen(graphText);
+        dc.SetPen(themeColors.GraphText);
         wxCoord y = (-minValue) * scaleFactor + height;
         dc.DrawLine(0, y, drawRectangle.width, y);
 
@@ -1461,19 +1460,11 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
             y = yy;
         }
 
-        dc.SetTextForeground(graphText);
+        dc.SetTextForeground(themeColors.GraphText);
         auto fontMetrics = dc.GetFontMetrics();
         dc.DrawText(wxString::Format(FORMAT_FLOAT1_0, maxValue), fontMetrics.internalLeading, 0);
         dc.DrawText(wxString::Format(FORMAT_FLOAT1_0, minValue), fontMetrics.internalLeading, drawRectangle.height - fontMetrics.height - fontMetrics.descent);
     }
-}
-
-// Изменение размеров панели графика
-void FormMain::DrawPanel_OnSize(wxSizeEvent& event)
-{
-    //drawRectangle = drawPanel->GetClientRect();
-    //this->Refresh(true, &drawRectangle);
-    //event.Skip();
 }
 
 // Стирание фона панели графика

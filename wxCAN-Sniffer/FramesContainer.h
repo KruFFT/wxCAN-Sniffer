@@ -10,9 +10,9 @@ public:
     FramesContainer(WindowColors colors);
     ~FramesContainer();
 
-    void Clear();
-    void AddFrame(CANFrameIn& frame);
-    void ProcessAllFrames();
+    void Clear();                           // очистить контейнер
+    void AddFrame(CANFrameIn& frame);       // добавить пакет в контейнер
+    void ProcessAllFrames();                // обработать все пакеты на "выцветание"
     size_t Size();
     VisualCANFrame GetFrame(size_t index);
 

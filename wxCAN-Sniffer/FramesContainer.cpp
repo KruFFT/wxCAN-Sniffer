@@ -35,8 +35,6 @@ VisualCANFrame FramesContainer::GetFrame(size_t index)
 // Добавить данные нового CAN-пакет с раскраской его данных в таблицу
 void FramesContainer::AddFrame(CANFrameIn& frame)
 {
-    auto ms = wxGetUTCTimeMillis();
-
     size_t idCount = frames.size();
     for (size_t iID = 0; iID < idCount; iID++)
     {
@@ -56,14 +54,12 @@ void FramesContainer::AddFrame(CANFrameIn& frame)
                         // ... пометить его, как обновлённый
                         currentFrame.color[iData] = themeColors.GridUpdateBackground;
                         currentFrame.ticks[iData] = UPDATED_PACKET;
-                        currentFrame.ms[iData] = ms;
                     }
                 }
                 else
                 {
                     currentFrame.color[iData] = themeColors.GridUpdateBackground;
                     currentFrame.ticks[iData] = UPDATED_PACKET;
-                    currentFrame.ms[iData] = ms;
                 }
             }
             // обновить данные пакета
@@ -78,15 +74,13 @@ void FramesContainer::AddFrame(CANFrameIn& frame)
     std::fill_n(vFrame.color, 8, themeColors.GridNewBackground);
     uint8_t defaultShift = NEW_PACKET;
     std::fill_n(vFrame.ticks, 8, defaultShift);
-    std::fill_n(vFrame.ms, 8, ms);
     frames.push_back(vFrame);
     std::sort(frames.begin(), frames.end());
 }
 
+// Обработать такты всех пакетов
 void FramesContainer::ProcessAllFrames()
 {
-    auto ms = wxGetUTCTimeMillis();
-
     size_t idCount = frames.size();
     for (size_t iID = 0; iID < idCount; iID++)
     {
@@ -99,7 +93,6 @@ void FramesContainer::ProcessAllFrames()
             if (currentFrame.ticks[iData] >= UPDATED_PACKET && currentFrame.ticks[iData] < TIMEOUT_PACKET)
             {
                 currentFrame.ticks[iData]++;
-                currentFrame.ms[iData] = ms;
             }
         }
     }

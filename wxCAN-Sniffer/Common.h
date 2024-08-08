@@ -47,7 +47,6 @@ public:
     CANFrameIn frame;       // пакет с данными
     wxColour   color[8];    // цвет фона каждой ячейки
     uint8_t    ticks[8];    // счётчик тактов обновления цвета: 101 - новый пакет, 100 - обновлённый пакет, 0 - пакет "выцвел"
-    wxLongLong ms[8];       // время фиксации новых данных
 
     // оператор сравнения CAN-пакета для сортировки
     bool operator < (const VisualCANFrame& anotherFrame) const

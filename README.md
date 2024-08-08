@@ -151,7 +151,7 @@ sudo cp ./lib/wx/include/gtk3-unicode-static-3.3/wx/setup.h /usr/local/include/w
 3. В меню **Terminal** выбрать пункт **Run Task**, выбрать необходимую конфигурацию **C/C++: GCC build release** или **C/C++: GCC build debug** (результат будет в этой же директории)
 
 ## Сборка приложения в macOS
-Сборка и работа приложения возможна и находится в процессе тестирования
+Сборка и работа приложения возможна
 
 ## License
 MIT
