@@ -15,7 +15,7 @@
     #define MEMCOPY(dest, source, size) memcpy(dest, source, size);
 #endif
 
-#define CAPTION             wxT("CAN Sniffer 2.2.1 beta 4")
+#define CAPTION             wxT("CAN Sniffer 2.3.0")
 
 #define SIGNATURE_DWORD     0x55AA55AA  // сигнатура пакета (big-endian)
 #define UDP_PORT            0xAA55      // UDP порт

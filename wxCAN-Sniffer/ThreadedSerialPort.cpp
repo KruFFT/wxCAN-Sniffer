@@ -243,6 +243,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
 #ifdef __APPLE__
     const char* asciiPortName = portName.mb_str().data();
     hSerial = open(asciiPortName, O_RDWR | O_NOCTTY | O_NDELAY | O_EXLOCK | O_NONBLOCK);
+    //hSerial = open(asciiPortName, O_RDWR | O_NOCTTY | O_NDELAY);
 #endif
 
     if (hSerial == INVALID_HANDLE_VALUE)
