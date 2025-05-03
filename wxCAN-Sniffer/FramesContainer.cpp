@@ -1,9 +1,8 @@
 ﻿#include "FramesContainer.h"
 
 // Конструктор
-FramesContainer::FramesContainer(WindowColors colors)
+FramesContainer::FramesContainer()
 {
-    themeColors = colors;
     frames.reserve(FRAMES_DATA_RESERV);
     frames.clear();
 }
@@ -52,13 +51,13 @@ void FramesContainer::AddFrame(CANFrameIn& frame)
                     if (currentFrame.ticks[iData] == NEW_PACKET)
                     {
                         // ... пометить его, как обновлённый
-                        currentFrame.color[iData] = themeColors.GridUpdateBackground;
+                        currentFrame.color[iData] = Parameters::colors.GridUpdatedBackground;
                         currentFrame.ticks[iData] = UPDATED_PACKET;
                     }
                 }
                 else
                 {
-                    currentFrame.color[iData] = themeColors.GridUpdateBackground;
+                    currentFrame.color[iData] = Parameters::colors.GridUpdatedBackground;
                     currentFrame.ticks[iData] = UPDATED_PACKET;
                 }
             }
@@ -71,7 +70,7 @@ void FramesContainer::AddFrame(CANFrameIn& frame)
     // если ID не найден - добавить с цветом нового пакета
     VisualCANFrame vFrame;
     vFrame.frame = frame;
-    std::fill_n(vFrame.color, 8, themeColors.GridNewBackground);
+    std::fill_n(vFrame.color, 8, Parameters::colors.GridNewBackground);
     uint8_t defaultShift = NEW_PACKET;
     std::fill_n(vFrame.ticks, 8, defaultShift);
     frames.push_back(vFrame);

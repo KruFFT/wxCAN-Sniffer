@@ -31,7 +31,9 @@ set(SRCS
 	${Sources}/FormMain.cpp
 	${Sources}/FramesContainer.h
 	${Sources}/FramesContainer.cpp
-	${Sources}/resources.h
+	${Sources}/Parameters.h
+	${Sources}/Parameters.cpp
+	${Sources}/resource.h
 	${Sources}/ThreadedSerialPort.h
 	${Sources}/ThreadedSerialPort.cpp
 	${Sources}/${PROJECT_NAME}.rc

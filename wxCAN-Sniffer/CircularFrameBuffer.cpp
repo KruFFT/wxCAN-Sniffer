@@ -3,7 +3,7 @@
 // Конструктор
 CircularFrameBuffer::CircularFrameBuffer(size_t windowSize)
 {
-    // размер буфера должен быть минимум в два раза больше размера окна
+    // размер буфера должен быть минимум в четыре раза больше размера окна
     bufferSize = windowSize * 4;
     buffer = new float[bufferSize + 1] { 0 };
     frameSize = windowSize;

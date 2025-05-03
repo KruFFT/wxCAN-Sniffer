@@ -1,0 +1,1 @@
+﻿#define WXICON                       101

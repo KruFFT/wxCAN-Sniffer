@@ -7,7 +7,7 @@
 class FramesContainer
 {
 public:
-    FramesContainer(WindowColors colors);
+    FramesContainer();
     ~FramesContainer();
 
     void Clear();                           // очистить контейнер
@@ -18,5 +18,4 @@ public:
 
 private:
     std::vector<VisualCANFrame> frames;     // хранилище пакетов с данными для визуализации
-    WindowColors themeColors;               // цвета объектов
 };

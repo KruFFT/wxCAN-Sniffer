@@ -319,7 +319,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
         }
 
         // поиск CAN-пакета и формирование данных
-        while (bufferTail - bufferHead >= CAN_DATA_MINIMAL)
+        while (bufferTail - bufferHead >= Parameters::can.MinimalDataSize)
         {
             CANFrameIn frame;
 
@@ -339,6 +339,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
         if (frameToSend.Frame.id)
         {
             syncCANSend.Lock();
+            frameToSend.Signature = Parameters::can.Signature;
             // 4 байта сигнатуры + 4 байта ID-пакета + 1 байт длина данных + сами данные
             bytesToSend = 9 + frameToSend.Frame.length;
 #ifdef __WINDOWS__
@@ -419,17 +420,7 @@ void ThreadedSerialPort::SendFrame(CANFrameOut& frame)
     wxMutexLocker lock(syncCANSend);
     MEMCOPY(&frameToSend.Frame, &frame, sizeof(CANFrameOut));
     // если понадобится - поменять порядок байтов в идентификаторе
-    //frameToSend.Frame.ID = SwapBytes(frameToSend.Frame.ID);
-}
-
-// Меняет порядок байтов в слове
-uint32_t ThreadedSerialPort::SwapBytes(uint32_t value)
-{
-    uint32_t revValue = value & 0xFF;
-    revValue = (revValue << 8) | ((value >> 8) & 0xFF);
-    revValue = (revValue << 8) | ((value >> 16) & 0xFF);
-    revValue = (revValue << 8) | ((value >> 24) & 0xFF);
-    return revValue;
+    //frameToSend.Frame.id = SWAP_BYTES_UINT32(frameToSend.Frame.id);
 }
 
 // Отправить сообщение об ошибке
@@ -579,7 +570,7 @@ std::vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 #endif
 
 #ifdef __APPLE__
-    // TODO перечисление списка доступных портов
+    // TODO: перечисление списка доступных портов
 #endif
 
     sort(ports.begin(), ports.end());

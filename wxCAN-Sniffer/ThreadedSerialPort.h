@@ -92,7 +92,7 @@ public:
     public:
         wxString Port;
         wxString Description;
-        wxString HardwareID;        
+        wxString HardwareID;
 
         // оператор сравнения для естественной сортировки
         bool operator < (const Information& anotherInformation) const
@@ -108,7 +108,6 @@ public:
 private:
     virtual ExitCode Entry();
     bool SetParameters();
-    uint32_t SwapBytes(uint32_t value);
     void SendLastErrorMessage(const wxChar* prefix);
 
     wxString portName;                  // полное наименование последовательно порта с префиксами

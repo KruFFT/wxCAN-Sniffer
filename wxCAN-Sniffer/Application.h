@@ -4,6 +4,7 @@
 //#include <vld.h>
 
 #include "Common.h"
+#include "FormMain.h"
 
 //  Класс приложения
 class Application : public wxApp
