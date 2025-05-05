@@ -64,6 +64,7 @@ static wxMutex syncCANBuffer;
 static wxMutex syncCANSend;
 
 // События, которые генерирует этот поток
+wxDECLARE_EVENT(wxEVT_SERIAL_PORT_THREAD_STARTED, wxThreadEvent);
 wxDECLARE_EVENT(wxEVT_SERIAL_PORT_THREAD_UPDATE, wxThreadEvent);
 wxDECLARE_EVENT(wxEVT_SERIAL_PORT_THREAD_EXIT, wxThreadEvent);
 wxDECLARE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
@@ -115,5 +116,5 @@ private:
     wxFrame* handleFrame = nullptr;     // указатель на окно для генерации события для него
     uint8_t* buffer = nullptr;          // байтовый буфер последовательного порта
     std::queue<CANFrameIn> canBuffer;   // буфер полученных CAN-пакетов
-    SendCANFrame frameToSend;           // CAN-пакет для отправки в CAN-сеть
+    SendCANFrame frameToSend = { 0 };   // CAN-пакет для отправки в CAN-сеть
 };

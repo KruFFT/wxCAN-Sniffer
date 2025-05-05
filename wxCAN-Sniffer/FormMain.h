@@ -51,6 +51,7 @@ public:
     void TextCANAnswerID_OnEnter(wxCommandEvent& event);
     void DrawPanel_OnPaint(wxPaintEvent& event);
     void DrawPanel_OnEraseBackground(wxEraseEvent& event);
+    void Thread_OnStarted(wxThreadEvent& event);
     void Thread_OnUpdate(wxThreadEvent& event);
     void Thread_OnExit(wxThreadEvent& event);
     void Thread_OnMessage(wxThreadEvent& event);
@@ -76,7 +77,7 @@ private:
     wxTextCtrl* textCANAnswerID;
     wxButton* buttonClearCANLog;
     wxComboBox* comboBoxSerialPort;
-    wxComboBox* comboBoxSerialSpeed;
+    wxComboBox* comboBoxCANSpeed;
     wxTextCtrl* textFPS;
     wxTextCtrl* textBPS;
     wxButton* buttonConnectDisconnect;
@@ -120,6 +121,7 @@ private:
         Float
     };
 
+    unsigned long selectedCanSpeed = 0;         // выбраннная скорость CAN-шины
     ThreadedSerialPort* serialPort = nullptr;   // последовательный порт в отдельном потоке
     FramesContainer* frames = nullptr;          // список отображаемых на экране пакетов
 
@@ -166,6 +168,7 @@ private:
     void AddToDraw();                           // добавить значение для рисования графика
     void ShowNumbers();                         // показать числовые представления выбранных ячеек
     void UDPSocket_SendFrame(CANFrameOut& frame);   // отправить пакет через сетевое подключение
+    void SendCANCommand(CANCommands command, uint16_t speed = 0);   // отправить команду управления
 
     wxDECLARE_EVENT_TABLE();
 };

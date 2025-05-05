@@ -1,6 +1,7 @@
 ﻿#include "FormMain.h"
 
 // События из фонового потока
+wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_STARTED, wxThreadEvent);
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_UPDATE, wxThreadEvent);
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_EXIT, wxThreadEvent);
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
@@ -220,7 +221,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
             labelControls->SetForegroundColour(Parameters::colors.ControlText);
             auto sizerControls = new wxStaticBoxSizer(labelControls, wxHORIZONTAL);
             {
-                comboBoxSerialPort = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(90, 22)), 0, nullptr, wxTE_CENTRE | wxBORDER_SIMPLE);
+                comboBoxSerialPort = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(90, 22)), 0, nullptr, wxBORDER_SIMPLE);
                 comboBoxSerialPort->SetForegroundColour(Parameters::colors.ControlText);
                 comboBoxSerialPort->SetBackgroundColour(Parameters::colors.ControlBackground);
                 auto ports = ThreadedSerialPort::Enumerate();
@@ -253,17 +254,17 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
                 }
                 sizerControls->Add(comboBoxSerialPort, 2, wxALL, 2);
 
-                comboBoxSerialSpeed = new wxComboBox(this, wxID_ANY, wxT("500000"), wxDefaultPosition, FromDIP(wxSize(90, 22)), 0, nullptr, wxTE_CENTRE | wxBORDER_SIMPLE);
-                comboBoxSerialSpeed->SetForegroundColour(Parameters::colors.ControlText);
-                comboBoxSerialSpeed->SetBackgroundColour(Parameters::colors.ControlBackground);
-                comboBoxSerialSpeed->Append(wxT("57600"));
-                comboBoxSerialSpeed->Append(wxT("115200"));
-                comboBoxSerialSpeed->Append(wxT("250000"));
-                comboBoxSerialSpeed->Append(wxT("500000"));
-                comboBoxSerialSpeed->Append(wxT("1000000"));
-                comboBoxSerialSpeed->Append(wxT("2000000"));
-                comboBoxSerialSpeed->SetToolTip(wxT("Скорость соединения"));
-                sizerControls->Add(comboBoxSerialSpeed, 2, wxALL, 2);
+                comboBoxCANSpeed = new wxComboBox(this, wxID_ANY, wxT("500"), wxDefaultPosition, FromDIP(wxSize(90, 22)), 0, nullptr, wxBORDER_SIMPLE);
+                comboBoxCANSpeed->SetForegroundColour(Parameters::colors.ControlText);
+                comboBoxCANSpeed->SetBackgroundColour(Parameters::colors.ControlBackground);
+                comboBoxCANSpeed->Append(wxT("100"));
+                comboBoxCANSpeed->Append(wxT("125"));
+                comboBoxCANSpeed->Append(wxT("200"));
+                comboBoxCANSpeed->Append(wxT("250"));
+                comboBoxCANSpeed->Append(wxT("500"));
+                comboBoxCANSpeed->Append(wxT("1000"));
+                comboBoxCANSpeed->SetToolTip(wxT("Скорость CAN-шины"));
+                sizerControls->Add(comboBoxCANSpeed, 2, wxALL, 2);
 
                 buttonConnectDisconnect = new wxButton(this, wxID_ANY, wxT("Подключить"), wxDefaultPosition, FromDIP(wxSize(80, 25)));
                 buttonConnectDisconnect->SetForegroundColour(Parameters::colors.ControlText);
@@ -536,6 +537,7 @@ FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition
     drawData = new CircularFrameBuffer(drawFrameSize);
 
     // событие от фонового потока COM-порта
+    this->Bind(wxEVT_SERIAL_PORT_THREAD_STARTED, &FormMain::Thread_OnStarted, this);
     this->Bind(wxEVT_SERIAL_PORT_THREAD_UPDATE, &FormMain::Thread_OnUpdate, this);
     this->Bind(wxEVT_SERIAL_PORT_THREAD_EXIT, &FormMain::Thread_OnExit, this);
     this->Bind(wxEVT_SERIAL_PORT_THREAD_MESSAGE, &FormMain::Thread_OnMessage, this);
@@ -631,9 +633,8 @@ void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
     {
         // если порт не открыт - открыть, иначе - закрыть
         if (serialPort == nullptr)
-        {
-            unsigned long serialSpeed = 0;
-            if (comboBoxSerialSpeed->GetValue().ToULong(&serialSpeed))
+        {   
+            if (comboBoxCANSpeed->GetValue().ToULong(&selectedCanSpeed))
             {
                 frames->Clear();
 
@@ -643,13 +644,15 @@ void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
                     gridCANView->DeleteRows(0, gridCANView->GetNumberRows());
                 }
 
-                serialPort = new ThreadedSerialPort(comboBoxSerialPort->GetValue(), (uint32_t)serialSpeed, (wxFrame*)this);
+                serialPort = new ThreadedSerialPort(comboBoxSerialPort->GetValue(), Parameters::serial.PortSpeed, (wxFrame*)this);
                 // поток стартует с задержкой, все остальные проверки его состояния в событии таймера MainTimer_OnTimer
                 buttonConnectDisconnect->SetLabelText(DISCONNECT);
             }
         }
         else
         {
+            // отправить управляющий пакет отключения
+            SendCANCommand(CANCommands::Disconnect);
             // просто запустить процесс остановки потока, все остальные проверки его состояния в событии таймера MainTimer_OnTimer
             serialPort->Delete();
             // записать все log-файлы
@@ -662,6 +665,13 @@ void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
         buttonConnectDisconnect->SetLabelText(CONNECT);
         wxMessageBox(ERROR_SERIAL);
     }
+}
+
+// Поток работы с последовательным портом запустился
+void FormMain::Thread_OnStarted(wxThreadEvent& event)
+{
+    // отправить управляющий пакет подключения
+    SendCANCommand(CANCommands::Connect, selectedCanSpeed);
 }
 
 // По событию от потока забирать все принятые CAN-пакеты, которые есть в буфере
@@ -702,9 +712,9 @@ void FormMain::ProcessCANFrame(CANFrameIn& frame)
     // если это пакет с сервисным идентификатором - это статистика и её надо обработать отдельно
     if (frame.id == Parameters::can.ServiceID && frame.length >= 4)
     {
-        uint16_t fps = frame.data[0] << 8 | frame.data[1];
+        uint16_t fps = *(uint16_t*)(&(frame.data[0]));
         textFPS->ChangeValue(wxString::Format(FORMAT_INT, fps));    // кадров в секунду
-        uint16_t bps = frame.data[2] << 8 | frame.data[3];
+        uint16_t bps = *(uint16_t*)(&(frame.data[2]));
         textBPS->ChangeValue(wxString::Format(FORMAT_INT, bps));    // байтов в секунду
     }
     else
@@ -738,21 +748,24 @@ void FormMain::ProcessCANFrame(CANFrameIn& frame)
             int32_t lastRow = gridCANLog->GetNumberRows();
             gridCANLog->InsertRows(lastRow);
 
-            gridCANLog->SetCellValue(lastRow, 0, wxString::Format(FORMAT_HEX3, frame.id));
+            if (frame.id & 0x80000000)
+            {
+                // расширенный пакет
+                gridCANLog->SetCellValue(lastRow, 0, wxString::Format(FORMAT_HEX8, frame.id & 0x7FFFFFFF));
+            }
+            else
+            {
+                gridCANLog->SetCellValue(lastRow, 0, wxString::Format(FORMAT_HEX3, frame.id));
+            }
             gridCANLog->SetCellValue(lastRow, 1, wxString::Format(FORMAT_INT, frame.length));
 
-            // заполнение столбцов параметров
+            // заполнение столбцов данных пакета
             for (size_t iData = 0; iData < 8; iData++)
             {
                 if (iData < frame.length)
                 {
                     // вывод данных
-                    gridCANLog->SetCellValue(lastRow, iData + 2, wxString::Format(FORMAT_HEX2, frame.data[iData]));
-                }
-                else
-                {
-                    // вывод пустых ячеек
-                    gridCANView->SetCellValue(lastRow, iData + 2, wxT(" "));
+                    gridCANLog->SetCellValue(lastRow, 2 + iData, wxString::Format(FORMAT_HEX2, frame.data[iData]));
                 }
             }
             // прокрутить список вниз
@@ -1182,7 +1195,15 @@ void FormMain::RefreshGridCANView()
         {
             // вывод ID, интервала и длины пакета
             auto vFrame = frames->GetFrame(iFrame);
-            gridCANView->SetCellValue(iFrame, 0, wxString::Format(FORMAT_HEX3, vFrame.frame.id));
+            if (vFrame.frame.id & 0x80000000)
+            {
+                // расширенный пакет
+                gridCANView->SetCellValue(iFrame, 0, wxString::Format(FORMAT_HEX8, vFrame.frame.id & 0x7FFFFFFF));
+            }
+            else
+            {
+                gridCANView->SetCellValue(iFrame, 0, wxString::Format(FORMAT_HEX3, vFrame.frame.id));
+            }
             gridCANView->SetCellValue(iFrame, 1, wxString::Format(FORMAT_INT, vFrame.frame.interval));
             gridCANView->SetCellValue(iFrame, 2, wxString::Format(FORMAT_INT, vFrame.frame.length));
             gridCANView->SetCellBackgroundColour(iFrame, 0, Parameters::colors.GridBackground);
@@ -1572,74 +1593,76 @@ void FormMain::ButtonClearCANLog_OnClick(wxCommandEvent& event)
 // Нажатие кнопки отправки CAN-пакета
 void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
 {
-    long tempValue;
+    unsigned long tempValue;
 
     // собрать CAN-пакет для отправки
     CANFrameOut frame = { 0 };
 
     // ID пакета
-    textCANID->GetValue().ToLong(&tempValue, 16);
-    if (tempValue >= 0 && tempValue <= 0x7FFF)
+    textCANID->GetValue().ToULong(&tempValue, 16);
+    if (tempValue > 0)
         frame.id = (uint32_t)tempValue;
     else
         return;
+    // зарезервировано
+    frame.reserved = 0;
     // длина данных пакета
-    textCANLength->GetValue().ToLong(&tempValue, 10);
+    textCANLength->GetValue().ToULong(&tempValue, 10);
     if (tempValue >= 0 && tempValue <= 8)
         frame.length = (uint8_t)tempValue;
     else
         return;
     // байт 1
-    textCANByte1->GetValue().ToLong(&tempValue, 16);
+    textCANByte1->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[0] = (uint8_t)tempValue;
     else
         return;
     // байт 2
-    textCANByte2->GetValue().ToLong(&tempValue, 16);
+    textCANByte2->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[1] = (uint8_t)tempValue;
     else
         return;
     // байт 3
-    textCANByte3->GetValue().ToLong(&tempValue, 16);
+    textCANByte3->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[2] = (uint8_t)tempValue;
     else
         return;
     // байт 4
-    textCANByte4->GetValue().ToLong(&tempValue, 16);
+    textCANByte4->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[3] = (uint8_t)tempValue;
     else
         return;
     // байт 5
-    textCANByte5->GetValue().ToLong(&tempValue, 16);
+    textCANByte5->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[4] = (uint8_t)tempValue;
     else
         return;
     // байт 6
-    textCANByte6->GetValue().ToLong(&tempValue, 16);
+    textCANByte6->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[5] = (uint8_t)tempValue;
     else
         return;
     // байт 7
-    textCANByte7->GetValue().ToLong(&tempValue, 16);
+    textCANByte7->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[6] = (uint8_t)tempValue;
     else
         return;
     // байт 8
-    textCANByte8->GetValue().ToLong(&tempValue, 16);
+    textCANByte8->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[7] = (uint8_t)tempValue;
     else
         return;
     // запомнить ID пакета, от которого ожидается ответ
-    textCANAnswerID->GetValue().ToLong(&tempValue, 16);
-    if (tempValue > 0 && tempValue <= 0x7FFF)
+    textCANAnswerID->GetValue().ToULong(&tempValue, 16);
+    if (tempValue > 0)
         answerID = (uint32_t)tempValue;
     else
         answerID = 0;
@@ -1695,4 +1718,40 @@ void FormMain::UDPSocket_SendFrame(CANFrameOut& frame)
     sendCANFrame.Signature = Parameters::can.Signature;
     sendCANFrame.Frame = frame;
     udpSocket->SendTo(espIpAddress, &sendCANFrame, sizeof(SendCANFrame));
+}
+
+// Отправить команду управления
+void FormMain::SendCANCommand(CANCommands command, uint16_t speed)
+{
+    CANFrameOut frame = { 0 };
+    switch (command)
+    {
+        case CANCommands::Disconnect:
+            // собрать управляющий CAN-пакет отключения
+            frame.id = Parameters::can.ServiceID;
+            frame.length = 1;
+            frame.data[0] = 0;
+            break;
+
+        case CANCommands::Connect:
+            // собрать управляющий CAN-пакет подключения
+            frame.id = Parameters::can.ServiceID;
+            frame.length = 3;
+            frame.data[0] = 1;
+            *(uint16_t*)(&(frame.data[1])) = selectedCanSpeed;
+            break;
+
+        default:
+            return;
+            break;
+    }
+
+    if (serialPort)
+    {
+        serialPort->SendFrame(frame);
+    }
+    if (udpSocket)
+    {
+        UDPSocket_SendFrame(frame);
+    }
 }

@@ -6,7 +6,7 @@
 #define PARAMETER_CAN_SIGNATURE_DWORD           wxT("CAN/Signature")
 #define PARAMETER_CAN_SIGNATURE_DWORD_DEFAULT   0xAA55AA55u
 #define PARAMETER_CAN_SERVICE_ID                wxT("CAN/ServiceID")
-#define PARAMETER_CAN_SERVICE_ID_DEFAULT        0x00000000u
+#define PARAMETER_CAN_SERVICE_ID_DEFAULT        0x000007FFu
 #define PARAMETER_CAN_MIN_DATA_SIZE             wxT("CAN/MinimalDataSize")
 #define PARAMETER_CAN_MIN_DATA_SIZE_DEFAULT     19
 #define PARAMETER_SERIAL_PORT_SPEED             wxT("SerialPort/Speed")

@@ -262,6 +262,9 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
     bufferHead = bufferTail = buffer;
     bufferEnd = buffer + BUFFER_SIZE;
 
+    // сообщить об успешном запуске
+    handleFrame->GetEventHandler()->AddPendingEvent(wxThreadEvent(wxEVT_SERIAL_PORT_THREAD_STARTED));
+
     // проверка на запрос для выхода
     while (!TestDestroy())
     {
@@ -340,8 +343,8 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
         {
             syncCANSend.Lock();
             frameToSend.Signature = Parameters::can.Signature;
-            // 4 байта сигнатуры + 4 байта ID-пакета + 1 байт длина данных + сами данные
-            bytesToSend = 9 + frameToSend.Frame.length;
+            // отправлять всегда весь пакет, все 19 байтов
+            bytesToSend = sizeof(SendCANFrame);
 #ifdef __WINDOWS__
             WriteFile(hSerial, &frameToSend, bytesToSend, &bytesSent, NULL);
 #endif
