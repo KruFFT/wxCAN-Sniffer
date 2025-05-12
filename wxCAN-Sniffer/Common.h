@@ -23,9 +23,6 @@
 
 #define UDP_BUFFER_SIZE             1000        // размер сетевого буфера приёма пакетов
 
-#define CONNECT                     wxT("Подключить")
-#define DISCONNECT                  wxT("Отключить")
-
 #define FORMAT_HEX2                 wxT("%02X")
 #define FORMAT_HEX3                 wxT("%03X")
 #define FORMAT_HEX8                 wxT("%08X")
@@ -35,6 +32,96 @@
 #define FORMAT_INT3                 wxT("%03i")
 #define FORMAT_FLOAT1_0             wxT("%1.0f")
 #define FORMAT_FLOAT1_3             wxT("%1.3f")
+
+#define TEXT_CAN_PACKETS_VIEW       wxT("Просмотр пакетов")
+#define TEXT_CAN_ID                 wxT("CAN ID")
+#define TEXT_CAN_INTERVAL           wxT("Интервал")
+#define TEXT_CAN_LENGTH             wxT("Длина")
+#define TEXT_CAN_BYTE_0             wxT("Байт 0")
+#define TEXT_CAN_BYTE_1             wxT("Байт 1")
+#define TEXT_CAN_BYTE_2             wxT("Байт 2")
+#define TEXT_CAN_BYTE_3             wxT("Байт 3")
+#define TEXT_CAN_BYTE_4             wxT("Байт 4")
+#define TEXT_CAN_BYTE_5             wxT("Байт 5")
+#define TEXT_CAN_BYTE_6             wxT("Байт 6")
+#define TEXT_CAN_BYTE_7             wxT("Байт 7")
+#define TEXT_CAN_TEST               wxT("Тестовая отправка пакета и просмотр ответа")
+#define TEXT_CAN_TEST_PACKET        wxT("CAN пакет:")
+#define TEXT_CAN_TEST_ID            wxT("7E0")
+#define TEXT_CAN_TEST_LENGTH        wxT("8")
+#define TEXT_CAN_TEST_BYTE_0        wxT("05")
+#define TEXT_CAN_TEST_BYTE_1        wxT("2F")
+#define TEXT_CAN_TEST_BYTE_2        wxT("00")
+#define TEXT_CAN_TEST_BYTE_3        wxT("0A")
+#define TEXT_CAN_TEST_BYTE_4        wxT("06")
+#define TEXT_CAN_TEST_BYTE_5        wxT("FF")
+#define TEXT_CAN_TEST_BYTE_6        wxT("00")
+#define TEXT_CAN_TEST_BYTE_7        wxT("00")
+#define TEXT_CAN_TEST_ANSWER        wxT("Отображать ответ от:")
+#define TEXT_CAN_TEST_ANSWER_ID     wxT("7E8")
+#define TEXT_CAN_TEST_SEND          wxT("Отправить CAN-пакет")
+#define TEXT_CAN_TEST_CLEAR         wxT("Очистить список ответов")
+#define TEXT_MANAGEMENT             wxT("Управление")
+#define TEXT_PORT                   wxT("Порт")
+#define TEXT_NETWORK                wxT("Сеть")
+#define TEXT_CONNECTION_MODE        wxT("Режим подключения")
+#define TEXT_CONNECT                wxT("Подключить")
+#define TEXT_DISCONNECT             wxT("Отключить")
+#define TEXT_CR_SPACES              wxT("\n  ")
+#define TEXT_CR_CR                  wxT("\n\n")
+#define TEXT_SERIAL_PORT            wxT("Последовательный порт")
+#define TEXT_MC_IP_ADDRESS          wxT("IP-адрес микроконтроллера")
+#define TEXT_CAN_SPEED_100          wxT("100")
+#define TEXT_CAN_SPEED_125          wxT("125")
+#define TEXT_CAN_SPEED_200          wxT("200")
+#define TEXT_CAN_SPEED_250          wxT("250")
+#define TEXT_CAN_SPEED_500          wxT("500")
+#define TEXT_CAN_SPEED_1000         wxT("1000")
+#define TEXT_CAN_SPEED              wxT("Скорость CAN-шины")
+#define TEXT_PPS                    wxT("пакетов/с")
+#define TEXT_BPS                    wxT("байтов/с (исключая служебную информацию)")
+#define TEXT_LOG_WRITE              wxT("Запись в журнал")
+#define TEXT_LOG_WRITE_ENABLE       wxT("Вести запись в журнал")
+#define TEXT_LOG_ADD_ID             wxT("Добавить ID в фильтр >>")
+#define TEXT_LOG_REMOVE_ID          wxT("Убрать ID из фильтра <<")
+#define TEXT_LOG_CLEAR_IDS          wxT("Очистить фильтр")
+#define TEXT_LOG_FILE_TYPE          wxT("Тип файла:")
+#define TEXT_LOG_FILE_EXT_CSV       wxT(".csv")
+#define TEXT_LOG_FILE_EXT_LOG       wxT(".log")
+#define TEXT_LOG_SEPARATOR          wxT("Разделитель:")
+#define TEXT_LOG_SEPARATOR_SEMICOLON wxT(";")
+#define TEXT_LOG_SEPARATOR_TAB      wxT("Tab")
+#define TEXT_LOG_SEPARATOR_MINUS    wxT("-")
+#define TEXT_LOG_SEPARATOR_UNDERSCORE wxT("_")
+#define TEXT_LOG_SEPARATOR_SPACE    wxT("Space")
+#define TEXT_LOG_SEPARATOR_TAB_VALUE wxT("\t")
+#define TEXT_LOG_SEPARATOR_SPACE_VALUE wxT(" ")
+#define TEXT_LOG_SAVE_TO_ONE_FILE   wxT("Сохранение данных в один файл")
+#define TEXT_LOG_DECIMAL            wxT("Десятичный вывод данных")
+#define TEXT_LOG_ADD_ASCII          wxT("Добавлять ASCII данные")
+#define TEXT_LOG_FILE_PREFIX        wxT("CAN")
+#define TEXT_LOG_FILE_PREFIX_ID     wxT("/CAN ID ")
+#define TEXT_LOG_FILE_ACCESS        wxT("a")
+#define TEXT_LOG_FILE_ASCII_SEPARATOR wxT('|')
+#define TEXT_DECODING               wxT("Декодированные значения")
+#define TEXT_DECODING_DATA_TYPE     wxT("Тип данных:")
+#define TEXT_DECODING_UINT8         wxT("UInt8")
+#define TEXT_DECODING_UINT16        wxT("UInt16")
+#define TEXT_DECODING_UINT32        wxT("UInt32")
+#define TEXT_DECODING_INT8          wxT("Int8")
+#define TEXT_DECODING_INT16         wxT("Int16")
+#define TEXT_DECODING_INT32         wxT("Int32")
+#define TEXT_DECODING_FLOAT         wxT("Float")
+#define TEXT_DECODING_BE            wxT("Big-endian")
+#define TEXT_DECODING_BINARY        wxT("Двоичный вид:")
+#define TEXT_DECODING_DECIMAL       wxT("Десятичный вид:")
+#define TEXT_DECODING_MULTIPLIER    wxT("Множитель:")
+#define TEXT_DECODING_RESULT        wxT("Результат:")
+#define TEXT_DECIMAL_SEPARATOR      wxT(".")
+#define TEXT_SPACE                  wxT(" ")
+#define TEXT_0                      wxT('0')
+#define TEXT_1                      wxT('1')
+#define TEXT_NUMBER_BLOCK_SEPARATOR wxT('_')
 
 #define ERROR_CAPTION               wxT("Ошибка")
 #define ERROR_SERIAL                wxT("Невозможно работать с этим последовательным портом")
@@ -114,10 +201,17 @@ public:
     wxFFile* file;          // ассоциированный файл
 };
 
+// Режимы работы
+enum Modes
+{
+    Serial = 0,
+    Network
+};
+
 // Команды управления
 enum CANCommands
 {
-    Disconnect,
+    Disconnect = 0,
     Connect
 };
 

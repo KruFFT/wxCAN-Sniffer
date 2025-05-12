@@ -12,7 +12,7 @@ include(FetchContent)
 FetchContent_Declare(
    wxWidgets
    GIT_REPOSITORY https://github.com/wxWidgets/wxWidgets.git
-   #GIT_TAG v3.2.5
+   #GIT_TAG v3.2.8
    GIT_SHALLOW ON
 )
 FetchContent_MakeAvailable(wxWidgets)
@@ -28,6 +28,8 @@ set(SRCS
 	${Sources}/CircularFrameBuffer.cpp
 	${Sources}/Common.h
 	${Sources}/FormMain.h
+	${Sources}/FormMainControls.cpp
+	${Sources}/FormMainEvents.cpp
 	${Sources}/FormMain.cpp
 	${Sources}/FramesContainer.h
 	${Sources}/FramesContainer.cpp

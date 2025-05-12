@@ -13,15 +13,7 @@
 #include "FramesContainer.h"
 
 #define TIMER_INTERVAL              10              // интервал срабатывания таймера обработки данных (мс)
-#define SCREEN_UPDATE_COUNTER_LIMIT 2               // лимит счётчика обновления данных на экране (2 по TIMER_INTERVAL мс = около 50 кадров/с)
-
-#define TEXT_UINT8                  wxT("UInt8")
-#define TEXT_UINT16                 wxT("UInt16")
-#define TEXT_UINT32                 wxT("UInt32")
-#define TEXT_INT8                   wxT("Int8")
-#define TEXT_INT16                  wxT("Int16")
-#define TEXT_INT32                  wxT("Int32")
-#define TEXT_FLOAT                  wxT("Float")
+#define SCREEN_UPDATE_COUNTER_LIMIT 2               // лимит счётчика обновления данных на экране (2 по TIMER_INTERVAL мс = 20 мс, около 50 кадров/с)
 
 //  Класс окна
 class FormMain : public wxFrame
@@ -31,6 +23,8 @@ public:
 
     // обработчики событий
     void OnClose(wxCloseEvent& event);
+    void ChoiceMode_OnChoice(wxCommandEvent& event);
+    void ChoiceCANSpeed_OnChoice(wxCommandEvent& event);
     void ButtonConnectDisconnect_OnClick(wxCommandEvent& event);
     void ButtonAdd_OnClick(wxCommandEvent& event);
     void ButtonRemove_OnClick(wxCommandEvent& event);
@@ -65,6 +59,7 @@ private:
     wxGrid* gridCANLog;
     wxTextCtrl* textCANID;
     wxTextCtrl* textCANLength;
+    wxTextCtrl* textCANByte0;
     wxTextCtrl* textCANByte1;
     wxTextCtrl* textCANByte2;
     wxTextCtrl* textCANByte3;
@@ -72,12 +67,13 @@ private:
     wxTextCtrl* textCANByte5;
     wxTextCtrl* textCANByte6;
     wxTextCtrl* textCANByte7;
-    wxTextCtrl* textCANByte8;
     wxButton* buttonSend;
     wxTextCtrl* textCANAnswerID;
     wxButton* buttonClearCANLog;
+    wxChoice* choiceMode;
     wxComboBox* comboBoxSerialPort;
-    wxComboBox* comboBoxCANSpeed;
+    wxComboBox* comboBoxIPAddress;
+    wxChoice* choiceCANSpeed;
     wxTextCtrl* textFPS;
     wxTextCtrl* textBPS;
     wxButton* buttonConnectDisconnect;
@@ -104,9 +100,9 @@ private:
     // Идентификаторы необходимых объектов
     enum IDs
     {
-        ID_MAIN_FORM = wxID_HIGHEST + 1,
-        ID_MAIN_TIMER,
-        ID_UDP_SOCKET
+        MAIN_FORM = wxID_HIGHEST + 1,
+        MAIN_TIMER,
+        UDP_SOCKET
     };
 
     // Типы данных для преобразования и графика
@@ -121,7 +117,10 @@ private:
         Float
     };
 
-    unsigned long selectedCanSpeed = 0;         // выбраннная скорость CAN-шины
+    Modes mode = Modes::Serial;                 // Режим работы: последовательный порт или сеть
+
+    wxArrayString comboSpeedChoices;            // список скоростей CAN-шины
+    uint16_t selectedCanSpeed = 500;            // выбраннная скорость CAN-шины
     ThreadedSerialPort* serialPort = nullptr;   // последовательный порт в отдельном потоке
     FramesContainer* frames = nullptr;          // список отображаемых на экране пакетов
 
@@ -137,6 +136,7 @@ private:
     wxFFile* logFile = nullptr;                 // единый log-файл
     wxString decimalSeparator;                  // выбранный символ разделитель для данных в log-файле
 
+    wxColour gridSystemSelectedBackgroundColor; // системный цвет выделенной ячейки
     int32_t rowToView = -1;                     // номер строки выбранной ячейки для отображения данных о ней
     int32_t colToView = -1;                     // номер столбца выбранной ячейки для отображения данных о ней
     float mul = 1.0;                            // множитель для отображаемых чисел
@@ -154,7 +154,8 @@ private:
     bool bigEndian = true;                      // порядок следования байтов в слове big-endian
 
     wxDatagramSocket* udpSocket = nullptr;      // UDP-сокет
-    wxIPV4address espIpAddress;                 // сохранённый адрес ESP
+    wxIPV4address mcIpAddress;                  // сохранённый адрес IP-адрес микроконтроллера
+    bool udpConnected = false;                  // была отправлена команда подключения к CAN-шине
 
     void ProcessCANFrame(CANFrameIn& frame);    // обработка полученного CAN-пакета
     void RefreshGridCANView();                  // обновить таблицу CAN-пакетов с раскраской ячеек
@@ -169,6 +170,9 @@ private:
     void ShowNumbers();                         // показать числовые представления выбранных ячеек
     void UDPSocket_SendFrame(CANFrameOut& frame);   // отправить пакет через сетевое подключение
     void SendCANCommand(CANCommands command, uint16_t speed = 0);   // отправить команду управления
+    void EnableConnectionControls();            // включить элементы управления соединением
+    void DisableConnectionControls();           // отключить элементы управления соединением
+    void AssignEventHandlers();                 // подключение обработчиков событий
 
     wxDECLARE_EVENT_TABLE();
 };

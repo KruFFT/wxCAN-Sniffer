@@ -9,6 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+wxCAN-Sniffer.ini
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -104,6 +105,7 @@ ipch/
 *.cachefile
 *.VC.db
 *.VC.VC.opendb
+cpp.hint
 
 # Visual Studio profiler
 *.psess

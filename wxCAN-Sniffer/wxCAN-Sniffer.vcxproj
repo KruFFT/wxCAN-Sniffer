@@ -178,6 +178,8 @@
     <ClCompile Include="CANParser.cpp" />
     <ClCompile Include="CircularFrameBuffer.cpp" />
     <ClCompile Include="FormMain.cpp" />
+    <ClCompile Include="FormMainControls.cpp" />
+    <ClCompile Include="FormMainEvents.cpp" />
     <ClCompile Include="FramesContainer.cpp" />
     <ClCompile Include="Parameters.cpp" />
     <ClCompile Include="ThreadedSerialPort.cpp" />
@@ -192,7 +194,9 @@
     <Manifest Include="wxCAN-Sniffer.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="Info.plist" />
+    <None Include="wxCAN-Sniffer.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,709 +1,5 @@
 ﻿#include "FormMain.h"
 
-// События из фонового потока
-wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_STARTED, wxThreadEvent);
-wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_UPDATE, wxThreadEvent);
-wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_EXIT, wxThreadEvent);
-wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
-
-// Таблица событий (только событие для UDP-сокета)
-wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
-    EVT_SOCKET(ID_UDP_SOCKET, FormMain::UDPSocket_OnEvent)
-wxEND_EVENT_TABLE()
-
-// Конструктор окна
-FormMain::FormMain() : wxFrame(nullptr, ID_MAIN_FORM, CAPTION, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE)
-{
-    // сохранение цветов и настройка кистей
-    graphFramePen = wxPen(Parameters::colors.GraphFrame, 1);
-    graphBackgroundBrush = wxBrush(Parameters::colors.GraphBackground);
-    graphPen = wxPen(Parameters::colors.GraphDraw, 3);
-
-    // иконка и размер окна
-    auto icon = wxIcon(canIcon);
-    this->SetIcon(icon);
-    this->SetSizeHints(FromDIP(wxSize(1240, 600)));
-
-    // главный сайзер окна
-    auto sizerMain = new wxBoxSizer(wxHORIZONTAL);
-    {
-        splitterLeft = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3D);
-
-        panelLeftTop = new wxPanel(splitterLeft, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxNO_BORDER);
-        panelLeftBottom = new wxPanel(splitterLeft, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxNO_BORDER);
-
-        // левый верхний сайзер
-        auto labelLeftTop = new wxStaticBox(panelLeftTop, wxID_ANY, wxT("Просмотр пакетов"));
-        labelLeftTop->SetForegroundColour(Parameters::colors.ControlText);
-        auto sizerLeftTop = new wxStaticBoxSizer(labelLeftTop, wxVERTICAL);
-        {
-            gridCANView = new wxGrid(panelLeftTop, wxID_ANY);
-            // параметры сетки
-            gridCANView->CreateGrid(0, 11);
-            gridCANView->EnableEditing(false);
-            gridCANView->EnableGridLines(true);
-            gridCANView->EnableDragGridSize(false);
-            gridCANView->SetMargins(0, 0);
-            // параметры столбцов
-            gridCANView->EnableDragColMove(false);
-            gridCANView->EnableDragColSize(true);
-            gridCANView->SetColLabelSize(FromDIP(20));
-            gridCANView->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
-            // параметры строк
-            gridCANView->EnableDragRowSize(false);
-            gridCANView->SetRowLabelSize(FromDIP(40));
-            gridCANView->SetRowLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
-            gridCANView->SetDefaultCellAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
-            // заполнение таблицы
-            gridCANView->SetColLabelValue(0, wxT("CAN ID"));
-            gridCANView->SetColLabelValue(1, wxT("Интервал"));
-            gridCANView->SetColLabelValue(2, wxT("Длина"));
-            gridCANView->SetColLabelValue(3, wxT("Байт 0"));
-            gridCANView->SetColLabelValue(4, wxT("Байт 1"));
-            gridCANView->SetColLabelValue(5, wxT("Байт 2"));
-            gridCANView->SetColLabelValue(6, wxT("Байт 3"));
-            gridCANView->SetColLabelValue(7, wxT("Байт 4"));
-            gridCANView->SetColLabelValue(8, wxT("Байт 5"));
-            gridCANView->SetColLabelValue(9, wxT("Байт 6"));
-            gridCANView->SetColLabelValue(10, wxT("Байт 7"));
-            // установка ширины столбцов
-            gridCANView->SetColSize(0, FromDIP(100));
-            for (size_t iCol = 1; iCol < 11; iCol++)
-            {
-                gridCANView->SetColSize(iCol, FromDIP(60));
-            }
-            // внешний вид
-            gridCANView->SetSelectionMode(wxGrid::wxGridSelectionModes::wxGridSelectNone);
-            gridCANView->SetDefaultCellTextColour(Parameters::colors.GridText);
-            gridCANView->SetDefaultCellBackgroundColour(Parameters::colors.GridBackground);
-            gridCANView->SetGridLineColour(Parameters::colors.GridLines);
-            gridCANView->SetLabelTextColour(Parameters::colors.ControlText);
-            gridCANView->SetLabelBackgroundColour(Parameters::colors.ControlBackground);
-        }
-        sizerLeftTop->Add(gridCANView, 1, wxEXPAND, 0);
-        panelLeftTop->SetSizer(sizerLeftTop);
-
-        // левый нижний сайзер
-        auto labelLeftBottom = new wxStaticBox(panelLeftBottom, wxID_ANY, wxT("Тестовая отправка пакета и просмотр ответа"));
-        labelLeftBottom->SetForegroundColour(Parameters::colors.ControlText);
-        auto sizerLeftBottom = new wxStaticBoxSizer(labelLeftBottom, wxVERTICAL);
-        {
-            // сайзер с текстовыми полями ввода данных CAN-пакета
-            auto sizerLeftBottomText = new wxBoxSizer(wxHORIZONTAL);
-            {
-                auto labelCAN = new wxStaticText(panelLeftBottom, wxID_ANY, wxT("CAN:"), wxDefaultPosition, FromDIP(wxSize(37, 20)));
-                labelCAN->SetForegroundColour(Parameters::colors.ControlText);
-                labelCAN->Wrap(-1);
-                sizerLeftBottomText->Add(labelCAN, 0, wxLEFT | wxTOP, 2);
-                textCANID = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("7E0"), wxDefaultPosition, FromDIP(wxSize(51, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANID->SetForegroundColour(Parameters::colors.ControlText);
-                textCANID->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANID, 0, wxEXPAND, 0);
-                textCANLength = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("8"), wxDefaultPosition, FromDIP(wxSize(50, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANLength->SetForegroundColour(Parameters::colors.ControlText);
-                textCANLength->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANLength, 0, wxEXPAND, 0);
-                textCANByte1 = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("05"), wxDefaultPosition, FromDIP(wxSize(50, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANByte1->SetForegroundColour(Parameters::colors.ControlText);
-                textCANByte1->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANByte1, 0, wxEXPAND, 0);
-                textCANByte2 = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("2F"), wxDefaultPosition, FromDIP(wxSize(50, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANByte2->SetForegroundColour(Parameters::colors.ControlText);
-                textCANByte2->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANByte2, 0, wxEXPAND, 0);
-                textCANByte3 = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("00"), wxDefaultPosition, FromDIP(wxSize(50, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANByte3->SetForegroundColour(Parameters::colors.ControlText);
-                textCANByte3->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANByte3, 0, wxEXPAND, 0);
-                textCANByte4 = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("0A"), wxDefaultPosition, FromDIP(wxSize(50, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANByte4->SetForegroundColour(Parameters::colors.ControlText);
-                textCANByte4->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANByte4, 0, wxEXPAND, 0);
-                textCANByte5 = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("06"), wxDefaultPosition, FromDIP(wxSize(50, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANByte5->SetForegroundColour(Parameters::colors.ControlText);
-                textCANByte5->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANByte5, 0, wxEXPAND, 0);
-                textCANByte6 = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("FF"), wxDefaultPosition, FromDIP(wxSize(50, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANByte6->SetForegroundColour(Parameters::colors.ControlText);
-                textCANByte6->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANByte6, 0, wxEXPAND, 0);
-                textCANByte7 = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("00"), wxDefaultPosition, FromDIP(wxSize(50, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANByte7->SetForegroundColour(Parameters::colors.ControlText);
-                textCANByte7->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANByte7, 0, wxEXPAND, 0);
-                textCANByte8 = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("00"), wxDefaultPosition, FromDIP(wxSize(50, 20)), wxTE_CENTRE | wxBORDER_SIMPLE);
-                textCANByte8->SetForegroundColour(Parameters::colors.ControlText);
-                textCANByte8->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomText->Add(textCANByte8, 0, wxEXPAND, 0);
-            }
-            sizerLeftBottom->Add(sizerLeftBottomText, 0, wxEXPAND, 0);
-
-            // сайзер с кнопками управления отправкой и журналом ответа
-            auto sizerLeftBottomButtons = new wxBoxSizer(wxHORIZONTAL);
-            {
-                buttonSend = new wxButton(panelLeftBottom, wxID_ANY, wxT("Отправить CAN-пакет"));
-                buttonSend->SetForegroundColour(Parameters::colors.ControlText);
-                buttonSend->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomButtons->Add(buttonSend, 0, wxALL, 4);
-                auto labelCANFromID = new wxStaticText(panelLeftBottom, wxID_ANY, wxT("Отображать ответ от:"), wxDefaultPosition, wxDefaultSize);
-                labelCANFromID->SetForegroundColour(Parameters::colors.ControlText);
-                labelCANFromID->Wrap(-1);
-                sizerLeftBottomButtons->Add(labelCANFromID, 0, wxALL, 9);
-                textCANAnswerID = new wxTextCtrl(panelLeftBottom, wxID_ANY, wxT("7E8"), wxDefaultPosition, FromDIP(wxSize(51, 20)), wxTE_CENTRE | wxTE_PROCESS_ENTER | wxBORDER_SIMPLE);
-                textCANAnswerID->SetForegroundColour(Parameters::colors.ControlText);
-                textCANAnswerID->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomButtons->Add(textCANAnswerID, 0, wxALL, 7);
-                // спейсер между кнопками
-                sizerLeftBottomButtons->Add(0, 0, 1, wxEXPAND, 0);
-                buttonClearCANLog = new wxButton(panelLeftBottom, wxID_ANY, wxT("Очистить ответ"));
-                buttonClearCANLog->SetForegroundColour(Parameters::colors.ControlText);
-                buttonClearCANLog->SetBackgroundColour(Parameters::colors.ControlBackground);
-                sizerLeftBottomButtons->Add(buttonClearCANLog, 0, wxALL, 4);
-            }
-            sizerLeftBottom->Add(sizerLeftBottomButtons, 0, wxEXPAND, 0);
-
-            gridCANLog = new wxGrid(panelLeftBottom, wxID_ANY);
-            // параметры сетки
-            gridCANLog->CreateGrid(0, 10);
-            gridCANLog->EnableEditing(false);
-            gridCANLog->EnableGridLines(true);
-            gridCANLog->EnableDragGridSize(false);
-            gridCANLog->SetMargins(0, 0);
-            // параметры столбцов
-            gridCANLog->EnableDragColMove(false);
-            gridCANLog->EnableDragColSize(false);
-            gridCANLog->SetColLabelSize(FromDIP(20));
-            gridCANLog->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
-            // параметры строк
-            gridCANLog->EnableDragRowSize(false);
-            gridCANLog->SetRowLabelSize(FromDIP(40));
-            gridCANLog->SetRowLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
-            gridCANLog->SetDefaultCellAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
-            // заполнение таблицы
-            gridCANLog->SetColLabelValue(0, wxT("CAN ID"));
-            gridCANLog->SetColLabelValue(1, wxT("Длина"));
-            gridCANLog->SetColLabelValue(2, wxT("Байт 0"));
-            gridCANLog->SetColLabelValue(3, wxT("Байт 1"));
-            gridCANLog->SetColLabelValue(4, wxT("Байт 2"));
-            gridCANLog->SetColLabelValue(5, wxT("Байт 3"));
-            gridCANLog->SetColLabelValue(6, wxT("Байт 4"));
-            gridCANLog->SetColLabelValue(7, wxT("Байт 5"));
-            gridCANLog->SetColLabelValue(8, wxT("Байт 6"));
-            gridCANLog->SetColLabelValue(9, wxT("Байт 7"));
-            // установка ширины столбцов
-            gridCANLog->SetColSize(0, FromDIP(100));
-            for (size_t iCol = 1; iCol < 10; iCol++)
-            {
-                gridCANLog->SetColSize(iCol, FromDIP(60));
-            }
-            gridCANLog->SetSelectionMode(wxGrid::wxGridSelectionModes::wxGridSelectNone);
-            // внешний вид
-            gridCANLog->SetSelectionMode(wxGrid::wxGridSelectionModes::wxGridSelectNone);
-            gridCANLog->SetDefaultCellTextColour(Parameters::colors.GridText);
-            gridCANLog->SetDefaultCellBackgroundColour(Parameters::colors.GridBackground);
-            gridCANLog->SetGridLineColour(Parameters::colors.GridLines);
-            gridCANLog->SetLabelTextColour(Parameters::colors.ControlText);
-            gridCANLog->SetLabelBackgroundColour(Parameters::colors.ControlBackground);
-            sizerLeftBottom->Add(gridCANLog, 1, wxEXPAND, 0);
-        }
-        panelLeftBottom->SetSizer(sizerLeftBottom);
-
-        splitterLeft->SplitHorizontally(panelLeftTop, panelLeftBottom, -1);
-        splitterLeft->SetMinimumPaneSize(FromDIP(30));
-        // пропорция задаёт ширину левой области
-        sizerMain->Add(splitterLeft, 1, wxALL | wxEXPAND, 4);
-
-        // правый сайзер
-        auto sizerRight = new wxBoxSizer(wxVERTICAL);
-        {
-            // последовательный порт, кнопка управления и статистика буфера
-            auto labelControls = new wxStaticBox(this, wxID_ANY, wxT("Управление"));
-            labelControls->SetForegroundColour(Parameters::colors.ControlText);
-            auto sizerControls = new wxStaticBoxSizer(labelControls, wxHORIZONTAL);
-            {
-                comboBoxSerialPort = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(90, 22)), 0, nullptr, wxBORDER_SIMPLE);
-                comboBoxSerialPort->SetForegroundColour(Parameters::colors.ControlText);
-                comboBoxSerialPort->SetBackgroundColour(Parameters::colors.ControlBackground);
-                auto ports = ThreadedSerialPort::Enumerate();
-                wxString serialPortToolTip;
-                if (ports.size() > 0)
-                {
-                    for (auto& port : ports)
-                    {
-                        comboBoxSerialPort->Append(port.Port);
-                        if (port.HardwareID.IsEmpty())
-                        {
-                            serialPortToolTip += port.Port + wxT("\n  ") + port.Description + wxT("\n\n");
-                        }
-                        else
-                        {
-                            serialPortToolTip += port.Port + wxT("\n  ") + port.Description + wxT("\n  ") + port.HardwareID + wxT("\n\n");
-                        }
-                    }
-                    serialPortToolTip.RemoveLast(2);
-                    // по умолчанию выбрать первый порт из списка
-                    if (ports.size() > 0)
-                    {
-                        comboBoxSerialPort->Select(0);
-                    }
-                    comboBoxSerialPort->SetToolTip(serialPortToolTip);
-                }
-                else
-                {
-                    comboBoxSerialPort->SetToolTip(wxT("Последовательный порт"));
-                }
-                sizerControls->Add(comboBoxSerialPort, 2, wxALL, 2);
-
-                comboBoxCANSpeed = new wxComboBox(this, wxID_ANY, wxT("500"), wxDefaultPosition, FromDIP(wxSize(90, 22)), 0, nullptr, wxBORDER_SIMPLE);
-                comboBoxCANSpeed->SetForegroundColour(Parameters::colors.ControlText);
-                comboBoxCANSpeed->SetBackgroundColour(Parameters::colors.ControlBackground);
-                comboBoxCANSpeed->Append(wxT("100"));
-                comboBoxCANSpeed->Append(wxT("125"));
-                comboBoxCANSpeed->Append(wxT("200"));
-                comboBoxCANSpeed->Append(wxT("250"));
-                comboBoxCANSpeed->Append(wxT("500"));
-                comboBoxCANSpeed->Append(wxT("1000"));
-                comboBoxCANSpeed->SetToolTip(wxT("Скорость CAN-шины"));
-                sizerControls->Add(comboBoxCANSpeed, 2, wxALL, 2);
-
-                buttonConnectDisconnect = new wxButton(this, wxID_ANY, wxT("Подключить"), wxDefaultPosition, FromDIP(wxSize(80, 25)));
-                buttonConnectDisconnect->SetForegroundColour(Parameters::colors.ControlText);
-                buttonConnectDisconnect->SetBackgroundColour(Parameters::colors.ControlBackground);
-                buttonConnectDisconnect->SetFocus();
-                sizerControls->Add(buttonConnectDisconnect, 2, wxALL, 0);
-
-                textFPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, FromDIP(wxSize(50, 22)), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
-                textFPS->SetForegroundColour(Parameters::colors.ControlText);
-                textFPS->SetBackgroundColour(Parameters::colors.ControlBackground);
-                textFPS->SetToolTip(wxT("пакетов/с"));
-                sizerControls->Add(textFPS, 1, wxALL, 2);
-
-                textBPS = new wxTextCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, FromDIP(wxSize(50, 22)), wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
-                textBPS->SetForegroundColour(Parameters::colors.ControlText);
-                textBPS->SetBackgroundColour(Parameters::colors.ControlBackground);
-                textBPS->SetToolTip(wxT("байтов/с (исключая служебную информацию)"));
-                sizerControls->Add(textBPS, 1, wxALL, 2);
-            }
-            sizerRight->Add(sizerControls, 0, wxALL | wxEXPAND, 2);
-
-            // журнал, кнопки управления логом и его параметры
-            paneLog = new wxCollapsiblePane(this, wxID_ANY, "Запись в журнал", wxDefaultPosition, wxDefaultSize, wxCP_NO_TLW_RESIZE | wxCP_DEFAULT_STYLE);
-            // TODO: установка цвета для этого контрола не работает
-            paneLog->SetForegroundColour(Parameters::colors.ControlText);
-            paneLog->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [this](wxCollapsiblePaneEvent&)
-                {
-                    Layout();
-                    Refresh();
-                });
-            {
-                auto pane = paneLog->GetPane();
-                auto sizerLog = new wxBoxSizer(wxVERTICAL);
-                {
-                    checkLogEnable = new wxCheckBox(pane, wxID_ANY, wxT("Вести запись в журнал"));
-                    checkLogEnable->SetForegroundColour(Parameters::colors.ControlText);
-                    checkLogEnable->SetValue(logEnable);
-                    sizerLog->Add(checkLogEnable, 0, wxALL, 5);
-
-                    auto sizerLogButtonsList = new wxBoxSizer(wxHORIZONTAL);
-                    {
-                        // кнопки журнала
-                        auto sizerLogButtons = new wxBoxSizer(wxVERTICAL);
-                        {
-                            buttonAdd = new wxButton(pane, wxID_ANY, wxT("Добавить ID в фильтр >>"));
-                            buttonAdd->SetForegroundColour(Parameters::colors.ControlText);
-                            buttonAdd->SetBackgroundColour(Parameters::colors.ControlBackground);
-                            sizerLogButtons->Add(buttonAdd, 1, wxALL | wxEXPAND, 2);
-
-                            buttonRemove = new wxButton(pane, wxID_ANY, wxT("Убрать ID из фильтра <<"));
-                            buttonRemove->SetForegroundColour(Parameters::colors.ControlText);
-                            buttonRemove->SetBackgroundColour(Parameters::colors.ControlBackground);
-                            sizerLogButtons->Add(buttonRemove, 1, wxALL | wxEXPAND, 2);
-
-                            buttonRemoveAll = new wxButton(pane, wxID_ANY, wxT("Очистить фильтр"));
-                            buttonRemoveAll->SetForegroundColour(Parameters::colors.ControlText);
-                            buttonRemoveAll->SetBackgroundColour(Parameters::colors.ControlBackground);
-                            sizerLogButtons->Add(buttonRemoveAll, 1, wxALL | wxEXPAND, 2);
-
-                            // ширина кнопок фильтров
-                            sizerLogButtonsList->Add(sizerLogButtons, 6, wxALL, 2);
-                        }
-                        // список кадров журнала
-                        listLog = new wxListBox(pane, wxID_ANY);
-                        listLog->SetForegroundColour(Parameters::colors.ControlText);
-                        listLog->SetBackgroundColour(Parameters::colors.ControlBackground);
-                        // ширина списка фильтров
-                        sizerLogButtonsList->Add(listLog, 4, wxALL | wxEXPAND, 4);
-                    }
-                    sizerLog->Add(sizerLogButtonsList, 0, wxEXPAND, 2);
-
-                    // настройки типа файла журнала
-                    auto sizerLogType = new wxBoxSizer(wxHORIZONTAL);
-                    {
-                        auto labelExt = new wxStaticText(pane, wxID_ANY, wxT("Тип файла:"));
-                        labelExt->SetForegroundColour(Parameters::colors.ControlText);
-                        labelExt->Wrap(-1);
-                        sizerLogType->Add(labelExt, 0, wxALL, 8);
-
-                        wxArrayString comboExtChoices;
-                        comboExtChoices.Add(wxT(".csv"));
-                        comboExtChoices.Add(wxT(".log"));
-                        choiceExt = new wxChoice(pane, wxID_ANY, wxDefaultPosition, wxDefaultSize, comboExtChoices);
-                        choiceExt->SetForegroundColour(Parameters::colors.ControlText);
-                        choiceExt->SetBackgroundColour(Parameters::colors.ControlBackground);
-                        choiceExt->SetSelection(0);
-                        logExt = wxT(".csv");
-                        sizerLogType->Add(choiceExt, 0, wxALL, 2);
-
-                        auto labelSep = new wxStaticText(pane, wxID_ANY, wxT("Разделитель:"));
-                        labelSep->SetForegroundColour(Parameters::colors.ControlText);
-                        labelSep->Wrap(-1);
-                        sizerLogType->Add(labelSep, 0, wxALL, 8);
-
-                        wxArrayString comboSepChoices;
-                        comboSepChoices.Add(wxT(";"));
-                        comboSepChoices.Add(wxT("Tab"));
-                        comboSepChoices.Add(wxT("-"));
-                        comboSepChoices.Add(wxT("_"));
-                        comboSepChoices.Add(wxT("Space"));
-
-                        choiceSep = new wxChoice(pane, wxID_ANY, wxDefaultPosition, wxDefaultSize, comboSepChoices);
-                        choiceSep->SetForegroundColour(Parameters::colors.ControlText);
-                        choiceSep->SetBackgroundColour(Parameters::colors.ControlBackground);
-                        choiceSep->SetSelection(0);
-                        logSeparator = wxT(";");
-                        sizerLogType->Add(choiceSep, 0, wxALL, 2);
-                    }
-                    sizerLog->Add(sizerLogType, 0, wxALIGN_CENTER, 2);
-
-                    // параметры сохранения данных в лог
-                    auto sizerLogParameters = new wxBoxSizer(wxVERTICAL);
-                    {
-                        checkSingle = new wxCheckBox(pane, wxID_ANY, wxT("Сохранение данных в один файл"));
-                        checkSingle->SetForegroundColour(Parameters::colors.ControlText);
-                        checkSingle->SetValue(logSingle);
-                        sizerLogParameters->Add(checkSingle, 0, wxALL, 5);
-                        checkDec = new wxCheckBox(pane, wxID_ANY, wxT("Десятичный вывод данных"));
-                        checkDec->SetForegroundColour(Parameters::colors.ControlText);
-                        checkDec->SetValue(logDecimal);
-                        sizerLogParameters->Add(checkDec, 0, wxALL, 5);
-                        checkASCII = new wxCheckBox(pane, wxID_ANY, wxT("Добавлять ASCII данные"));
-                        checkASCII->SetForegroundColour(Parameters::colors.ControlText);
-                        checkASCII->SetValue(logASCII);
-                        sizerLogParameters->Add(checkASCII, 0, wxALL, 5);
-                    }
-                    sizerLog->Add(sizerLogParameters, 0, wxALIGN_LEFT, 2);
-
-                    pane->SetSizer(sizerLog);
-                }
-                sizerLog->SetSizeHints(pane);
-            }
-            sizerRight->Add(paneLog, 0, wxALL | wxEXPAND, 4);
-
-            // элементы для наглядного представления чисел
-            auto labelDecoders = new wxStaticBox(this, wxID_ANY, wxT("Декодированные значения"));
-            labelDecoders->SetForegroundColour(Parameters::colors.ControlText);
-            auto sizerDecoders = new wxStaticBoxSizer(labelDecoders, wxVERTICAL);
-            {
-                // выбор типа данных для отображения и порядка следования байтов
-                auto sizerDataType = new wxBoxSizer(wxHORIZONTAL);
-                {
-                    auto labelDataType = new wxStaticText(this, wxID_ANY, wxT("Тип данных:"), wxDefaultPosition, wxDefaultSize);
-                    labelDataType->SetForegroundColour(Parameters::colors.ControlText);
-                    labelDataType->Wrap(-1);
-                    sizerDataType->Add(labelDataType, 1, wxALL, 3);
-                    wxArrayString comboDataTypeChoices;
-                    comboDataTypeChoices.Add(TEXT_UINT8);
-                    comboDataTypeChoices.Add(TEXT_UINT16);
-                    comboDataTypeChoices.Add(TEXT_UINT32);
-                    comboDataTypeChoices.Add(TEXT_INT8);
-                    comboDataTypeChoices.Add(TEXT_INT16);
-                    comboDataTypeChoices.Add(TEXT_INT32);
-                    comboDataTypeChoices.Add(TEXT_FLOAT);
-                    choiceDataType = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, comboDataTypeChoices);
-                    choiceDataType->SetForegroundColour(Parameters::colors.ControlText);
-                    choiceDataType->SetBackgroundColour(Parameters::colors.ControlBackground);
-                    choiceDataType->Select(0);
-                    sizerDataType->Add(choiceDataType, 1, wxALL, 0);
-                    sizerDataType->Add(0, 0, 1, wxALL, 0);
-                    checkEndian = new wxCheckBox(this, wxID_ANY, wxT("Big-endian"));
-                    checkEndian->SetForegroundColour(Parameters::colors.ControlText);
-                    checkEndian->SetValue(bigEndian);
-                    checkEndian->Disable();
-                    sizerDataType->Add(checkEndian, 1, wxALL, 5);
-                }
-                sizerDecoders->Add(sizerDataType, 0, wxALL | wxEXPAND, 2);
-
-                // отображение двоичного байта
-                auto sizerDecoderBinary = new wxBoxSizer(wxHORIZONTAL);
-                {
-                    auto labelBinary = new wxStaticText(this, wxID_ANY, wxT("Двоичный вид:"), wxDefaultPosition, wxDefaultSize);
-                    labelBinary->SetForegroundColour(Parameters::colors.ControlText);
-                    labelBinary->Wrap(-1);
-                    sizerDecoderBinary->Add(labelBinary, 1, wxALL, 3);
-                    textBin = new wxTextCtrl(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDefaultSize, wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
-                    textBin->SetForegroundColour(Parameters::colors.ControlText);
-                    textBin->SetBackgroundColour(Parameters::colors.ControlBackground);
-                    sizerDecoderBinary->Add(textBin, 3, wxALL, 0);
-                }
-                sizerDecoders->Add(sizerDecoderBinary, 0, wxALL | wxEXPAND, 2);
-
-                // отображение десятичного байта
-                auto sizerDecoderDecimal = new wxBoxSizer(wxHORIZONTAL);
-                {
-                    auto labelDecimal = new wxStaticText(this, wxID_ANY, wxT("Десятичный вид:"), wxDefaultPosition, wxDefaultSize);
-                    labelDecimal->SetForegroundColour(Parameters::colors.ControlText);
-                    labelDecimal->Wrap(-1);
-                    sizerDecoderDecimal->Add(labelDecimal, 1, wxALL, 3);
-                    textDec = new wxTextCtrl(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDefaultSize, wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
-                    textDec->SetForegroundColour(Parameters::colors.ControlText);
-                    textDec->SetBackgroundColour(Parameters::colors.ControlBackground);
-                    sizerDecoderDecimal->Add(textDec, 3, wxALL, 0);
-                }
-                sizerDecoders->Add(sizerDecoderDecimal, 0, wxALL | wxEXPAND, 2);
-
-                // множитель десятичного слова
-                auto sizerDecimalMul = new wxBoxSizer(wxHORIZONTAL);
-                {
-                    auto labelDecimalMul = new wxStaticText(this, wxID_ANY, wxT("Множитель:"), wxDefaultPosition, wxDefaultSize);
-                    labelDecimalMul->SetForegroundColour(Parameters::colors.ControlText);
-                    labelDecimalMul->Wrap(-1);
-                    sizerDecimalMul->Add(labelDecimalMul, 1, wxALL, 3);
-                    textDecWordMul = new wxTextCtrl(this, wxID_ANY, wxString::Format(FORMAT_FLOAT1_3, mul), wxDefaultPosition, wxDefaultSize, wxTE_CENTRE | wxTE_PROCESS_ENTER | wxBORDER_SIMPLE);
-                    textDecWordMul->SetForegroundColour(Parameters::colors.ControlText);
-                    textDecWordMul->SetBackgroundColour(Parameters::colors.ControlBackground);
-                    sizerDecimalMul->Add(textDecWordMul, 3, wxALL, 0);
-                }
-                sizerDecoders->Add(sizerDecimalMul, 0, wxALL | wxEXPAND, 2);
-
-                // результат умножения десятичного слова
-                auto sizerDecimalResult = new wxBoxSizer(wxHORIZONTAL);
-                {
-                    auto labelDecimalResult = new wxStaticText(this, wxID_ANY, wxT("Результат:"), wxDefaultPosition, wxDefaultSize);
-                    labelDecimalResult->SetForegroundColour(Parameters::colors.ControlText);
-                    labelDecimalResult->Wrap(-1);
-                    sizerDecimalResult->Add(labelDecimalResult, 1, wxALL, 3);
-                    textDecimalResult = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_CENTRE | wxTE_READONLY | wxBORDER_SIMPLE);
-                    textDecimalResult->SetForegroundColour(Parameters::colors.ControlText);
-                    textDecimalResult->SetBackgroundColour(Parameters::colors.ControlBackground);
-                    sizerDecimalResult->Add(textDecimalResult, 3, wxALL, 0);
-                }
-                sizerDecoders->Add(sizerDecimalResult, 0, wxALL | wxEXPAND, 2);
-            }
-            sizerRight->Add(sizerDecoders, 0, wxALL | wxEXPAND, 2);
-
-            // панель для графика
-            drawPanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-            drawPanel->SetBackgroundStyle(wxBG_STYLE_PAINT);
-            drawPanel->SetBackgroundColour(*wxWHITE);
-            
-            sizerRight->Add(drawPanel, 1, wxALL | wxEXPAND, 2);
-        }
-        // ширина правой области
-        sizerMain->Add(sizerRight, 0, wxALL | wxEXPAND, 2);
-    }
-
-    this->SetSizer(sizerMain);
-    this->SetAutoLayout(true);
-    this->Layout();
-    this->Center(wxCENTER_ON_SCREEN);
-    this->SetBackgroundColour(Parameters::colors.WindowBackground);
-    // почему-то установка двойной буфферизации корректно работает только после инициализации всех сайзеров
-    gridCANView->SetDoubleBuffered(true);
-
-    // привязка событий
-    this->Bind(wxEVT_CLOSE_WINDOW, &FormMain::OnClose, this, ID_MAIN_FORM);
-    buttonConnectDisconnect->Bind(wxEVT_BUTTON, &FormMain::ButtonConnectDisconnect_OnClick, this);
-    buttonAdd->Bind(wxEVT_BUTTON, &FormMain::ButtonAdd_OnClick, this);
-    buttonRemove->Bind(wxEVT_BUTTON, &FormMain::ButtonRemove_OnClick, this);
-    buttonRemoveAll->Bind(wxEVT_BUTTON, &FormMain::ButtonRemoveAll_OnClick, this);
-    buttonSend->Bind(wxEVT_BUTTON, &FormMain::ButtonSend_OnClick, this);
-    buttonClearCANLog->Bind(wxEVT_BUTTON, &FormMain::ButtonClearCANLog_OnClick, this);
-    gridCANView->Bind(wxEVT_GRID_SELECT_CELL, &FormMain::GridCANView_OnSelectCell, this); 
-    checkLogEnable->Bind(wxEVT_CHECKBOX, &FormMain::CheckLogEnable_OnClick, this);
-    choiceExt->Bind(wxEVT_CHOICE, &FormMain::ChoiceExt_OnChoice, this);
-    choiceSep->Bind(wxEVT_CHOICE, &FormMain::ChoiceSep_OnChoice, this);
-    checkDec->Bind(wxEVT_CHECKBOX, &FormMain::CheckDec_OnClick, this);
-    checkSingle->Bind(wxEVT_CHECKBOX, &FormMain::CheckSingle_OnClick, this);
-    choiceDataType->Bind(wxEVT_CHOICE, &FormMain::ChoiceDataType_OnChoice, this);
-    checkEndian->Bind(wxEVT_CHECKBOX, &FormMain::CheckEndian_OnClick, this);
-    checkASCII->Bind(wxEVT_CHECKBOX, &FormMain::CheckASCII_OnClick, this);
-    textDecWordMul->Bind(wxEVT_TEXT_ENTER, &FormMain::TextDecWordMul_OnEnter, this);
-    textCANAnswerID->Bind(wxEVT_TEXT_ENTER, &FormMain::TextCANAnswerID_OnEnter, this);
-
-    // события панели графика
-    drawPanel->Bind(wxEVT_PAINT, &FormMain::DrawPanel_OnPaint, this);
-    drawPanel->Bind(wxEVT_ERASE_BACKGROUND, &FormMain::DrawPanel_OnEraseBackground, this);
-    drawFrameSize = drawPanel->GetClientSize().GetWidth();
-    drawData = new CircularFrameBuffer(drawFrameSize);
-
-    // событие от фонового потока COM-порта
-    this->Bind(wxEVT_SERIAL_PORT_THREAD_STARTED, &FormMain::Thread_OnStarted, this);
-    this->Bind(wxEVT_SERIAL_PORT_THREAD_UPDATE, &FormMain::Thread_OnUpdate, this);
-    this->Bind(wxEVT_SERIAL_PORT_THREAD_EXIT, &FormMain::Thread_OnExit, this);
-    this->Bind(wxEVT_SERIAL_PORT_THREAD_MESSAGE, &FormMain::Thread_OnMessage, this);
-
-    // так и не понял, как прикрепить обработчик события для сокета, поэтому он отдельно в таблице событий выше
-    //this->Bind(wxEVT_SOCKET, &FormMain::UDPSocket_OnEvent, this, ID_UDP_SOCKET);
-
-    // событие таймера
-    this->Bind(wxEVT_TIMER, &FormMain::MainTimer_OnTimer, this, ID_MAIN_TIMER);
-
-    // создание хранилища пакетов
-    frames = new FramesContainer();
-
-    // настройка и запуск таймера
-    timerMain = new wxTimer(this, ID_MAIN_TIMER);
-    timerMain->Start(TIMER_INTERVAL);
-
-    // определение разделителя дробной части чисел
-    /*const wxLanguageInfo* langInfo = wxLocale::GetLanguageInfo(wxLocale::GetSystemLanguage());
-    wxChar sepBuf[256] { 0 };
-    GetLocaleInfo(langInfo->GetLCID(), LOCALE_SDECIMAL, sepBuf, WXSIZEOF(sepBuf));
-    decimalSeparator = sepBuf;*/
-
-    // для русского языка определяется запятая, как и положено
-    // эта запятая и ставится в дробную часть времени в файл, разделяя секунды и миллисекунды
-    // вот только Excel не понимает этого и неверно отображает миллисекунды
-    // поэтому разделителем ставлю точку
-    decimalSeparator = wxT(".");
-
-    // подготовка сетевых операций
-    espIpAddress.Service(Parameters::network.UdpPort);
-
-    wxIPV4address ipAddress;
-    ipAddress.AnyAddress();
-    ipAddress.Service(Parameters::network.UdpPort);
-    udpSocket = new wxDatagramSocket(ipAddress);
-
-    if (udpSocket->IsOk())
-    {
-        udpSocket->SetEventHandler(*this, ID_UDP_SOCKET);
-        udpSocket->SetNotify(wxSOCKET_INPUT_FLAG);
-        udpSocket->Notify(true);
-    }
-    else if (udpSocket->Error())
-    {
-        wxMessageBox(ERROR_UDP_OPEN + udpSocket->LastError());
-    }
-}
-
-// Нажатие кнопки закрытия окна
-void FormMain::OnClose(wxCloseEvent& event)
-{
-    timerMain->Stop();
-
-    if (udpSocket)
-    {
-        udpSocket->Destroy();
-        udpSocket = nullptr;
-    }
-
-    if (serialPort)
-    {
-        serialPort->Delete();
-        serialPort = nullptr;
-    }
-
-    if (drawData)
-    {
-        delete drawData;
-        drawData = nullptr;
-    }
-
-    if (frames)
-    {
-        delete frames;
-        frames = nullptr;
-    }
-
-    // записать все файлы
-    FlushLogs();
-
-    Destroy();
-}
-
-// Обработчик кнопки Подключить/отключить
-void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
-{
-    rowToView = -1;
-    colToView = -1;
-    drawData->Clear();
-
-    try
-    {
-        // если порт не открыт - открыть, иначе - закрыть
-        if (serialPort == nullptr)
-        {   
-            if (comboBoxCANSpeed->GetValue().ToULong(&selectedCanSpeed))
-            {
-                frames->Clear();
-
-                // удалить все строки таблицы
-                if (gridCANView->GetNumberRows() > 0)
-                {
-                    gridCANView->DeleteRows(0, gridCANView->GetNumberRows());
-                }
-
-                serialPort = new ThreadedSerialPort(comboBoxSerialPort->GetValue(), Parameters::serial.PortSpeed, (wxFrame*)this);
-                // поток стартует с задержкой, все остальные проверки его состояния в событии таймера MainTimer_OnTimer
-                buttonConnectDisconnect->SetLabelText(DISCONNECT);
-            }
-        }
-        else
-        {
-            // отправить управляющий пакет отключения
-            SendCANCommand(CANCommands::Disconnect);
-            // просто запустить процесс остановки потока, все остальные проверки его состояния в событии таймера MainTimer_OnTimer
-            serialPort->Delete();
-            // записать все log-файлы
-            FlushLogs();
-            logFiles.clear();
-        }
-    }
-    catch (...)
-    {
-        buttonConnectDisconnect->SetLabelText(CONNECT);
-        wxMessageBox(ERROR_SERIAL);
-    }
-}
-
-// Поток работы с последовательным портом запустился
-void FormMain::Thread_OnStarted(wxThreadEvent& event)
-{
-    // отправить управляющий пакет подключения
-    SendCANCommand(CANCommands::Connect, selectedCanSpeed);
-}
-
-// По событию от потока забирать все принятые CAN-пакеты, которые есть в буфере
-void FormMain::Thread_OnUpdate(wxThreadEvent& event)
-{
-    CANFrameIn frame;
-
-    if (serialPort)
-    {
-        while (serialPort->GetNextFrame(frame))
-        {
-            ProcessCANFrame(frame);
-        }
-    }
-}
-
-// По событию от потока забирать все принятые CAN-пакеты, которые есть в буфере
-void FormMain::Thread_OnExit(wxThreadEvent& event)
-{
-    if (serialPort)
-    {
-        serialPort = nullptr;
-    }
-    buttonConnectDisconnect->SetLabelText(CONNECT);
-}
-
-// Сообщение от потока при ошибке
-void FormMain::Thread_OnMessage(wxThreadEvent& event)
-{
-    wxMessageBox(event.GetPayload<wxString>(), ERROR_CAPTION, wxICON_ERROR);
-}
-
 // Обработка поступившего CAN-пакета
 void FormMain::ProcessCANFrame(CANFrameIn& frame)
 {
@@ -774,13 +70,6 @@ void FormMain::ProcessCANFrame(CANFrameIn& frame)
     }
 }
 
-// Выбран другой тип данных для отображения
-void FormMain::ChoiceDataType_OnChoice(wxCommandEvent& event)
-{
-    dataType = (DataTypes)event.GetSelection();
-    checkEndian->Enable(dataType != DataTypes::UInt8 && dataType != DataTypes::Int8);
-}
-
 // Обновляет список ID для записи в log
 void FormMain::RefreshListLog()
 {
@@ -790,113 +79,6 @@ void FormMain::RefreshListLog()
     {
         listLog->Append(wxString::Format(FORMAT_HEX3, logFilterIDs[iID]));
     }
-}
-
-// При нажатии Enter в поле ввода множителя - обработать его и запомнить
-void FormMain::TextDecWordMul_OnEnter(wxCommandEvent& event)
-{
-    double newMul;
-    if (textDecWordMul->GetValue().ToDouble(&newMul))
-    {
-        float newFloatMul = (float)newMul;
-        if (newFloatMul == 0)
-            mul = 1.0;
-        else if (newFloatMul > 10000)
-            mul = 10000.0;
-        else
-            mul = newFloatMul;
-    }
-
-    textDecWordMul->ChangeValue(wxString::Format(FORMAT_FLOAT1_3, mul));
-}
-
-// Добавить ID в список фильтра для записи в log
-void FormMain::ButtonAdd_OnClick(wxCommandEvent& event)
-{
-    if (rowToLog >= 0 && (int)frames->Size() > rowToLog)
-    {
-        bool found = false;
-        for (size_t iID = 0; iID < logFilterIDs.size(); iID++)
-        {
-            if (frames->GetFrame(rowToLog).frame.id == logFilterIDs[iID])
-            {
-                found = true;
-                break;
-            }
-        }
-        if (!found)
-            logFilterIDs.push_back(frames->GetFrame(rowToLog).frame.id);
-    }
-
-    RefreshListLog();
-}
-
-// Удалить ID из списка фильтра записи в log
-void FormMain::ButtonRemove_OnClick(wxCommandEvent& event)
-{
-    int32_t index = listLog->GetSelection();
-
-    if (index > -1)
-    {
-        logFilterIDs.erase(logFilterIDs.begin() + index);
-    }
-
-    RefreshListLog();
-}
-
-// Очистить весь список фильтра записи в log
-void FormMain::ButtonRemoveAll_OnClick(wxCommandEvent& event)
-{
-    logFilterIDs.clear();
-    RefreshListLog();
-}
-
-// Выбор разрешения записи в журнал
-void FormMain::CheckLogEnable_OnClick(wxCommandEvent& event)
-{
-    logEnable = event.IsChecked();
-}
-
-// Выбор расширения файла
-void FormMain::ChoiceExt_OnChoice(wxCommandEvent& event)
-{
-    logExt = event.GetString();
-}
-
-// Выбор разделителя в log-файле
-void FormMain::ChoiceSep_OnChoice(wxCommandEvent& event)
-{
-    auto value = event.GetString();
-    if (value == wxT("Tab"))
-        logSeparator = wxT("\t");
-    else if (value == wxT("Space"))
-        logSeparator = wxT(" ");
-    else
-        logSeparator = value;
-}
-
-// Клик по десятичной форме записи log
-void FormMain::CheckDec_OnClick(wxCommandEvent& event)
-{
-    logDecimal = event.IsChecked();
-}
-
-// Клик по выводу в один файл
-void FormMain::CheckSingle_OnClick(wxCommandEvent& event)
-{
-    logSingle = event.IsChecked();
-}
-
-// Клик для добавления в log-файл ASCII данных
-void FormMain::CheckASCII_OnClick(wxCommandEvent& event)
-{
-    logASCII = event.IsChecked();
-}
-
-// Клик по выбору big endian или little endian
-void FormMain::CheckEndian_OnClick(wxCommandEvent& event)
-{
-    bigEndian = event.IsChecked();
 }
 
 // Записать в log указанный CAN-пакет
@@ -917,9 +99,9 @@ void FormMain::SaveToLog(CANFrameIn& frame)
                 // сначала создать файл
                 try
                 {
-                    auto logPath = wxGetCwd() + wxFILE_SEP_PATH + wxT("CAN") + logExt;
+                    auto logPath = wxGetCwd() + wxFILE_SEP_PATH + TEXT_LOG_FILE_PREFIX + logExt;
                     logFile = new wxFFile();
-                    if (logFile->Open(logPath, wxT("a")))
+                    if (logFile->Open(logPath, TEXT_LOG_FILE_ACCESS))
                     {
                         logFile->SeekEnd();
                         LogWriteLine(logFile, frame);
@@ -951,11 +133,11 @@ void FormMain::SaveToLog(CANFrameIn& frame)
             {
                 try
                 {
-                    auto logPath = wxGetCwd() + wxT("/CAN ID ") + wxString::Format(FORMAT_HEX3, frame.id) + logExt;
+                    auto logPath = wxGetCwd() + TEXT_LOG_FILE_PREFIX_ID + wxString::Format(FORMAT_HEX3, frame.id) + logExt;
 
                     LogFile newLogFile = { 0 };
                     newLogFile.file = new wxFFile();
-                    if (newLogFile.file->Open(logPath, wxT("a")))
+                    if (newLogFile.file->Open(logPath, TEXT_LOG_FILE_ACCESS))
                     {
                         newLogFile.file->SeekEnd();
                         newLogFile.id = frame.id;
@@ -1005,7 +187,7 @@ void FormMain::LogWriteLine(wxFFile* file, CANFrameIn& frame)
             {
                 newLine += logSeparator;
             }
-            newLine += wxT('|') + logSeparator;
+            newLine += TEXT_LOG_FILE_ASCII_SEPARATOR + logSeparator;
 
             // добавить ASCII данные из пакета
             buf = newLine.ToStdString();
@@ -1056,31 +238,6 @@ void FormMain::FlushLogs()
     }
 }
 
-// Выбор ячейки в таблице
-void FormMain::GridCANView_OnSelectCell(wxGridEvent& event)
-{
-    // запомнить строку для добавления в log
-    rowToLog = event.GetRow();
-
-    rowToView = rowToLog;
-    colToView = event.GetCol() - 3;
-    // если выбран столбик не с данными
-    if (colToView < 0)
-    {
-        rowToView = -1;
-        colToView = -1;
-
-        textBin->ChangeValue(wxT(""));
-        textDec->ChangeValue(wxT(""));
-        textDecimalResult->ChangeValue(wxT(""));
-    }
-    else
-    {
-        // показать числа в разных форматах
-        ShowNumbers();
-    }
-}
-
 // Преобразовывает байт в двоичное представление
 wxString FormMain::ToBinary(uint8_t value)
 {
@@ -1088,13 +245,13 @@ wxString FormMain::ToBinary(uint8_t value)
 
     for (size_t counter = 0; counter < 4; counter++)
     {
-        binaryString += (value & 0x80) ? wxT('1') : wxT('0');
+        binaryString += (value & 0x80) ? TEXT_1 : TEXT_0;
         value <<= 1;
     }
-    binaryString += wxT('_');
+    binaryString += TEXT_NUMBER_BLOCK_SEPARATOR;
     for (size_t counter = 0; counter < 4; counter++)
     {
-        binaryString += (value & 0x80) ? wxT('1') : wxT('0');
+        binaryString += (value & 0x80) ? TEXT_1 : TEXT_0;
         value <<= 1;
     }
     return binaryString;
@@ -1107,13 +264,13 @@ wxString FormMain::ToBinary(uint16_t value)
 
     for (size_t counter = 0; counter < 8; counter++)
     {
-        binaryString += (value & 0x8000) ? wxT('1') : wxT('0');
+        binaryString += (value & 0x8000) ? TEXT_1 : TEXT_0;
         value <<= 1;
     }
-    binaryString += wxT('_');
+    binaryString += TEXT_NUMBER_BLOCK_SEPARATOR;
     for (size_t counter = 0; counter < 8; counter++)
     {
-        binaryString += (value & 0x8000) ? wxT('1') : wxT('0');
+        binaryString += (value & 0x8000) ? TEXT_1 : TEXT_0;
         value <<= 1;
     }
     return binaryString;
@@ -1126,57 +283,28 @@ wxString FormMain::ToBinary(uint32_t value)
 
     for (size_t counter = 0; counter < 8; counter++)
     {
-        binaryString += (value & 0x80000000) ? wxT('1') : wxT('0');
+        binaryString += (value & 0x80000000) ? TEXT_1 : TEXT_0;
         value <<= 1;
     }
-    binaryString += wxT('_');
+    binaryString += TEXT_NUMBER_BLOCK_SEPARATOR;
     for (size_t counter = 0; counter < 8; counter++)
     {
-        binaryString += (value & 0x80000000) ? wxT('1') : wxT('0');
+        binaryString += (value & 0x80000000) ? TEXT_1 : TEXT_0;
         value <<= 1;
     }
-    binaryString += wxT('_');
+    binaryString += TEXT_NUMBER_BLOCK_SEPARATOR;
     for (size_t counter = 0; counter < 8; counter++)
     {
-        binaryString += (value & 0x80000000) ? wxT('1') : wxT('0');
+        binaryString += (value & 0x80000000) ? TEXT_1 : TEXT_0;
         value <<= 1;
     }
-    binaryString += wxT('_');
+    binaryString += TEXT_NUMBER_BLOCK_SEPARATOR;
     for (size_t counter = 0; counter < 8; counter++)
     {
-        binaryString += (value & 0x80000000) ? wxT('1') : wxT('0');
+        binaryString += (value & 0x80000000) ? TEXT_1 : TEXT_0;
         value <<= 1;
     }
     return binaryString;
-}
-
-// Срабатывание таймера - обработка данных
-void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
-{
-    // проверка состояния последовательного порта
-    if (serialPort && serialPort->hSerial == INVALID_HANDLE_VALUE)
-    {
-        delete serialPort;
-        serialPort = nullptr;
-        buttonConnectDisconnect->SetLabelText(CONNECT);
-    }
-
-    // обработка всех пакетов на "выцветание"
-    frames->ProcessAllFrames();
-
-    if (screenUpdateCounter >= SCREEN_UPDATE_COUNTER_LIMIT)
-    {
-        // обновить данные в таблице
-        RefreshGridCANView();
-
-        ShowNumbers();
-
-        // это вызовет событие OnPaint для панели
-        drawPanel->Refresh();
-        screenUpdateCounter = 0;
-    }
-
-    screenUpdateCounter++;
 }
 
 // Обновить данные CAN-пакетов в таблице, вызывается по таймеру
@@ -1206,9 +334,12 @@ void FormMain::RefreshGridCANView()
             }
             gridCANView->SetCellValue(iFrame, 1, wxString::Format(FORMAT_INT, vFrame.frame.interval));
             gridCANView->SetCellValue(iFrame, 2, wxString::Format(FORMAT_INT, vFrame.frame.length));
-            gridCANView->SetCellBackgroundColour(iFrame, 0, Parameters::colors.GridBackground);
-            gridCANView->SetCellBackgroundColour(iFrame, 1, Parameters::colors.GridBackground);
-            gridCANView->SetCellBackgroundColour(iFrame, 2, Parameters::colors.GridBackground);
+            if (Parameters::appearance.ControlsCustomColors)
+            {
+                gridCANView->SetCellBackgroundColour(iFrame, 0, Parameters::colors.GridBackground);
+                gridCANView->SetCellBackgroundColour(iFrame, 1, Parameters::colors.GridBackground);
+                gridCANView->SetCellBackgroundColour(iFrame, 2, Parameters::colors.GridBackground);
+            }
             gridCANView->SetCellTextColour(iFrame, 0, Parameters::colors.GridText);
             gridCANView->SetCellTextColour(iFrame, 1, Parameters::colors.GridText);
             gridCANView->SetCellTextColour(iFrame, 2, Parameters::colors.GridText);
@@ -1243,9 +374,9 @@ void FormMain::RefreshGridCANView()
                         uint8_t rColor = color.GetRed();
                         uint8_t gColor = color.GetGreen();
                         uint8_t bColor = color.GetBlue();
-                        
+
                         wxColour tunedColor;
-                        if (Parameters::isDark)
+                        if (Parameters::appearance.isDark)
                         {
                             uint8_t rDelta = shift * (rColor - rBackground) / PACKET_DELTA;
                             uint8_t gDelta = shift * (gColor - gBackground) / PACKET_DELTA;
@@ -1265,7 +396,7 @@ void FormMain::RefreshGridCANView()
                 else
                 {
                     // вывод пустых ячеек
-                    gridCANView->SetCellValue(iFrame, iData + 3, wxT(" "));
+                    gridCANView->SetCellValue(iFrame, iData + 3, TEXT_SPACE);
                     gridCANView->SetCellTextColour(iFrame, iData + 3, Parameters::colors.GridText);
                     gridCANView->SetCellBackgroundColour(iFrame, iData + 3, Parameters::colors.GridBackground);
                 }
@@ -1274,14 +405,15 @@ void FormMain::RefreshGridCANView()
         // раскраска выделенных ячеек
         if (colToView >= 0)
         {
-            gridCANView->SetCellBackgroundColour(rowToView, colToView + 3, Parameters::colors.GridSelectedBackground);
+            wxColour backgroundColor = Parameters::appearance.ControlsCustomColors ? Parameters::colors.GridSelectedBackground : gridSystemSelectedBackgroundColor;
+            gridCANView->SetCellBackgroundColour(rowToView, colToView + 3, backgroundColor);
             switch (dataType)
             {
                 case DataTypes::UInt16:
                 case DataTypes::Int16:
                     if (colToView < 7)
                     {
-                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, Parameters::colors.GridSelectedBackground);
+                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, backgroundColor);
                     }
                     break;
 
@@ -1290,18 +422,18 @@ void FormMain::RefreshGridCANView()
                 case DataTypes::Float:
                     if (colToView < 5)
                     {
-                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, Parameters::colors.GridSelectedBackground);
-                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 5, Parameters::colors.GridSelectedBackground);
-                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 6, Parameters::colors.GridSelectedBackground);
+                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, backgroundColor);
+                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 5, backgroundColor);
+                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 6, backgroundColor);
                     }
                     else if (colToView < 6)
                     {
-                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, Parameters::colors.GridSelectedBackground);
-                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 5, Parameters::colors.GridSelectedBackground);
+                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, backgroundColor);
+                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 5, backgroundColor);
                     }
                     else if (colToView < 7)
                     {
-                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, Parameters::colors.GridSelectedBackground);
+                        gridCANView->SetCellBackgroundColour(rowToView, colToView + 4, backgroundColor);
                     }
                     break;
             }
@@ -1520,204 +652,13 @@ void FormMain::AddToDraw()
     }
 }
 
-// Событие отрисовки в панели графика
-void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
-{
-    //wxPaintDC dc(drawPanel);
-    //wxBufferedPaintDC dc(drawPanel);
-    wxAutoBufferedPaintDC dc(drawPanel);
-    PrepareDC(dc);
-    auto drawRectangle = drawPanel->GetClientRect();
-
-    // нарисовать рамку и фон
-    dc.SetPen(graphFramePen);
-    dc.SetBrush(graphBackgroundBrush);
-    dc.DrawRectangle(drawRectangle);
-
-    if (drawData && colToView >= 0)
-    {
-        float* frame = drawData->Frame();
-
-        float minValue = 0;
-        float maxValue = 0;
-        // поиск наибольшего значения для графика
-        for (size_t index = 0; index < drawFrameSize; index++)
-        {
-            float nextValue = *(frame + index);
-            if (nextValue < minValue) minValue = nextValue;
-            if (nextValue > maxValue) maxValue = nextValue;
-        }
-
-        // вычисление масштабного коэффициента
-        float height = (float)drawRectangle.height;
-        float scaleFactor = -height / (maxValue - minValue);
-
-        // нарисовать осевую линию по нулю
-        dc.SetPen(Parameters::colors.GraphText);
-        wxCoord y = (-minValue) * scaleFactor + height;
-        dc.DrawLine(0, y, drawRectangle.width, y);
-
-        // рисовать отмасштабированный график
-        dc.SetPen(graphPen);
-        y = (*frame - minValue) * scaleFactor + height;
-        for (size_t index = 1; index < drawFrameSize; index++)
-        {   
-            wxCoord yy = (*(frame + index) - minValue) * scaleFactor + height;
-            dc.DrawLine(index - 1, y, index, yy);
-            y = yy;
-        }
-
-        dc.SetTextForeground(Parameters::colors.GraphText);
-        auto fontMetrics = dc.GetFontMetrics();
-        dc.DrawText(wxString::Format(FORMAT_FLOAT1_0, maxValue), fontMetrics.internalLeading, 0);
-        dc.DrawText(wxString::Format(FORMAT_FLOAT1_0, minValue), fontMetrics.internalLeading, drawRectangle.height - fontMetrics.height - fontMetrics.descent);
-    }
-}
-
-// Стирание фона панели графика
-void FormMain::DrawPanel_OnEraseBackground(wxEraseEvent& event)
-{
-    // кода нет, используется как заглушка
-}
-
-// Нажатие кнопки очистки ответа на отправленный пакет
-void FormMain::ButtonClearCANLog_OnClick(wxCommandEvent& event)
-{
-    // удалить все строки таблицы
-    if (gridCANLog->GetNumberRows() > 0)
-    {
-        gridCANLog->DeleteRows(0, gridCANLog->GetNumberRows());
-    }
-}
-
-// Нажатие кнопки отправки CAN-пакета
-void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
-{
-    unsigned long tempValue;
-
-    // собрать CAN-пакет для отправки
-    CANFrameOut frame = { 0 };
-
-    // ID пакета
-    textCANID->GetValue().ToULong(&tempValue, 16);
-    if (tempValue > 0)
-        frame.id = (uint32_t)tempValue;
-    else
-        return;
-    // зарезервировано
-    frame.reserved = 0;
-    // длина данных пакета
-    textCANLength->GetValue().ToULong(&tempValue, 10);
-    if (tempValue >= 0 && tempValue <= 8)
-        frame.length = (uint8_t)tempValue;
-    else
-        return;
-    // байт 1
-    textCANByte1->GetValue().ToULong(&tempValue, 16);
-    if (tempValue >= 0 && tempValue <= 0xFF)
-        frame.data[0] = (uint8_t)tempValue;
-    else
-        return;
-    // байт 2
-    textCANByte2->GetValue().ToULong(&tempValue, 16);
-    if (tempValue >= 0 && tempValue <= 0xFF)
-        frame.data[1] = (uint8_t)tempValue;
-    else
-        return;
-    // байт 3
-    textCANByte3->GetValue().ToULong(&tempValue, 16);
-    if (tempValue >= 0 && tempValue <= 0xFF)
-        frame.data[2] = (uint8_t)tempValue;
-    else
-        return;
-    // байт 4
-    textCANByte4->GetValue().ToULong(&tempValue, 16);
-    if (tempValue >= 0 && tempValue <= 0xFF)
-        frame.data[3] = (uint8_t)tempValue;
-    else
-        return;
-    // байт 5
-    textCANByte5->GetValue().ToULong(&tempValue, 16);
-    if (tempValue >= 0 && tempValue <= 0xFF)
-        frame.data[4] = (uint8_t)tempValue;
-    else
-        return;
-    // байт 6
-    textCANByte6->GetValue().ToULong(&tempValue, 16);
-    if (tempValue >= 0 && tempValue <= 0xFF)
-        frame.data[5] = (uint8_t)tempValue;
-    else
-        return;
-    // байт 7
-    textCANByte7->GetValue().ToULong(&tempValue, 16);
-    if (tempValue >= 0 && tempValue <= 0xFF)
-        frame.data[6] = (uint8_t)tempValue;
-    else
-        return;
-    // байт 8
-    textCANByte8->GetValue().ToULong(&tempValue, 16);
-    if (tempValue >= 0 && tempValue <= 0xFF)
-        frame.data[7] = (uint8_t)tempValue;
-    else
-        return;
-    // запомнить ID пакета, от которого ожидается ответ
-    textCANAnswerID->GetValue().ToULong(&tempValue, 16);
-    if (tempValue > 0)
-        answerID = (uint32_t)tempValue;
-    else
-        answerID = 0;
-
-    // отправить данные
-    if (serialPort)
-    {
-        serialPort->SendFrame(frame);
-    }
-    if (udpSocket)
-    {
-        UDPSocket_SendFrame(frame);
-    }
-}
-
-// Нажатие Enter при вводе номера CAN ID ожидания ответа
-void FormMain::TextCANAnswerID_OnEnter(wxCommandEvent& event)
-{
-    textCANAnswerID->GetValue().ToCULong((unsigned long*)&answerID, 16);
-    textCANAnswerID->ChangeValue(wxString::Format(FORMAT_HEX3, answerID));
-}
-
-// Событие UDP-сокета
-void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
-{
-    uint8_t  receivedData[UDP_BUFFER_SIZE] = { 0 };
-    uint8_t* receivedDataPointer = receivedData;
-
-    if (event.GetSocketEvent() == wxSOCKET_INPUT)
-    {
-        size_t receivedDataLen = udpSocket->RecvFrom(espIpAddress, receivedData, UDP_BUFFER_SIZE).LastCount();
-        if (receivedDataLen)
-        {
-            CANFrameIn frame;
-            uint8_t* receivedDataTail = receivedDataPointer + receivedDataLen;
-            // поиск CAN-пакета и формирование данных
-            while (receivedDataPointer < receivedDataTail)
-            {
-                // пакет собран - обработать пакет
-                if (CANParser::Parse(&receivedDataPointer, frame))
-                {
-                    ProcessCANFrame(frame);
-                }
-            }
-        }
-    }
-}
-
 // Отправить CAN-пакет через UDP-сокет
 void FormMain::UDPSocket_SendFrame(CANFrameOut& frame)
 {
     SendCANFrame sendCANFrame;
     sendCANFrame.Signature = Parameters::can.Signature;
     sendCANFrame.Frame = frame;
-    udpSocket->SendTo(espIpAddress, &sendCANFrame, sizeof(SendCANFrame));
+    udpSocket->SendTo(mcIpAddress, &sendCANFrame, sizeof(SendCANFrame));
 }
 
 // Отправить команду управления
@@ -1738,7 +679,7 @@ void FormMain::SendCANCommand(CANCommands command, uint16_t speed)
             frame.id = Parameters::can.ServiceID;
             frame.length = 3;
             frame.data[0] = 1;
-            *(uint16_t*)(&(frame.data[1])) = selectedCanSpeed;
+            *(uint16_t*)(&(frame.data[1])) = speed;
             break;
 
         default:
@@ -1746,12 +687,38 @@ void FormMain::SendCANCommand(CANCommands command, uint16_t speed)
             break;
     }
 
-    if (serialPort)
+    switch (mode)
     {
-        serialPort->SendFrame(frame);
+        case Modes::Serial:
+            if (serialPort)
+            {
+                serialPort->SendFrame(frame);
+            }
+            break;
+
+        case Modes::Network:
+            if (udpSocket)
+            {
+                UDPSocket_SendFrame(frame);
+            }
+            break;
     }
-    if (udpSocket)
-    {
-        UDPSocket_SendFrame(frame);
-    }
+}
+
+// Включить элементы управления соединением
+void FormMain::EnableConnectionControls()
+{
+    choiceMode->Enable();
+    comboBoxSerialPort->Enable();
+    comboBoxIPAddress->Enable();
+    choiceCANSpeed->Enable();
+}
+
+// Отключить элементы управления соединением
+void FormMain::DisableConnectionControls()
+{
+    choiceMode->Disable();
+    comboBoxSerialPort->Disable();
+    comboBoxIPAddress->Disable();
+    choiceCANSpeed->Disable();
 }

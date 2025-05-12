@@ -3,18 +3,20 @@
 #include "Common.h"
 #include <wx/fileconf.h>
 
-#define PARAMETER_CAN_SIGNATURE_DWORD           wxT("CAN/Signature")
-#define PARAMETER_CAN_SIGNATURE_DWORD_DEFAULT   0xAA55AA55u
-#define PARAMETER_CAN_SERVICE_ID                wxT("CAN/ServiceID")
-#define PARAMETER_CAN_SERVICE_ID_DEFAULT        0x000007FFu
-#define PARAMETER_CAN_MIN_DATA_SIZE             wxT("CAN/MinimalDataSize")
-#define PARAMETER_CAN_MIN_DATA_SIZE_DEFAULT     19
-#define PARAMETER_SERIAL_PORT_SPEED             wxT("SerialPort/Speed")
-#define PARAMETER_SERIAL_PORT_SPEED_DEFAULT     500000
-#define PARAMETER_UDP_PORT                      wxT("Network/UdpPort")
-#define PARAMETER_UDP_PORT_DEFAULT              0xAA55
-#define PARAMETER_UDP_BUFFER_SIZE               wxT("Network/UdpBufferSize")
-#define PARAMETER_UDP_BUFFER_SIZE_DEFAULT       1000
+#define PARAMETER_CONTROLS_CUSTOM_COLORS                        wxT("Appearance/ControlsCustomColors")
+#define PARAMETER_CONTROLS_CUSTOM_COLORS_DEFAULT                false
+#define PARAMETER_CAN_SIGNATURE_DWORD                           wxT("CAN/Signature")
+#define PARAMETER_CAN_SIGNATURE_DWORD_DEFAULT                   0xAA55AA55u
+#define PARAMETER_CAN_SERVICE_ID                                wxT("CAN/ServiceID")
+#define PARAMETER_CAN_SERVICE_ID_DEFAULT                        0x000007FFu
+#define PARAMETER_CAN_MIN_DATA_SIZE                             wxT("CAN/MinimalDataSize")
+#define PARAMETER_CAN_MIN_DATA_SIZE_DEFAULT                     19
+#define PARAMETER_SERIAL_PORT_SPEED                             wxT("SerialPort/Speed")
+#define PARAMETER_SERIAL_PORT_SPEED_DEFAULT                     500000
+#define PARAMETER_MICROCONTROLLER_IP                            wxT("Network/MicrocontrollerIP")
+#define PARAMETER_MICROCONTROLLER_IP_DEFAULT                    wxT("192.168.1.1")
+#define PARAMETER_PORT                                          wxT("Network/Port")
+#define PARAMETER_PORT_DEFAULT                                  0xAA55
 
 #define PARAMETER_COLOR_WINDOW_BACKGROUND                       wxT("Colors/WindowBackground")
 #define PARAMETER_COLOR_WINDOW_BACKGROUND_DEFAULT               0xF3F3F3u
@@ -70,6 +72,14 @@
 #define PARAMETER_DARK_COLOR_GRAPH_TEXT                         wxT("DarkColors/GraphText")
 #define PARAMETER_DARK_COLOR_GRAPH_TEXT_DEFAULT                 0xFFFFFFu
 
+// Параметры внешнего вида
+struct ParametersAppearance
+{
+public:
+    bool ControlsCustomColors;
+    bool isDark;
+};
+
 // Параметры CAN-шины
 struct ParametersCAN
 {
@@ -90,7 +100,8 @@ public:
 struct ParametersNetwork
 {
 public:
-    uint16_t UdpPort;
+    wxString MicrocontrollerIP;
+    uint16_t Port;
 };
 
 // Цветовые стили для окна
@@ -118,12 +129,14 @@ class Parameters
 public:
     static void Init(const wxString& iniFile);
 
-    static inline bool              isDark;
-    static inline ParametersCAN     can;
-    static inline ParametersSerial  serial;
-    static inline ParametersNetwork network;
-    static inline ParametersColors  colors;
+    static inline ParametersAppearance  appearance;
+    static inline ParametersCAN         can;
+    static inline ParametersSerial      serial;
+    static inline ParametersNetwork     network;
+    static inline ParametersColors      colors;
 
 private:
     static uint32_t ReadNumber(wxFileConfig& fileConfig, wxString name, uint32_t defaultValue, uint32_t maxValue, bool hex = false);
+    static wxString ReadString(wxFileConfig& fileConfig, wxString name, wxString defaultValue);
+    static bool ReadBoolean(wxFileConfig& fileConfig, wxString name, bool defaultValue);
 };

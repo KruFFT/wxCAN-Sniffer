@@ -2,21 +2,23 @@
 
 void Parameters::Init(const wxString& iniFile)
 {
-    wxFileConfig fileConfig(APPLICATION_NAME, VENDOR_NAME, iniFile);
+    wxFileConfig fileConfig(APPLICATION_NAME, VENDOR_NAME, iniFile, iniFile, wxCONFIG_USE_LOCAL_FILE | wxCONFIG_USE_RELATIVE_PATH);
     fileConfig.EnableAutoSave();
 
+    appearance.ControlsCustomColors = ReadBoolean(fileConfig, PARAMETER_CONTROLS_CUSTOM_COLORS, PARAMETER_CONTROLS_CUSTOM_COLORS_DEFAULT);
     can.Signature = SWAP_BYTES_UINT32(ReadNumber(fileConfig, PARAMETER_CAN_SIGNATURE_DWORD, PARAMETER_CAN_SIGNATURE_DWORD_DEFAULT, UINT32_MAX, true));
     can.ServiceID = ReadNumber(fileConfig, PARAMETER_CAN_SERVICE_ID, PARAMETER_CAN_SERVICE_ID_DEFAULT, UINT32_MAX, true);
     can.MinimalDataSize = ReadNumber(fileConfig, PARAMETER_CAN_MIN_DATA_SIZE, PARAMETER_CAN_MIN_DATA_SIZE_DEFAULT, UINT8_MAX);
     serial.PortSpeed = ReadNumber(fileConfig, PARAMETER_SERIAL_PORT_SPEED, PARAMETER_SERIAL_PORT_SPEED_DEFAULT, UINT32_MAX);
-    network.UdpPort = ReadNumber(fileConfig, PARAMETER_UDP_PORT, PARAMETER_UDP_PORT_DEFAULT, UINT16_MAX);
+    network.MicrocontrollerIP = ReadString(fileConfig, PARAMETER_MICROCONTROLLER_IP, PARAMETER_MICROCONTROLLER_IP_DEFAULT);
+    network.Port = ReadNumber(fileConfig, PARAMETER_PORT, PARAMETER_PORT_DEFAULT, UINT16_MAX);
 
     // https://docs.wxwidgets.org/latest/settings_8h.html
-    // но почему-то, системные цвета не определяются в соответствии с выбранной темой
+    // но почему-то, системные цвета стиля не определяются в соответствии с выбранной темой
 
     // определение цветовой темы приложения
-    isDark = wxSystemSettings::GetAppearance().AreAppsDark();
-    if (!isDark)
+    appearance.isDark = wxSystemSettings::GetAppearance().AreAppsDark();
+    if (!appearance.isDark)
     {
         colors.WindowBackground = SWAP_BYTES_UINT24(ReadNumber(fileConfig, PARAMETER_COLOR_WINDOW_BACKGROUND, PARAMETER_COLOR_WINDOW_BACKGROUND_DEFAULT, UINT32_MAX, true));
         colors.ControlText = SWAP_BYTES_UINT24(ReadNumber(fileConfig, PARAMETER_COLOR_CONTROL_TEXT, PARAMETER_COLOR_CONTROL_TEXT_DEFAULT, UINT32_MAX, true));
@@ -68,4 +70,24 @@ uint32_t Parameters::ReadNumber(wxFileConfig& fileConfig, wxString name, uint32_
     }
 
     return value;
+}
+
+wxString Parameters::ReadString(wxFileConfig& fileConfig, wxString name, wxString defaultValue)
+{
+    wxString stringValue;
+    if (!fileConfig.Read(name, &stringValue, defaultValue))
+    {
+        fileConfig.Write(name, stringValue);
+    }
+    return stringValue;
+}
+
+bool Parameters::ReadBoolean(wxFileConfig& fileConfig, wxString name, bool defaultValue)
+{
+    bool booleanValue;
+    if (!fileConfig.Read(name, &booleanValue, defaultValue))
+    {
+        fileConfig.Write(name, booleanValue);
+    }
+    return booleanValue;
 }
