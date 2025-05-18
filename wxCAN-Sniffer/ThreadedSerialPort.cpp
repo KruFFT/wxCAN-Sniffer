@@ -339,7 +339,7 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
         }
 
         // если есть данные на отправку - отправить
-        if (frameToSend.Frame.id)
+        if (needSend)
         {
             syncCANSend.Lock();
             frameToSend.Signature = Parameters::can.Signature;
@@ -355,13 +355,13 @@ wxThread::ExitCode ThreadedSerialPort::Entry()
             write(hSerial, &frameToSend, bytesToSend);
 #endif
 
-            // после отправки - сбросить флаг (ID пакета) наличия данных
-            frameToSend.Frame.id = 0;
+            // после отправки - сбросить флаг необходимости отправки
+            needSend = false;
             syncCANSend.Unlock();
         }
         /*else
         {
-            // код для тестирования поиска данных в потоке мусора на стороне Arduino
+            // код для тестирования поиска данных в потоке мусора на стороне микроконтроллера
             // если нет никаких данных на отправку - отправлять всякий мусор
             byte randomByte = rand() % 255;
             WriteFile(hSerial, &randomByte, 1, &bytesWritten, NULL);
@@ -422,6 +422,7 @@ void ThreadedSerialPort::SendFrame(CANFrameOut& frame)
     // создаётся локальная копия пакета данных
     wxMutexLocker lock(syncCANSend);
     MEMCOPY(&frameToSend.Frame, &frame, sizeof(CANFrameOut));
+    needSend = true;
     // если понадобится - поменять порядок байтов в идентификаторе
     //frameToSend.Frame.id = SWAP_BYTES_UINT32(frameToSend.Frame.id);
 }

@@ -116,5 +116,6 @@ private:
     wxFrame* handleFrame = nullptr;     // указатель на окно для генерации события для него
     uint8_t* buffer = nullptr;          // байтовый буфер последовательного порта
     std::queue<CANFrameIn> canBuffer;   // буфер полученных CAN-пакетов
+    bool needSend = false;              // флаг необходимости отправки
     SendCANFrame frameToSend = { 0 };   // CAN-пакет для отправки в CAN-сеть
 };

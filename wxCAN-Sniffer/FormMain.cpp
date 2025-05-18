@@ -709,8 +709,7 @@ void FormMain::SendCANCommand(CANCommands command, uint16_t speed)
 void FormMain::EnableConnectionControls()
 {
     choiceMode->Enable();
-    comboBoxSerialPort->Enable();
-    comboBoxIPAddress->Enable();
+    comboBoxDataSource->Enable();
     choiceCANSpeed->Enable();
 }
 
@@ -718,7 +717,6 @@ void FormMain::EnableConnectionControls()
 void FormMain::DisableConnectionControls()
 {
     choiceMode->Disable();
-    comboBoxSerialPort->Disable();
-    comboBoxIPAddress->Disable();
+    comboBoxDataSource->Disable();
     choiceCANSpeed->Disable();
 }

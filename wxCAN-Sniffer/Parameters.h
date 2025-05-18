@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include "Common.h"
 #include <wx/fileconf.h>
@@ -72,7 +72,7 @@
 #define PARAMETER_DARK_COLOR_GRAPH_TEXT                         wxT("DarkColors/GraphText")
 #define PARAMETER_DARK_COLOR_GRAPH_TEXT_DEFAULT                 0xFFFFFFu
 
-// Параметры внешнего вида
+// РџР°СЂР°РјРµС‚СЂС‹ РІРЅРµС€РЅРµРіРѕ РІРёРґР°
 struct ParametersAppearance
 {
 public:
@@ -80,7 +80,7 @@ public:
     bool isDark;
 };
 
-// Параметры CAN-шины
+// РџР°СЂР°РјРµС‚СЂС‹ CAN-С€РёРЅС‹
 struct ParametersCAN
 {
 public:
@@ -89,14 +89,14 @@ public:
     uint8_t  MinimalDataSize;
 };
 
-// Параметры последовательного порта
+// РџР°СЂР°РјРµС‚СЂС‹ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕРіРѕ РїРѕСЂС‚Р°
 struct ParametersSerial
 {
 public:
     uint32_t PortSpeed;
 };
 
-// Параметры сети
+// РџР°СЂР°РјРµС‚СЂС‹ СЃРµС‚Рё
 struct ParametersNetwork
 {
 public:
@@ -104,26 +104,26 @@ public:
     uint16_t Port;
 };
 
-// Цветовые стили для окна
+// Р¦РІРµС‚РѕРІС‹Рµ СЃС‚РёР»Рё РґР»СЏ РѕРєРЅР°
 struct ParametersColors
 {
 public:
-    wxColour WindowBackground;          // цвет окна
-    wxColour ControlText;               // цвет текста элементов окна
-    wxColour ControlBackground;         // цвет фона элементов окна
-    wxColour GridText;                  // цвет текста
-    wxColour GridLines;                 // цвет линий
-    wxColour GridBackground;            // цвет фона ячеек по умолчанию
-    wxColour GridNewBackground;         // цвет фона новых данных
-    wxColour GridUpdatedBackground;     // цвет фона обновляемых данных
-    wxColour GridSelectedBackground;    // цвет фона выделенных ячеек
-    wxColour GraphFrame;                // цвет рамки графика
-    wxColour GraphBackground;           // кисть фоновой заливки графика
-    wxColour GraphDraw;                 // цвет линии графика
-    wxColour GraphText;                 // цвет текста графика
+    wxColour WindowBackground;          // С†РІРµС‚ РѕРєРЅР°
+    wxColour ControlText;               // С†РІРµС‚ С‚РµРєСЃС‚Р° СЌР»РµРјРµРЅС‚РѕРІ РѕРєРЅР°
+    wxColour ControlBackground;         // С†РІРµС‚ С„РѕРЅР° СЌР»РµРјРµРЅС‚РѕРІ РѕРєРЅР°
+    wxColour GridText;                  // С†РІРµС‚ С‚РµРєСЃС‚Р°
+    wxColour GridLines;                 // С†РІРµС‚ Р»РёРЅРёР№
+    wxColour GridBackground;            // С†РІРµС‚ С„РѕРЅР° СЏС‡РµРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+    wxColour GridNewBackground;         // С†РІРµС‚ С„РѕРЅР° РЅРѕРІС‹С… РґР°РЅРЅС‹С…
+    wxColour GridUpdatedBackground;     // С†РІРµС‚ С„РѕРЅР° РѕР±РЅРѕРІР»СЏРµРјС‹С… РґР°РЅРЅС‹С…
+    wxColour GridSelectedBackground;    // С†РІРµС‚ С„РѕРЅР° РІС‹РґРµР»РµРЅРЅС‹С… СЏС‡РµРµРє
+    wxColour GraphFrame;                // С†РІРµС‚ СЂР°РјРєРё РіСЂР°С„РёРєР°
+    wxColour GraphBackground;           // РєРёСЃС‚СЊ С„РѕРЅРѕРІРѕР№ Р·Р°Р»РёРІРєРё РіСЂР°С„РёРєР°
+    wxColour GraphDraw;                 // С†РІРµС‚ Р»РёРЅРёРё РіСЂР°С„РёРєР°
+    wxColour GraphText;                 // С†РІРµС‚ С‚РµРєСЃС‚Р° РіСЂР°С„РёРєР°
 };
 
-// Класс настроек
+// РљР»Р°СЃСЃ РЅР°СЃС‚СЂРѕРµРє
 class Parameters
 {
 public:

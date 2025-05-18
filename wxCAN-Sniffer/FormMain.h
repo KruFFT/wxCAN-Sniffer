@@ -71,8 +71,7 @@ private:
     wxTextCtrl* textCANAnswerID;
     wxButton* buttonClearCANLog;
     wxChoice* choiceMode;
-    wxComboBox* comboBoxSerialPort;
-    wxComboBox* comboBoxIPAddress;
+    wxComboBox* comboBoxDataSource;
     wxChoice* choiceCANSpeed;
     wxTextCtrl* textFPS;
     wxTextCtrl* textBPS;
@@ -173,6 +172,7 @@ private:
     void EnableConnectionControls();            // включить элементы управления соединением
     void DisableConnectionControls();           // отключить элементы управления соединением
     void AssignEventHandlers();                 // подключение обработчиков событий
+    void FillDataSource();                      // заполняет контрол источника данных списком последовательных портов или сетевым адресом
 
     wxDECLARE_EVENT_TABLE();
 };

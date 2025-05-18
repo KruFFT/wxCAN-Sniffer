@@ -1,4 +1,4 @@
-#include "Parameters.h"
+п»ї#include "Parameters.h"
 
 void Parameters::Init(const wxString& iniFile)
 {
@@ -14,9 +14,9 @@ void Parameters::Init(const wxString& iniFile)
     network.Port = ReadNumber(fileConfig, PARAMETER_PORT, PARAMETER_PORT_DEFAULT, UINT16_MAX);
 
     // https://docs.wxwidgets.org/latest/settings_8h.html
-    // но почему-то, системные цвета стиля не определяются в соответствии с выбранной темой
+    // РЅРѕ РїРѕС‡РµРјСѓ-С‚Рѕ, СЃРёСЃС‚РµРјРЅС‹Рµ С†РІРµС‚Р° СЃС‚РёР»СЏ РЅРµ РѕРїСЂРµРґРµР»СЏСЋС‚СЃСЏ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅРѕР№ С‚РµРјРѕР№
 
-    // определение цветовой темы приложения
+    // РѕРїСЂРµРґРµР»РµРЅРёРµ С†РІРµС‚РѕРІРѕР№ С‚РµРјС‹ РїСЂРёР»РѕР¶РµРЅРёСЏ
     appearance.isDark = wxSystemSettings::GetAppearance().AreAppsDark();
     if (!appearance.isDark)
     {

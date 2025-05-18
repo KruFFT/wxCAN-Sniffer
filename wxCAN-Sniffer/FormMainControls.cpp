@@ -23,7 +23,7 @@ FormMain::FormMain() : wxFrame(nullptr, IDs::MAIN_FORM, CAPTION, wxDefaultPositi
         panelLeftTop = new wxPanel(splitterLeft, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxNO_BORDER);
         panelLeftBottom = new wxPanel(splitterLeft, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxNO_BORDER);
 
-        // левый верхний сайзер
+        // левый верхний сайзер -------------------------------------------------------------------
         auto labelLeftTop = new wxStaticBox(panelLeftTop, wxID_ANY, TEXT_CAN_PACKETS_VIEW);
         if (Parameters::appearance.ControlsCustomColors)
             labelLeftTop->SetForegroundColour(Parameters::colors.ControlText);
@@ -78,7 +78,7 @@ FormMain::FormMain() : wxFrame(nullptr, IDs::MAIN_FORM, CAPTION, wxDefaultPositi
         sizerLeftTop->Add(gridCANView, 1, wxEXPAND, 0);
         panelLeftTop->SetSizer(sizerLeftTop);
 
-        // левый нижний сайзер
+        // левый нижний сайзер --------------------------------------------------------------------
         auto labelLeftBottom = new wxStaticBox(panelLeftBottom, wxID_ANY, TEXT_CAN_TEST);
         if (Parameters::appearance.ControlsCustomColors)
             labelLeftBottom->SetForegroundColour(Parameters::colors.ControlText);
@@ -251,71 +251,33 @@ FormMain::FormMain() : wxFrame(nullptr, IDs::MAIN_FORM, CAPTION, wxDefaultPositi
         splitterLeft->SplitHorizontally(panelLeftTop, panelLeftBottom, -1);
         splitterLeft->SetMinimumPaneSize(FromDIP(30));
 
-        // правый сайзер
+        // правый сайзер --------------------------------------------------------------------------
         auto sizerRight = new wxBoxSizer(wxVERTICAL);
         {
-            // последовательный порт, кнопка управления и статистика буфера
+            // последовательный порт/сеть, кнопка управления и статистика буфера
             auto labelControls = new wxStaticBox(this, wxID_ANY, TEXT_MANAGEMENT);
             if (Parameters::appearance.ControlsCustomColors)
                 labelControls->SetForegroundColour(Parameters::colors.ControlText);
             auto sizerControls = new wxStaticBoxSizer(labelControls, wxHORIZONTAL);
             {
-                wxArrayString choiceList;
-                choiceList.Add(TEXT_PORT);
-                choiceList.Add(TEXT_NETWORK);
+                wxArrayString choiceModeList;
+                choiceModeList.Add(TEXT_PORT);
+                choiceModeList.Add(TEXT_NETWORK);
 
-                choiceMode = new wxChoice(this, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(60, 27)), choiceList);
+                choiceMode = new wxChoice(this, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(60, 27)), choiceModeList);
                 choiceMode->SetToolTip(TEXT_CONNECTION_MODE);
                 choiceMode->Select(0);
 
                 sizerControls->Add(choiceMode, 0, wxALL, 2);
 
-                comboBoxSerialPort = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(100, 22)), 0, nullptr, wxBORDER_SIMPLE);
+                comboBoxDataSource = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(100, 22)), 0, nullptr, wxBORDER_SIMPLE);
                 if (Parameters::appearance.ControlsCustomColors)
                 {
-                    comboBoxSerialPort->SetForegroundColour(Parameters::colors.ControlText);
-                    comboBoxSerialPort->SetBackgroundColour(Parameters::colors.ControlBackground);
+                    comboBoxDataSource->SetForegroundColour(Parameters::colors.ControlText);
+                    comboBoxDataSource->SetBackgroundColour(Parameters::colors.ControlBackground);
                 }
-                auto ports = ThreadedSerialPort::Enumerate();
-                wxString serialPortToolTip;
-                if (ports.size() > 0)
-                {
-                    for (auto& port : ports)
-                    {
-                        comboBoxSerialPort->Append(port.Port);
-                        if (port.HardwareID.IsEmpty())
-                        {
-                            serialPortToolTip += port.Port + TEXT_CR_SPACES + port.Description + TEXT_CR_CR;
-                        }
-                        else
-                        {
-                            serialPortToolTip += port.Port + TEXT_CR_SPACES + port.Description + TEXT_CR_SPACES + port.HardwareID + TEXT_CR_CR;
-                        }
-                    }
-                    serialPortToolTip.RemoveLast(2);
-                    // по умолчанию выбрать первый порт из списка
-                    if (ports.size() > 0)
-                    {
-                        comboBoxSerialPort->Select(0);
-                    }
-                    comboBoxSerialPort->SetToolTip(serialPortToolTip);
-                }
-                else
-                {
-                    comboBoxSerialPort->SetToolTip(TEXT_SERIAL_PORT);
-                }
-                sizerControls->Add(comboBoxSerialPort, 0, wxALL, 2);
-
-                comboBoxIPAddress = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(100, 22)), 0, nullptr, wxBORDER_SIMPLE);
-                if (Parameters::appearance.ControlsCustomColors)
-                {
-                    comboBoxIPAddress->SetForegroundColour(Parameters::colors.ControlText);
-                    comboBoxIPAddress->SetBackgroundColour(Parameters::colors.ControlBackground);
-                }
-                comboBoxIPAddress->Show(false);
-                comboBoxIPAddress->SetValue(Parameters::network.MicrocontrollerIP);
-                comboBoxIPAddress->SetToolTip(TEXT_MC_IP_ADDRESS);
-                sizerControls->Add(comboBoxIPAddress, 0, wxALL, 2);
+                FillDataSource();
+                sizerControls->Add(comboBoxDataSource, 0, wxALL, 2);
 
                 comboSpeedChoices.Add(TEXT_CAN_SPEED_100);
                 comboSpeedChoices.Add(TEXT_CAN_SPEED_125);
@@ -723,4 +685,53 @@ void FormMain::OnClose(wxCloseEvent& event)
     FlushLogs();
 
     Destroy();
+}
+
+// Заполняет контрол источника данных списком последовательных портов или сетевым адресом
+void FormMain::FillDataSource()
+{
+    comboBoxDataSource->Clear();
+
+    switch (mode)
+    {
+    case Modes::Serial:
+    {
+        auto ports = ThreadedSerialPort::Enumerate();
+        wxString serialPortToolTip;
+        if (ports.size() > 0)
+        {
+            for (auto& port : ports)
+            {
+                comboBoxDataSource->Append(port.Port);
+                if (port.HardwareID.IsEmpty())
+                {
+                    serialPortToolTip += port.Port + TEXT_CR_SPACES + port.Description + TEXT_CR_CR;
+                }
+                else
+                {
+                    serialPortToolTip += port.Port + TEXT_CR_SPACES + port.Description + TEXT_CR_SPACES + port.HardwareID + TEXT_CR_CR;
+                }
+            }
+            serialPortToolTip.RemoveLast(2);
+            // по умолчанию выбрать первый порт из списка
+            if (ports.size() > 0)
+            {
+                comboBoxDataSource->Select(0);
+            }
+            comboBoxDataSource->SetToolTip(serialPortToolTip);
+        }
+        else
+        {
+            comboBoxDataSource->SetToolTip(TEXT_SERIAL_PORT);
+        }
+        break;
+    }
+
+    case Modes::Network:
+    {
+        comboBoxDataSource->SetValue(mcIpAddress.OrigHostname());
+        comboBoxDataSource->SetToolTip(TEXT_MC_IP_ADDRESS);
+        break;
+    }
+    }
 }

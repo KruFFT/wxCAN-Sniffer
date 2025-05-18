@@ -1,19 +1,19 @@
-#include "FormMain.h"
+п»ї#include "FormMain.h"
 
-// Таблица событий
+// РўР°Р±Р»РёС†Р° СЃРѕР±С‹С‚РёР№
 wxBEGIN_EVENT_TABLE(FormMain, wxFrame)
 wxEND_EVENT_TABLE()
 
-// События из фонового потока последовательного порта
+// РЎРѕР±С‹С‚РёСЏ РёР· С„РѕРЅРѕРІРѕРіРѕ РїРѕС‚РѕРєР° РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕРіРѕ РїРѕСЂС‚Р°
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_STARTED, wxThreadEvent);
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_UPDATE, wxThreadEvent);
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_EXIT, wxThreadEvent);
 wxDEFINE_EVENT(wxEVT_SERIAL_PORT_THREAD_MESSAGE, wxThreadEvent);
 
-// Обработчики событий главного окна
+// РћР±СЂР°Р±РѕС‚С‡РёРєРё СЃРѕР±С‹С‚РёР№ РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР°
 void FormMain::AssignEventHandlers()
 {
-    // привязка событий
+    // РїСЂРёРІСЏР·РєР° СЃРѕР±С‹С‚РёР№
     this->Bind(wxEVT_CLOSE_WINDOW, &FormMain::OnClose, this, IDs::MAIN_FORM);
     choiceMode->Bind(wxEVT_CHOICE, &FormMain::ChoiceMode_OnChoice, this);
     choiceCANSpeed->Bind(wxEVT_CHOICE, &FormMain::ChoiceCANSpeed_OnChoice, this);
@@ -35,27 +35,27 @@ void FormMain::AssignEventHandlers()
     textDecWordMul->Bind(wxEVT_TEXT_ENTER, &FormMain::TextDecWordMul_OnEnter, this);
     textCANAnswerID->Bind(wxEVT_TEXT_ENTER, &FormMain::TextCANAnswerID_OnEnter, this);
 
-    // события панели графика
+    // СЃРѕР±С‹С‚РёСЏ РїР°РЅРµР»Рё РіСЂР°С„РёРєР°
     drawPanel->Bind(wxEVT_PAINT, &FormMain::DrawPanel_OnPaint, this);
     drawPanel->Bind(wxEVT_ERASE_BACKGROUND, &FormMain::DrawPanel_OnEraseBackground, this);
 
-    // событие от фонового потока COM-порта
+    // СЃРѕР±С‹С‚РёРµ РѕС‚ С„РѕРЅРѕРІРѕРіРѕ РїРѕС‚РѕРєР° COM-РїРѕСЂС‚Р°
     this->Bind(wxEVT_SERIAL_PORT_THREAD_STARTED, &FormMain::Thread_OnStarted, this);
     this->Bind(wxEVT_SERIAL_PORT_THREAD_UPDATE, &FormMain::Thread_OnUpdate, this);
     this->Bind(wxEVT_SERIAL_PORT_THREAD_EXIT, &FormMain::Thread_OnExit, this);
     this->Bind(wxEVT_SERIAL_PORT_THREAD_MESSAGE, &FormMain::Thread_OnMessage, this);
 
-    // событие данных из UDP-сокета
+    // СЃРѕР±С‹С‚РёРµ РґР°РЅРЅС‹С… РёР· UDP-СЃРѕРєРµС‚Р°
     this->Bind(wxEVT_SOCKET, &FormMain::UDPSocket_OnEvent, this, IDs::UDP_SOCKET);
 
-    // событие таймера
+    // СЃРѕР±С‹С‚РёРµ С‚Р°Р№РјРµСЂР°
     this->Bind(wxEVT_TIMER, &FormMain::MainTimer_OnTimer, this, IDs::MAIN_TIMER);
 }
 
-// Срабатывание главного таймера - обработка данных
+// РЎСЂР°Р±Р°С‚С‹РІР°РЅРёРµ РіР»Р°РІРЅРѕРіРѕ С‚Р°Р№РјРµСЂР° - РѕР±СЂР°Р±РѕС‚РєР° РґР°РЅРЅС‹С…
 void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
 {
-    // проверка состояния последовательного порта
+    // РїСЂРѕРІРµСЂРєР° СЃРѕСЃС‚РѕСЏРЅРёСЏ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕРіРѕ РїРѕСЂС‚Р°
     if (mode == Modes::Serial && serialPort && serialPort->hSerial == INVALID_HANDLE_VALUE)
     {
         delete serialPort;
@@ -64,17 +64,17 @@ void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
         EnableConnectionControls();
     }
 
-    // обработка всех пакетов на "выцветание"
+    // РѕР±СЂР°Р±РѕС‚РєР° РІСЃРµС… РїР°РєРµС‚РѕРІ РЅР° "РІС‹С†РІРµС‚Р°РЅРёРµ"
     frames->ProcessAllFrames();
 
     if (screenUpdateCounter >= SCREEN_UPDATE_COUNTER_LIMIT)
     {
-        // обновить данные в таблице
+        // РѕР±РЅРѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ РІ С‚Р°Р±Р»РёС†Рµ
         RefreshGridCANView();
 
         ShowNumbers();
 
-        // это вызовет событие OnPaint для панели
+        // СЌС‚Рѕ РІС‹Р·РѕРІРµС‚ СЃРѕР±С‹С‚РёРµ OnPaint РґР»СЏ РїР°РЅРµР»Рё
         drawPanel->Refresh();
         screenUpdateCounter = 0;
     }
@@ -82,26 +82,14 @@ void FormMain::MainTimer_OnTimer(wxTimerEvent& event)
     screenUpdateCounter++;
 }
 
-// Выбор режима работы
+// Р’С‹Р±РѕСЂ СЂРµР¶РёРјР° СЂР°Р±РѕС‚С‹
 void FormMain::ChoiceMode_OnChoice(wxCommandEvent& event)
 {
     mode = (Modes)event.GetSelection();
-    switch (mode)
-    {
-        case Modes::Serial:
-            comboBoxSerialPort->Show(true);
-            comboBoxIPAddress->Show(false);
-            break;
-
-        case Modes::Network:
-            comboBoxIPAddress->Show(true);
-            comboBoxSerialPort->Show(false);
-            break;
-    }
-    Layout();
+    FillDataSource();
 }
 
-// Выбор скорости CAN-шины
+// Р’С‹Р±РѕСЂ СЃРєРѕСЂРѕСЃС‚Рё CAN-С€РёРЅС‹
 void FormMain::ChoiceCANSpeed_OnChoice(wxCommandEvent& event)
 {
     uint32_t value;
@@ -115,7 +103,7 @@ void FormMain::ChoiceCANSpeed_OnChoice(wxCommandEvent& event)
     }
 }
 
-// Обработчик кнопки Подключить/отключить
+// РћР±СЂР°Р±РѕС‚С‡РёРє РєРЅРѕРїРєРё РџРѕРґРєР»СЋС‡РёС‚СЊ/РѕС‚РєР»СЋС‡РёС‚СЊ
 void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
 {
     rowToView = -1;
@@ -124,34 +112,35 @@ void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
 
     switch (mode)
     {
-        // режим: последовательный порт
+        // СЂРµР¶РёРј: РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅС‹Р№ РїРѕСЂС‚
         case Modes::Serial:
+        {
             try
             {
-                // если порт не открыт - открыть, иначе - закрыть
+                // РµСЃР»Рё РїРѕСЂС‚ РЅРµ РѕС‚РєСЂС‹С‚ - РѕС‚РєСЂС‹С‚СЊ, РёРЅР°С‡Рµ - Р·Р°РєСЂС‹С‚СЊ
                 if (serialPort == nullptr)
                 {
                     DisableConnectionControls();
                     frames->Clear();
 
-                    // удалить все строки таблицы
+                    // СѓРґР°Р»РёС‚СЊ РІСЃРµ СЃС‚СЂРѕРєРё С‚Р°Р±Р»РёС†С‹
                     if (gridCANView->GetNumberRows() > 0)
                     {
                         gridCANView->DeleteRows(0, gridCANView->GetNumberRows());
                     }
 
-                    serialPort = new ThreadedSerialPort(comboBoxSerialPort->GetValue(), Parameters::serial.PortSpeed, (wxFrame*)this);
-                    // поток стартует с задержкой, все остальные проверки его состояния в событии таймера MainTimer_OnTimer
+                    serialPort = new ThreadedSerialPort(comboBoxDataSource->GetValue(), Parameters::serial.PortSpeed, (wxFrame*)this);
+                    // РїРѕС‚РѕРє СЃС‚Р°СЂС‚СѓРµС‚ СЃ Р·Р°РґРµСЂР¶РєРѕР№, РІСЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ РїСЂРѕРІРµСЂРєРё РµРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ РІ СЃРѕР±С‹С‚РёРё С‚Р°Р№РјРµСЂР° MainTimer_OnTimer
                     buttonConnectDisconnect->SetLabelText(TEXT_DISCONNECT);
-                    // команда подключения будет отправлена в событии запуска потока Thread_OnStarted
+                    // РєРѕРјР°РЅРґР° РїРѕРґРєР»СЋС‡РµРЅРёСЏ Р±СѓРґРµС‚ РѕС‚РїСЂР°РІР»РµРЅР° РІ СЃРѕР±С‹С‚РёРё Р·Р°РїСѓСЃРєР° РїРѕС‚РѕРєР° Thread_OnStarted
                 }
                 else
                 {
-                    // отправить управляющий пакет отключения
+                    // РѕС‚РїСЂР°РІРёС‚СЊ СѓРїСЂР°РІР»СЏСЋС‰РёР№ РїР°РєРµС‚ РѕС‚РєР»СЋС‡РµРЅРёСЏ
                     SendCANCommand(CANCommands::Disconnect);
-                    // просто запустить процесс остановки потока, все остальные проверки его состояния в событии таймера MainTimer_OnTimer
+                    // РїСЂРѕСЃС‚Рѕ Р·Р°РїСѓСЃС‚РёС‚СЊ РїСЂРѕС†РµСЃСЃ РѕСЃС‚Р°РЅРѕРІРєРё РїРѕС‚РѕРєР°, РІСЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ РїСЂРѕРІРµСЂРєРё РµРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ РІ СЃРѕР±С‹С‚РёРё С‚Р°Р№РјРµСЂР° MainTimer_OnTimer
                     serialPort->Delete();
-                    // записать все log-файлы
+                    // Р·Р°РїРёСЃР°С‚СЊ РІСЃРµ log-С„Р°Р№Р»С‹
                     FlushLogs();
                     logFiles.clear();
                     EnableConnectionControls();
@@ -164,19 +153,28 @@ void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
                 wxMessageBox(ERROR_SERIAL);
             }
             break;
+        }
             
-        // режим: сеть
+        // СЂРµР¶РёРј: СЃРµС‚СЊ
         case Modes::Network:
+        {
             try
             {
-                // отправка команды подключения/отключения, если есть сетевое соединение
+                // РѕС‚РїСЂР°РІРєР° РєРѕРјР°РЅРґС‹ РїРѕРґРєР»СЋС‡РµРЅРёСЏ/РѕС‚РєР»СЋС‡РµРЅРёСЏ, РµСЃР»Рё РµСЃС‚СЊ СЃРµС‚РµРІРѕРµ СЃРѕРµРґРёРЅРµРЅРёРµ
                 if (udpSocket)
                 {
                     if (!udpConnected)
                     {
-                        SendCANCommand(CANCommands::Connect, selectedCanSpeed);
-                        buttonConnectDisconnect->SetLabelText(TEXT_DISCONNECT);
-                        DisableConnectionControls();
+                        if (!mcIpAddress.Hostname(comboBoxDataSource->GetValue()))
+                        {
+                            wxMessageBox(ERROR_UDP_OPEN + udpSocket->LastError());
+                        }
+                        else
+                        {
+                            SendCANCommand(CANCommands::Connect, selectedCanSpeed);
+                            buttonConnectDisconnect->SetLabelText(TEXT_DISCONNECT);
+                            DisableConnectionControls();
+                        }
                     }
                     else
                     {
@@ -193,17 +191,18 @@ void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
                 EnableConnectionControls();
             }
             break;
+        }
     }
 }
 
-// Поток работы с последовательным портом запустился
+// РџРѕС‚РѕРє СЂР°Р±РѕС‚С‹ СЃ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅС‹Рј РїРѕСЂС‚РѕРј Р·Р°РїСѓСЃС‚РёР»СЃСЏ
 void FormMain::Thread_OnStarted(wxThreadEvent& event)
 {
-    // отправить управляющий пакет подключения
+    // РѕС‚РїСЂР°РІРёС‚СЊ СѓРїСЂР°РІР»СЏСЋС‰РёР№ РїР°РєРµС‚ РїРѕРґРєР»СЋС‡РµРЅРёСЏ
     SendCANCommand(CANCommands::Connect, selectedCanSpeed);
 }
 
-// По событию от потока забирать все принятые CAN-пакеты, которые есть в буфере
+// РџРѕ СЃРѕР±С‹С‚РёСЋ РѕС‚ РїРѕС‚РѕРєР° Р·Р°Р±РёСЂР°С‚СЊ РІСЃРµ РїСЂРёРЅСЏС‚С‹Рµ CAN-РїР°РєРµС‚С‹, РєРѕС‚РѕСЂС‹Рµ РµСЃС‚СЊ РІ Р±СѓС„РµСЂРµ
 void FormMain::Thread_OnUpdate(wxThreadEvent& event)
 {
     CANFrameIn frame;
@@ -217,7 +216,7 @@ void FormMain::Thread_OnUpdate(wxThreadEvent& event)
     }
 }
 
-// По событию от потока забирать все принятые CAN-пакеты, которые есть в буфере
+// РџРѕ СЃРѕР±С‹С‚РёСЋ РѕС‚ РїРѕС‚РѕРєР° Р·Р°Р±РёСЂР°С‚СЊ РІСЃРµ РїСЂРёРЅСЏС‚С‹Рµ CAN-РїР°РєРµС‚С‹, РєРѕС‚РѕСЂС‹Рµ РµСЃС‚СЊ РІ Р±СѓС„РµСЂРµ
 void FormMain::Thread_OnExit(wxThreadEvent& event)
 {
     if (serialPort)
@@ -228,20 +227,20 @@ void FormMain::Thread_OnExit(wxThreadEvent& event)
     EnableConnectionControls();
 }
 
-// Сообщение от потока при ошибке
+// РЎРѕРѕР±С‰РµРЅРёРµ РѕС‚ РїРѕС‚РѕРєР° РїСЂРё РѕС€РёР±РєРµ
 void FormMain::Thread_OnMessage(wxThreadEvent& event)
 {
     wxMessageBox(event.GetPayload<wxString>(), ERROR_CAPTION, wxICON_ERROR);
 }
 
-// Выбран другой тип данных для отображения
+// Р’С‹Р±СЂР°РЅ РґСЂСѓРіРѕР№ С‚РёРї РґР°РЅРЅС‹С… РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ
 void FormMain::ChoiceDataType_OnChoice(wxCommandEvent& event)
 {
     dataType = (DataTypes)event.GetSelection();
     checkEndian->Enable(dataType != DataTypes::UInt8 && dataType != DataTypes::Int8);
 }
 
-// При нажатии Enter в поле ввода множителя - обработать его и запомнить
+// РџСЂРё РЅР°Р¶Р°С‚РёРё Enter РІ РїРѕР»Рµ РІРІРѕРґР° РјРЅРѕР¶РёС‚РµР»СЏ - РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РµРіРѕ Рё Р·Р°РїРѕРјРЅРёС‚СЊ
 void FormMain::TextDecWordMul_OnEnter(wxCommandEvent& event)
 {
     double newMul;
@@ -259,7 +258,7 @@ void FormMain::TextDecWordMul_OnEnter(wxCommandEvent& event)
     textDecWordMul->ChangeValue(wxString::Format(FORMAT_FLOAT1_3, mul));
 }
 
-// Добавить ID в список фильтра для записи в log
+// Р”РѕР±Р°РІРёС‚СЊ ID РІ СЃРїРёСЃРѕРє С„РёР»СЊС‚СЂР° РґР»СЏ Р·Р°РїРёСЃРё РІ log
 void FormMain::ButtonAdd_OnClick(wxCommandEvent& event)
 {
     if (rowToLog >= 0 && (int)frames->Size() > rowToLog)
@@ -280,7 +279,7 @@ void FormMain::ButtonAdd_OnClick(wxCommandEvent& event)
     RefreshListLog();
 }
 
-// Удалить ID из списка фильтра записи в log
+// РЈРґР°Р»РёС‚СЊ ID РёР· СЃРїРёСЃРєР° С„РёР»СЊС‚СЂР° Р·Р°РїРёСЃРё РІ log
 void FormMain::ButtonRemove_OnClick(wxCommandEvent& event)
 {
     int32_t index = listLog->GetSelection();
@@ -293,26 +292,26 @@ void FormMain::ButtonRemove_OnClick(wxCommandEvent& event)
     RefreshListLog();
 }
 
-// Очистить весь список фильтра записи в log
+// РћС‡РёСЃС‚РёС‚СЊ РІРµСЃСЊ СЃРїРёСЃРѕРє С„РёР»СЊС‚СЂР° Р·Р°РїРёСЃРё РІ log
 void FormMain::ButtonRemoveAll_OnClick(wxCommandEvent& event)
 {
     logFilterIDs.clear();
     RefreshListLog();
 }
 
-// Выбор разрешения записи в журнал
+// Р’С‹Р±РѕСЂ СЂР°Р·СЂРµС€РµРЅРёСЏ Р·Р°РїРёСЃРё РІ Р¶СѓСЂРЅР°Р»
 void FormMain::CheckLogEnable_OnClick(wxCommandEvent& event)
 {
     logEnable = event.IsChecked();
 }
 
-// Выбор расширения файла
+// Р’С‹Р±РѕСЂ СЂР°СЃС€РёСЂРµРЅРёСЏ С„Р°Р№Р»Р°
 void FormMain::ChoiceExt_OnChoice(wxCommandEvent& event)
 {
     logExt = event.GetString();
 }
 
-// Выбор разделителя в log-файле
+// Р’С‹Р±РѕСЂ СЂР°Р·РґРµР»РёС‚РµР»СЏ РІ log-С„Р°Р№Р»Рµ
 void FormMain::ChoiceSep_OnChoice(wxCommandEvent& event)
 {
     auto value = event.GetString();
@@ -324,39 +323,39 @@ void FormMain::ChoiceSep_OnChoice(wxCommandEvent& event)
         logSeparator = value;
 }
 
-// Клик по десятичной форме записи log
+// РљР»РёРє РїРѕ РґРµСЃСЏС‚РёС‡РЅРѕР№ С„РѕСЂРјРµ Р·Р°РїРёСЃРё log
 void FormMain::CheckDec_OnClick(wxCommandEvent& event)
 {
     logDecimal = event.IsChecked();
 }
 
-// Клик по выводу в один файл
+// РљР»РёРє РїРѕ РІС‹РІРѕРґСѓ РІ РѕРґРёРЅ С„Р°Р№Р»
 void FormMain::CheckSingle_OnClick(wxCommandEvent& event)
 {
     logSingle = event.IsChecked();
 }
 
-// Клик для добавления в log-файл ASCII данных
+// РљР»РёРє РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РІ log-С„Р°Р№Р» ASCII РґР°РЅРЅС‹С…
 void FormMain::CheckASCII_OnClick(wxCommandEvent& event)
 {
     logASCII = event.IsChecked();
 }
 
-// Клик по выбору big endian или little endian
+// РљР»РёРє РїРѕ РІС‹Р±РѕСЂСѓ big endian РёР»Рё little endian
 void FormMain::CheckEndian_OnClick(wxCommandEvent& event)
 {
     bigEndian = event.IsChecked();
 }
 
-// Выбор ячейки в таблице
+// Р’С‹Р±РѕСЂ СЏС‡РµР№РєРё РІ С‚Р°Р±Р»РёС†Рµ
 void FormMain::GridCANView_OnSelectCell(wxGridEvent& event)
 {
-    // запомнить строку для добавления в log
+    // Р·Р°РїРѕРјРЅРёС‚СЊ СЃС‚СЂРѕРєСѓ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РІ log
     rowToLog = event.GetRow();
 
     rowToView = rowToLog;
     colToView = event.GetCol() - 3;
-    // если выбран столбик не с данными
+    // РµСЃР»Рё РІС‹Р±СЂР°РЅ СЃС‚РѕР»Р±РёРє РЅРµ СЃ РґР°РЅРЅС‹РјРё
     if (colToView < 0)
     {
         rowToView = -1;
@@ -368,99 +367,99 @@ void FormMain::GridCANView_OnSelectCell(wxGridEvent& event)
     }
     else
     {
-        // показать числа в разных форматах
+        // РїРѕРєР°Р·Р°С‚СЊ С‡РёСЃР»Р° РІ СЂР°Р·РЅС‹С… С„РѕСЂРјР°С‚Р°С…
         ShowNumbers();
     }
 }
 
-// Нажатие кнопки очистки ответа на отправленный пакет
+// РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё РѕС‡РёСЃС‚РєРё РѕС‚РІРµС‚Р° РЅР° РѕС‚РїСЂР°РІР»РµРЅРЅС‹Р№ РїР°РєРµС‚
 void FormMain::ButtonClearCANLog_OnClick(wxCommandEvent& event)
 {
-    // удалить все строки таблицы
+    // СѓРґР°Р»РёС‚СЊ РІСЃРµ СЃС‚СЂРѕРєРё С‚Р°Р±Р»РёС†С‹
     if (gridCANLog->GetNumberRows() > 0)
     {
         gridCANLog->DeleteRows(0, gridCANLog->GetNumberRows());
     }
 }
 
-// Нажатие кнопки отправки CAN-пакета
+// РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё РѕС‚РїСЂР°РІРєРё CAN-РїР°РєРµС‚Р°
 void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
 {
     unsigned long tempValue;
 
-    // собрать CAN-пакет для отправки
+    // СЃРѕР±СЂР°С‚СЊ CAN-РїР°РєРµС‚ РґР»СЏ РѕС‚РїСЂР°РІРєРё
     CANFrameOut frame = { 0 };
 
-    // ID пакета
+    // ID РїР°РєРµС‚Р°
     textCANID->GetValue().ToULong(&tempValue, 16);
     if (tempValue > 0)
         frame.id = (uint32_t)tempValue;
     else
         return;
-    // зарезервировано
+    // Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅРѕ
     frame.reserved = 0;
-    // длина данных пакета
+    // РґР»РёРЅР° РґР°РЅРЅС‹С… РїР°РєРµС‚Р°
     textCANLength->GetValue().ToULong(&tempValue, 10);
     if (tempValue >= 0 && tempValue <= 8)
         frame.length = (uint8_t)tempValue;
     else
         return;
-    // байт 1
+    // Р±Р°Р№С‚ 1
     textCANByte0->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[0] = (uint8_t)tempValue;
     else
         return;
-    // байт 2
+    // Р±Р°Р№С‚ 2
     textCANByte1->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[1] = (uint8_t)tempValue;
     else
         return;
-    // байт 3
+    // Р±Р°Р№С‚ 3
     textCANByte2->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[2] = (uint8_t)tempValue;
     else
         return;
-    // байт 4
+    // Р±Р°Р№С‚ 4
     textCANByte3->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[3] = (uint8_t)tempValue;
     else
         return;
-    // байт 5
+    // Р±Р°Р№С‚ 5
     textCANByte4->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[4] = (uint8_t)tempValue;
     else
         return;
-    // байт 6
+    // Р±Р°Р№С‚ 6
     textCANByte5->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[5] = (uint8_t)tempValue;
     else
         return;
-    // байт 7
+    // Р±Р°Р№С‚ 7
     textCANByte6->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[6] = (uint8_t)tempValue;
     else
         return;
-    // байт 8
+    // Р±Р°Р№С‚ 8
     textCANByte7->GetValue().ToULong(&tempValue, 16);
     if (tempValue >= 0 && tempValue <= 0xFF)
         frame.data[7] = (uint8_t)tempValue;
     else
         return;
-    // запомнить ID пакета, от которого ожидается ответ
+    // Р·Р°РїРѕРјРЅРёС‚СЊ ID РїР°РєРµС‚Р°, РѕС‚ РєРѕС‚РѕСЂРѕРіРѕ РѕР¶РёРґР°РµС‚СЃСЏ РѕС‚РІРµС‚
     textCANAnswerID->GetValue().ToULong(&tempValue, 16);
     if (tempValue > 0)
         answerID = (uint32_t)tempValue;
     else
         answerID = 0;
 
-    // отправить данные
+    // РѕС‚РїСЂР°РІРёС‚СЊ РґР°РЅРЅС‹Рµ
     if (serialPort)
     {
         serialPort->SendFrame(frame);
@@ -471,7 +470,7 @@ void FormMain::ButtonSend_OnClick(wxCommandEvent& event)
     }
 }
 
-// Нажатие Enter при вводе номера CAN ID ожидания ответа
+// РќР°Р¶Р°С‚РёРµ Enter РїСЂРё РІРІРѕРґРµ РЅРѕРјРµСЂР° CAN ID РѕР¶РёРґР°РЅРёСЏ РѕС‚РІРµС‚Р°
 void FormMain::TextCANAnswerID_OnEnter(wxCommandEvent& event)
 {
     unsigned long value;
@@ -480,7 +479,7 @@ void FormMain::TextCANAnswerID_OnEnter(wxCommandEvent& event)
     textCANAnswerID->ChangeValue(wxString::Format(FORMAT_HEX3, answerID));
 }
 
-// Событие UDP-сокета
+// РЎРѕР±С‹С‚РёРµ UDP-СЃРѕРєРµС‚Р°
 void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
 {
     uint8_t  receivedData[UDP_BUFFER_SIZE] = { 0 };
@@ -493,10 +492,10 @@ void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
         {
             CANFrameIn frame;
             uint8_t* receivedDataTail = receivedDataPointer + receivedDataLen;
-            // поиск CAN-пакета и формирование данных
+            // РїРѕРёСЃРє CAN-РїР°РєРµС‚Р° Рё С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ РґР°РЅРЅС‹С…
             while (receivedDataPointer < receivedDataTail)
             {
-                // пакет собран - обработать пакет
+                // РїР°РєРµС‚ СЃРѕР±СЂР°РЅ - РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РїР°РєРµС‚
                 if (CANParser::Parse(&receivedDataPointer, frame))
                 {
                     ProcessCANFrame(frame);
@@ -506,7 +505,7 @@ void FormMain::UDPSocket_OnEvent(wxSocketEvent& event)
     }
 }
 
-// Событие отрисовки в панели графика
+// РЎРѕР±С‹С‚РёРµ РѕС‚СЂРёСЃРѕРІРєРё РІ РїР°РЅРµР»Рё РіСЂР°С„РёРєР°
 void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 {
     //wxPaintDC dc(drawPanel);
@@ -515,7 +514,7 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
     PrepareDC(dc);
     auto drawRectangle = drawPanel->GetClientRect();
 
-    // нарисовать рамку и фон
+    // РЅР°СЂРёСЃРѕРІР°С‚СЊ СЂР°РјРєСѓ Рё С„РѕРЅ
     dc.SetPen(graphFramePen);
     dc.SetBrush(graphBackgroundBrush);
     dc.DrawRectangle(drawRectangle);
@@ -526,7 +525,7 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
 
         float minValue = 0;
         float maxValue = 0;
-        // поиск наибольшего значения для графика
+        // РїРѕРёСЃРє РЅР°РёР±РѕР»СЊС€РµРіРѕ Р·РЅР°С‡РµРЅРёСЏ РґР»СЏ РіСЂР°С„РёРєР°
         for (size_t index = 0; index < drawFrameSize; index++)
         {
             float nextValue = *(frame + index);
@@ -534,16 +533,16 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
             if (nextValue > maxValue) maxValue = nextValue;
         }
 
-        // вычисление масштабного коэффициента
+        // РІС‹С‡РёСЃР»РµРЅРёРµ РјР°СЃС€С‚Р°Р±РЅРѕРіРѕ РєРѕСЌС„С„РёС†РёРµРЅС‚Р°
         float height = (float)drawRectangle.height;
         float scaleFactor = -height / (maxValue - minValue);
 
-        // нарисовать осевую линию по нулю
+        // РЅР°СЂРёСЃРѕРІР°С‚СЊ РѕСЃРµРІСѓСЋ Р»РёРЅРёСЋ РїРѕ РЅСѓР»СЋ
         dc.SetPen(Parameters::colors.GraphText);
         wxCoord y = (-minValue) * scaleFactor + height;
         dc.DrawLine(0, y, drawRectangle.width, y);
 
-        // рисовать отмасштабированный график
+        // СЂРёСЃРѕРІР°С‚СЊ РѕС‚РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРЅС‹Р№ РіСЂР°С„РёРє
         dc.SetPen(graphPen);
         y = (*frame - minValue) * scaleFactor + height;
         for (size_t index = 1; index < drawFrameSize; index++)
@@ -560,8 +559,8 @@ void FormMain::DrawPanel_OnPaint(wxPaintEvent& event)
     }
 }
 
-// Стирание фона панели графика
+// РЎС‚РёСЂР°РЅРёРµ С„РѕРЅР° РїР°РЅРµР»Рё РіСЂР°С„РёРєР°
 void FormMain::DrawPanel_OnEraseBackground(wxEraseEvent& event)
 {
-    // кода нет, используется как заглушка
+    // РєРѕРґР° РЅРµС‚, РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РєР°Рє Р·Р°РіР»СѓС€РєР°
 }

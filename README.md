@@ -1,4 +1,4 @@
-﻿# CAN sniffer (приложение для компьютера)
+﻿# CAN Sniffer (приложение для компьютера)
 
 [![Translate](https://img.shields.io/badge/Translate_to-ENGLISH-blue.svg?style=plastic)](https://github-com.translate.goog/KruFFT/wxCAN-Sniffer?_x_tr_sl=ru&_x_tr_tl=en)
 
@@ -80,10 +80,7 @@ nmake /f makefile.vc RUNTIME_LIBS=static TARGET_CPU=X64 BUILD=release
 #### Используя CMake
 1. Понадобится установить следующие пакеты:
 ```
-sudo apt-get install build-essential
-sudo apt-get install libgtk-3-dev
-sudo apt-get install libglu1-mesa-dev freeglut3-dev mesa-common-dev
-sudo apt-get install cmake
+sudo apt-get install build-essential libgtk-3-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev cmake
 ```
 2. Запустить подготовку проекта к сборке, будет автоматически скачан и подготовлен пакет **wxWidgets** в директорию `./build-release`:
 ```sh
@@ -116,30 +113,21 @@ sudo swapon /swapfile
 ##### Сборка wxWidgets
 1. Понадобится [Visual Studio Code](https://code.visualstudio.com/download/) и установить следующие пакеты:
 ```
-sudo apt-get install build-essential
-sudo apt-get install libgtk-3-dev
-sudo apt-get install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+sudo apt-get install build-essential libgtk-3-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev
 ```
 2. Скачать и установить wxWidgets:
 ```
 git clone --recurse-submodules https://github.com/wxWidgets/wxWidgets.git
 ```
-3. Подготовить директорию `./gtk-build` для сборки и запустить настройку:
+3. Подготовить директорию `./gtk-build` для сборки, запустить настройку и сборку (использовать 8 потоков):
 ```
-mkdir gtk-build
-cd gtk-build
-../configure --with-gtk=3 --with-opengl --disable-shared
+cd wxWidgets; mkdir gtk-build; cd gtk-build; ../configure --with-gtk=3 --with-opengl --disable-shared; make -j8
 ```
-4. Запустить сборку (использовать 8 потоков):
+4. Установить собранный пакет в систему:
 ```
-make -j8
+sudo make install; sudo ldconfig
 ```
-5. Установить собранный пакет в систему:
-```
-sudo make install
-sudo ldconfig
-```
-6. Скопировать файл **setup.h** (обратите внимание на номер версии в директориях, если версия отличается от 3.3, то её надо поправить):
+5. Скопировать файл **setup.h** (обратите внимание на номер версии в директориях, если версия отличается от 3.3, то её надо поправить):
 ```
 sudo cp ./lib/wx/include/gtk3-unicode-static-3.3/wx/setup.h /usr/local/include/wx-3.3/wx
 ```
@@ -147,7 +135,11 @@ sudo cp ./lib/wx/include/gtk3-unicode-static-3.3/wx/setup.h /usr/local/include/w
 ##### Сборка приложения в Visual Studio Code
 1. Открыть директорию проекта `./wxCAN-Sniffer/wxCAN-Sniffer` в редакторе Visual Studio Code
 2. Открыть файл **Application.cpp**
-3. В меню **Terminal** выбрать пункт **Run Task**, выбрать необходимую конфигурацию **C/C++: GCC build release** или **C/C++: GCC build debug** (результат будет в этой же директории)
+3. В меню **Terminal** выбрать пункт **Run Build Task**, выбрать необходимую конфигурацию **C/C++: G++ build release** или **C/C++: GCC build debug** (результат будет в этой же директории)
+4. Будет необходимо добавить пользователя в группу с правами доступа к последовательному порту:
+```
+sudo addgroup $USERNAME dialout
+```
 
 ---
 
