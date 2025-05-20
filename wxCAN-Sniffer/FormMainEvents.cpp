@@ -92,15 +92,8 @@ void FormMain::ChoiceMode_OnChoice(wxCommandEvent& event)
 // Выбор скорости CAN-шины
 void FormMain::ChoiceCANSpeed_OnChoice(wxCommandEvent& event)
 {
-    uint32_t value;
-    if (event.GetString().ToUInt(&value))
-    {
-        selectedCanSpeed = (uint16_t)value;
-    }
-    else
-    {
-        selectedCanSpeed = 500;
-    }
+    uint32_t value = wxAtoi(event.GetString());
+    selectedCanSpeed = (uint16_t)value;
 }
 
 // Обработчик кнопки Подключить/отключить

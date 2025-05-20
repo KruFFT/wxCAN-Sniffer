@@ -2,7 +2,7 @@
   "tasks": [
     {
       "type": "cppbuild",
-      "label": "C/C++: GCC build debug",
+      "label": "C/C++: G++ build debug",
       "command": "/usr/bin/g++",
       "args": [
         "-fdiagnostics-color=always",
@@ -28,7 +28,7 @@
     },
     {
       "type": "cppbuild",
-      "label": "C/C++: GCC build release",
+      "label": "C/C++: G++ build release",
       "command": "/usr/bin/g++",
       "args": [
         "-fdiagnostics-color=always",

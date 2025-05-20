@@ -279,11 +279,24 @@ FormMain::FormMain() : wxFrame(nullptr, IDs::MAIN_FORM, CAPTION, wxDefaultPositi
                 FillDataSource();
                 sizerControls->Add(comboBoxDataSource, 0, wxALL, 2);
 
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_5);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_10);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_20);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_25);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_31);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_33);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_40);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_50);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_80);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_83);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_95);
                 comboSpeedChoices.Add(TEXT_CAN_SPEED_100);
                 comboSpeedChoices.Add(TEXT_CAN_SPEED_125);
                 comboSpeedChoices.Add(TEXT_CAN_SPEED_200);
                 comboSpeedChoices.Add(TEXT_CAN_SPEED_250);
                 comboSpeedChoices.Add(TEXT_CAN_SPEED_500);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_666);
+                comboSpeedChoices.Add(TEXT_CAN_SPEED_800);
                 comboSpeedChoices.Add(TEXT_CAN_SPEED_1000);
                 choiceCANSpeed = new wxChoice(this, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(60, 22)), comboSpeedChoices);
                 if (Parameters::appearance.ControlsCustomColors)
@@ -291,7 +304,7 @@ FormMain::FormMain() : wxFrame(nullptr, IDs::MAIN_FORM, CAPTION, wxDefaultPositi
                     choiceCANSpeed->SetForegroundColour(Parameters::colors.ControlText);
                     choiceCANSpeed->SetBackgroundColour(Parameters::colors.ControlBackground);
                 }
-                choiceCANSpeed->Select(4);
+                choiceCANSpeed->Select(15);
                 choiceCANSpeed->SetToolTip(TEXT_CAN_SPEED);
                 sizerControls->Add(choiceCANSpeed, 0, wxALL, 2);
 
