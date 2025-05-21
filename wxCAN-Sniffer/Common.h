@@ -136,6 +136,16 @@
 #define TEXT_1                      wxT('1')
 #define TEXT_NUMBER_BLOCK_SEPARATOR wxT('_')
 
+#if __WXMAC__
+
+#define MENU_FILE                   wxT("Файл")
+#define MENU_FILE_NEW_WINDOW        wxT("Новое окно\tCtrl+N")
+
+enum {
+    ID_MENU_FILE_NEW_WINDOW = wxID_HIGHEST+1,
+};
+#endif
+
 #define ERROR_CAPTION               wxT("Ошибка")
 #define ERROR_SERIAL                wxT("Невозможно работать с этим последовательным портом")
 #define ERROR_SERIAL_OPEN           wxT("Невозможно открыть порт.\nОшибка: 0x")

@@ -647,22 +647,6 @@ FormMain::FormMain() : wxFrame(nullptr, IDs::MAIN_FORM, CAPTION, wxDefaultPositi
     // подготовка сетевых операций
     mcIpAddress.Hostname(Parameters::network.MicrocontrollerIP);
     mcIpAddress.Service(Parameters::network.Port);
-
-    wxIPV4address ipAddress;
-    ipAddress.AnyAddress();
-    ipAddress.Service(Parameters::network.Port);
-    udpSocket = new wxDatagramSocket(ipAddress);
-
-    if (udpSocket->IsOk())
-    {
-        udpSocket->SetEventHandler(*this, IDs::UDP_SOCKET);
-        udpSocket->SetNotify(wxSOCKET_INPUT_FLAG);
-        udpSocket->Notify(true);
-    }
-    else if (udpSocket->Error())
-    {
-        wxMessageBox(ERROR_UDP_OPEN + udpSocket->LastError());
-    }
 }
 
 // Нажатие кнопки закрытия окна
