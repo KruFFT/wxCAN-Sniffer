@@ -605,6 +605,7 @@ FormMain::FormMain() : wxFrame(nullptr, IDs::MAIN_FORM, CAPTION, wxDefaultPositi
     this->SetSizer(sizerMain);
     this->SetAutoLayout(true);
     this->Layout();
+    this->Fit();
     this->Center(wxCENTER_ON_SCREEN);
     if (Parameters::appearance.ControlsCustomColors)
     {
