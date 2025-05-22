@@ -12,6 +12,8 @@ class Application : public wxApp
 public:
     bool OnInit();
 private:
+    void ShowNewMainWindow(); // отображает новое основное окно
+
     wxLocale locale;
 };
 

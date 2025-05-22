@@ -154,6 +154,27 @@ void FormMain::ButtonConnectDisconnect_OnClick(wxCommandEvent& event)
             try
             {
                 // отправка команды подключения/отключения, если есть сетевое соединение
+                if (!udpSocket)
+                {
+                    wxIPV4address ipAddress;
+                    ipAddress.AnyAddress();
+                    ipAddress.Service(Parameters::network.Port);
+
+                    udpSocket = new wxDatagramSocket(ipAddress);
+
+                    if (udpSocket->IsOk())
+                    {
+                        udpSocket->SetEventHandler(*this, IDs::UDP_SOCKET);
+                        udpSocket->SetNotify(wxSOCKET_INPUT_FLAG);
+                        udpSocket->Notify(true);
+                    }
+                    else if (udpSocket->Error())
+                    {
+                        wxMessageBox(ERROR_UDP_OPEN + udpSocket->LastError());
+                        delete udpSocket;
+                        udpSocket = nullptr;
+                    }
+                }
                 if (udpSocket)
                 {
                     if (!udpConnected)
