@@ -17,6 +17,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(wxWidgets)
 
+if (APPLE)
+# TODO: libserialport - кроссплатформенная библиотека и потенциально может использоваться во всех ОС
+# Getting libserialport
+message(STATUS "Fetching libserialport...")
+FetchContent_Declare(
+   libserialport
+   GIT_REPOSITORY https://github.com/loquens/libserialport.git
+   GIT_SHALLOW ON
+)
+FetchContent_MakeAvailable(libserialport)
+endif()
+
 # Preparing files
 set(Sources "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}")
 set(SRCS
@@ -45,11 +57,17 @@ set(SRCS
 message(STATUS "Project name:      " ${PROJECT_NAME})
 message(STATUS "Source files path: " ${Sources})
 message(STATUS "wxWidgets sources: " ${wxWidgets_SOURCE_DIR})
+if (APPLE)
+message(STATUS "libserialport sources: " ${libserialport_SOURCE_DIR})
+endif()
 
 # Building
 if(APPLE)
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SRCS})
+    target_link_directories(${PROJECT_NAME} PRIVATE ${serialport_BINARY_DIR})
+    target_link_libraries(${PROJECT_NAME} PRIVATE serialport)
     set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${Sources}/Info.plist)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${libserialport_SOURCE_DIR})
 else()
     add_executable(${PROJECT_NAME} WIN32 ${SRCS} ${Sources}/${PROJECT_NAME}.manifest)
 endif()

@@ -1,5 +1,9 @@
 ﻿#include "ThreadedSerialPort.h"
 
+#if __APPLE__
+#include <libserialport.h>
+#endif
+
 // Конструктор
 ThreadedSerialPort::ThreadedSerialPort(wxString serialPort, uint32_t portSpeed, wxFrame* handleWindow) : wxThread(wxTHREAD_JOINABLE)
 {
@@ -574,7 +578,33 @@ std::vector<ThreadedSerialPort::Information> ThreadedSerialPort::Enumerate()
 #endif
 
 #ifdef __APPLE__
-    // TODO: перечисление списка доступных портов
+    struct sp_port** enumeratedPorts = nullptr;
+    if (SP_OK == sp_list_ports(&enumeratedPorts))
+    {
+        int index = 0;
+        while (auto enumeratedPort = enumeratedPorts[index])
+        {
+            Information info;
+            auto szName = sp_get_port_name(enumeratedPort);
+            if (szName)
+            {
+                wxFileName fileName(szName);
+                info.Port = fileName.GetFullName();
+                info.Description = sp_get_port_description(enumeratedPort);
+                int vid = 0, pid = 0;
+                if (SP_OK == sp_get_port_usb_vid_pid(enumeratedPort, &vid, &pid))
+                {
+                    wxString hardwareID = wxT("vid_") + wxString::Format(wxT("%d"), (int)vid);
+                    hardwareID += wxT("&pid_") + wxString::Format(wxT("%d"), (int)pid);
+                    info.HardwareID = hardwareID;
+                }
+                ports.push_back(info);
+            }
+            index++;
+        }
+        sp_free_port_list(enumeratedPorts);
+    }
+
 #endif
 
     sort(ports.begin(), ports.end());
